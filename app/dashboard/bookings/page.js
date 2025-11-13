@@ -79,11 +79,11 @@ export default function MyBookingsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {bookings.map((booking) => (
               <Card key={booking._id} data-testid={`booking-${booking._id}`}>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Spa</p>
                       <p className="font-semibold text-gray-900">{booking.spaId?.title || 'N/A'}</p>
