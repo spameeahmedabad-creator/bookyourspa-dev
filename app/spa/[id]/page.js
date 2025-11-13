@@ -143,10 +143,10 @@ export default function SpaDetailPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow sticky top-24">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow lg:sticky lg:top-24">
               <Button 
-                className="w-full bg-emerald-600 hover:bg-emerald-700 mb-6 h-12 text-lg" 
+                className="w-full bg-emerald-600 hover:bg-emerald-700 mb-4 sm:mb-6 h-10 sm:h-12 text-base sm:text-lg" 
                 onClick={() => setShowBookingModal(true)}
                 data-testid="book-now-detail-button"
               >
