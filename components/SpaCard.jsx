@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 export default function SpaCard({ spa }) {
   return (
     <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300" data-testid={`spa-card-${spa._id}`}>
-      <div className="relative h-48 bg-gradient-to-br from-emerald-200 to-teal-200">
+      <div className="relative h-40 sm:h-48 bg-gradient-to-br from-emerald-200 to-teal-200">
         {spa.gallery?.[0] ? (
           <img
             src={spa.gallery[0]}
