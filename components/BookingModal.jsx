@@ -110,12 +110,12 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent onClose={onClose} className="max-w-md" data-testid="booking-modal">
+      <DialogContent onClose={onClose} className="max-w-md max-h-[90vh] overflow-y-auto" data-testid="booking-modal">
         <DialogHeader>
-          <DialogTitle>Book Your Spa Appointment</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Book Your Spa Appointment</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 mt-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Name <span className="text-red-500">*</span>
