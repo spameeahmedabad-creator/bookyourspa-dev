@@ -139,9 +139,10 @@ export default function Navbar() {
               </div>
             ) : (
               <Link href="/login">
-                <Button variant="outline" data-testid="login-button">
-                  <User className="w-4 h-4 mr-2" />
-                  Login
+                <Button variant="outline" className="text-xs sm:text-sm px-3 sm:px-4 h-8 sm:h-10" data-testid="login-button">
+                  <User className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Login</span>
+                  <span className="sm:hidden">Login</span>
                 </Button>
               </Link>
             )}
