@@ -7,7 +7,7 @@ import { verifyToken } from '@/lib/jwt';
 export async function GET(request, { params }) {
   try {
     await dbConnect();
-    const spa = await Spa.findById(params.id).populate('ownerId', 'name phone');
+    const spa = await Spa.findById(params.id);
 
     if (!spa) {
       return NextResponse.json(
