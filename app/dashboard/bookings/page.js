@@ -67,8 +67,8 @@ export default function MyBookingsPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      <div className="max-w-7xl mx-auto px-4 py-8" data-testid="bookings-page">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+      <div className="max-w-7xl mx-auto px-4 py-4 sm:py-8" data-testid="bookings-page">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
           {user?.role === 'admin' ? 'All Bookings' : user?.role === 'spa_owner' ? 'My Spa Bookings' : 'My Bookings'}
         </h1>
 
