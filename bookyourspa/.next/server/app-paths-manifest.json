@@ -1,4 +1,5 @@
 {
   "/api/spas/route": "app/api/spas/route.js",
-  "/api/auth/send-otp/route": "app/api/auth/send-otp/route.js"
+  "/api/auth/send-otp/route": "app/api/auth/send-otp/route.js",
+  "/api/auth/verify-otp/route": "app/api/auth/verify-otp/route.js"
 }
