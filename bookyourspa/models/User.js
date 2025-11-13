@@ -25,4 +25,9 @@ const UserSchema = new mongoose.Schema({
   },
 });
 
-export default mongoose.models.User || mongoose.model('User', UserSchema);
+// Delete model if it exists to avoid OverwriteModelError
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
+export default mongoose.model('User', UserSchema);
