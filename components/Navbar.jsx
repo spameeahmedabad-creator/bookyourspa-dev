@@ -66,21 +66,23 @@ export default function Navbar() {
           <div className="flex items-center space-x-2 sm:space-x-4">
             <Button 
               onClick={handleBookNow} 
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-emerald-600 hover:bg-emerald-700 text-xs sm:text-sm px-3 sm:px-4 h-8 sm:h-10"
               data-testid="book-now-nav-button"
             >
-              Book Now
+              <span className="hidden sm:inline">Book Now</span>
+              <span className="sm:hidden">Book</span>
             </Button>
 
             {user ? (
               <div className="relative">
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-emerald-600 transition-colors"
+                  className="flex items-center space-x-1 sm:space-x-2 text-gray-700 hover:text-emerald-600 transition-colors"
                   data-testid="user-menu-button"
                 >
-                  <User className="w-5 h-5" />
-                  <span className="font-medium">{user.name}</span>
+                  <User className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="font-medium text-sm sm:text-base hidden sm:inline">{user.name}</span>
+                  <span className="font-medium text-sm sm:hidden">{user.name.split(' ')[0]}</span>
                 </button>
 
                 {showDropdown && (
