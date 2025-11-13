@@ -51,13 +51,13 @@ export default function Home() {
       <Navbar />
       
       {/* Hero Section with Search */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-emerald-600 to-teal-600 py-16" data-testid="hero-section">
+      <div className="relative overflow-hidden bg-gradient-to-r from-emerald-600 to-teal-600 py-8 sm:py-12 lg:py-16" data-testid="hero-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4 px-2">
               Discover Your Perfect Spa Experience
             </h1>
-            <p className="text-lg sm:text-xl text-emerald-50 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-lg lg:text-xl text-emerald-50 max-w-2xl mx-auto px-4">
               Find and book the best spa and wellness centers across Ahmedabad, Gandhinagar, and beyond
             </p>
           </div>
