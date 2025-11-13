@@ -65,23 +65,23 @@ export default function SpaDetailPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="max-w-6xl mx-auto px-4 py-8" data-testid="spa-detail-page">
+      <div className="max-w-6xl mx-auto px-4 py-4 sm:py-8" data-testid="spa-detail-page">
         {/* Gallery */}
         {spa.gallery && spa.gallery.length > 0 && (
-          <div className="mb-8 rounded-lg overflow-hidden">
+          <div className="mb-6 sm:mb-8 rounded-lg overflow-hidden">
             <img
               src={spa.gallery[0]}
               alt={spa.title}
-              className="w-full h-96 object-cover"
+              className="w-full h-48 sm:h-64 lg:h-96 object-cover"
             />
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-4" data-testid="spa-detail-title">{spa.title}</h1>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4" data-testid="spa-detail-title">{spa.title}</h1>
               
               {spa.location && (
                 <div className="flex items-start text-gray-600 mb-4">
