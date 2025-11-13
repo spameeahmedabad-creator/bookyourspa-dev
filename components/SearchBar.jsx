@@ -55,15 +55,15 @@ export default function SearchBar({ onSelectSpa }) {
   };
 
   return (
-    <div className="relative max-w-3xl mx-auto" ref={searchRef} data-testid="search-bar">
+    <div className="relative max-w-3xl mx-auto px-2 sm:px-0" ref={searchRef} data-testid="search-bar">
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
         <Input
           type="text"
-          placeholder="Search by location, spa name, or service..."
+          placeholder="Search spa, location, or service..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full pl-12 pr-4 py-6 text-lg rounded-full shadow-lg border-2 border-white focus:border-emerald-300"
+          className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-4 sm:py-6 text-sm sm:text-lg rounded-full shadow-lg border-2 border-white focus:border-emerald-300"
           data-testid="search-input"
         />
       </div>
