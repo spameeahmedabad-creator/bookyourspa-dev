@@ -69,20 +69,20 @@ export default function SearchBar({ onSelectSpa }) {
       </div>
 
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute w-full mt-2 bg-white rounded-lg shadow-xl border max-h-96 overflow-y-auto z-50" data-testid="search-suggestions">
+        <div className="absolute w-full mt-2 bg-white rounded-lg shadow-xl border max-h-64 sm:max-h-96 overflow-y-auto z-50" data-testid="search-suggestions">
           {suggestions.map((spa) => (
             <button
               key={spa._id}
               onClick={() => handleSelect(spa)}
-              className="w-full text-left px-4 py-3 hover:bg-emerald-50 transition-colors border-b last:border-b-0"
+              className="w-full text-left px-3 sm:px-4 py-2 sm:py-3 hover:bg-emerald-50 transition-colors border-b last:border-b-0"
               data-testid={`suggestion-${spa._id}`}
             >
-              <div className="font-semibold text-gray-900">{spa.title}</div>
-              <div className="text-sm text-gray-600">
+              <div className="font-semibold text-gray-900 text-sm sm:text-base">{spa.title}</div>
+              <div className="text-xs sm:text-sm text-gray-600">
                 {spa.location?.region || spa.location?.address}
               </div>
               {spa.services?.length > 0 && (
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-gray-500 mt-1 hidden sm:block">
                   {spa.services.slice(0, 3).join(', ')}
                 </div>
               )}
