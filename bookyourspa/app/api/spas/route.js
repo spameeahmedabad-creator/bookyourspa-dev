@@ -13,7 +13,6 @@ export async function GET(request) {
     const skip = (page - 1) * limit;
 
     const spas = await Spa.find()
-      .populate('ownerId', 'name phone')
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
