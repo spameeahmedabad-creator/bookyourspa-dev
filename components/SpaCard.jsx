@@ -22,22 +22,22 @@ export default function SpaCard({ spa }) {
         )}
       </div>
       
-      <CardContent className="p-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-2" data-testid={`spa-title-${spa._id}`}>
+      <CardContent className="p-4 sm:p-6">
+        <h3 className="text-base sm:text-xl font-bold text-gray-900 mb-2 line-clamp-1" data-testid={`spa-title-${spa._id}`}>
           {spa.title}
         </h3>
         
         <div className="flex items-start text-gray-600 mb-3">
-          <MapPin className="w-4 h-4 mr-2 mt-1 flex-shrink-0" />
-          <span className="text-sm">
+          <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-2 mt-1 flex-shrink-0" />
+          <span className="text-xs sm:text-sm line-clamp-2">
             {spa.location?.address || spa.location?.region || 'Location not specified'}
           </span>
         </div>
 
         {spa.services?.length > 0 && (
-          <div className="mb-4">
-            <div className="flex flex-wrap gap-2">
-              {spa.services.slice(0, 3).map((service, index) => (
+          <div className="mb-3 sm:mb-4">
+            <div className="flex flex-wrap gap-1 sm:gap-2">
+              {spa.services.slice(0, 2).map((service, index) => (
                 <span
                   key={index}
                   className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full"
@@ -45,15 +45,15 @@ export default function SpaCard({ spa }) {
                   {service}
                 </span>
               ))}
-              {spa.services.length > 3 && (
-                <span className="text-xs text-gray-500">+{spa.services.length - 3} more</span>
+              {spa.services.length > 2 && (
+                <span className="text-xs text-gray-500">+{spa.services.length - 2}</span>
               )}
             </div>
           </div>
         )}
 
         <Link href={`/spa/${spa._id}`}>
-          <Button className="w-full bg-emerald-600 hover:bg-emerald-700" data-testid={`view-details-${spa._id}`}>
+          <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-sm sm:text-base h-9 sm:h-10" data-testid={`view-details-${spa._id}`}>
             View Details
           </Button>
         </Link>
