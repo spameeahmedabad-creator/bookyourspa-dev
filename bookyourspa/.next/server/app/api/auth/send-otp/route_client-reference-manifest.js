@@ -1,0 +1,1 @@
+globalThis.__RSC_MANIFEST=(globalThis.__RSC_MANIFEST||{});globalThis.__RSC_MANIFEST["/api/auth/send-otp/route"]={"moduleLoading":{"prefix":"/_next/"},"ssrModuleMapping":{},"edgeSSRModuleMapping":{},"clientModules":{},"entryCSSFiles":{"/app/bookyourspa/":[],"/app/bookyourspa/app/api/auth/send-otp/route":[]},"rscModuleMapping":{},"edgeRscModuleMapping":{}}
