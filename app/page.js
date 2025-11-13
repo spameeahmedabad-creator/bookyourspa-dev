@@ -90,29 +90,33 @@ export default function Home() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-center items-center space-x-4 mt-12" data-testid="pagination">
+              <div className="flex justify-center items-center space-x-2 sm:space-x-4 mt-8 sm:mt-12" data-testid="pagination">
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
                   data-testid="prev-page-button"
+                  className="text-xs sm:text-sm"
                 >
-                  <ChevronLeft className="w-4 h-4 mr-2" />
-                  Previous
+                  <ChevronLeft className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Previous</span>
                 </Button>
                 
-                <span className="text-gray-700 font-medium">
-                  Page {currentPage} of {totalPages}
+                <span className="text-gray-700 font-medium text-xs sm:text-base">
+                  {currentPage}/{totalPages}
                 </span>
                 
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
                   data-testid="next-page-button"
+                  className="text-xs sm:text-sm"
                 >
-                  Next
-                  <ChevronRight className="w-4 h-4 ml-2" />
+                  <span className="hidden sm:inline">Next</span>
+                  <ChevronRight className="w-4 h-4 sm:ml-2" />
                 </Button>
               </div>
             )}
