@@ -86,7 +86,7 @@ export default function Navbar() {
                 </button>
 
                 {showDropdown && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border py-2" data-testid="user-dropdown">
+                  <div className="absolute right-0 mt-2 w-48 sm:w-56 bg-white rounded-lg shadow-lg border py-2 z-50" data-testid="user-dropdown">
                     <Link
                       href="/dashboard/bookings"
                       className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
