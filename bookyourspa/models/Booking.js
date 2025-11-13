@@ -41,4 +41,9 @@ const BookingSchema = new mongoose.Schema({
   },
 });
 
-export default mongoose.models.Booking || mongoose.model('Booking', BookingSchema);
+// Delete model if it exists to avoid OverwriteModelError
+if (mongoose.models.Booking) {
+  delete mongoose.models.Booking;
+}
+
+export default mongoose.model('Booking', BookingSchema);
