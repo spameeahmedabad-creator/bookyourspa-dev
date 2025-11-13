@@ -1,3 +1,9 @@
 {
-  "pages": {}
+  "pages": {
+    "/api/spas/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/spas/route.js"
+    ]
+  }
 }

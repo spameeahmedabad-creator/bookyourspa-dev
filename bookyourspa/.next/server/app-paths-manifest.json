@@ -1,1 +1,3 @@
-{}
+{
+  "/api/spas/route": "app/api/spas/route.js"
+}
