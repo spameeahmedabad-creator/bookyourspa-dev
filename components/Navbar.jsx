@@ -44,18 +44,18 @@ export default function Navbar() {
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-40" data-testid="main-navbar">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-14 sm:h-16">
           {/* Logo and Home */}
-          <div className="flex items-center space-x-8">
+          <div className="flex items-center space-x-3 sm:space-x-8">
             <Link href="/" className="flex items-center space-x-2" data-testid="logo-link">
-              <div className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+              <div className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
                 BookYourSpa
               </div>
             </Link>
             <Link 
               href="/" 
-              className="text-gray-700 hover:text-emerald-600 font-medium transition-colors"
+              className="hidden sm:block text-gray-700 hover:text-emerald-600 font-medium transition-colors"
               data-testid="home-link"
             >
               Home
@@ -63,7 +63,7 @@ export default function Navbar() {
           </div>
 
           {/* Right Side - Book Now & User Menu */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <Button 
               onClick={handleBookNow} 
               className="bg-emerald-600 hover:bg-emerald-700"
