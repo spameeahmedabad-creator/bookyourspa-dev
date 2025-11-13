@@ -135,10 +135,10 @@ export default function AddListingPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      <div className="max-w-4xl mx-auto px-4 py-8" data-testid="add-listing-page">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Add New Spa Listing</h1>
+      <div className="max-w-4xl mx-auto px-4 py-4 sm:py-8" data-testid="add-listing-page">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">Add New Spa Listing</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
           {/* Basic Information */}
           <Card>
             <CardContent className="p-6 space-y-4">
