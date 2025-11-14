@@ -81,8 +81,13 @@ export default function Navbar() {
                   data-testid="user-menu-button"
                 >
                   <User className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="font-medium text-sm sm:text-base hidden sm:inline">{user.name}</span>
-                  <span className="font-medium text-sm sm:hidden">{user.name.split(' ')[0]}</span>
+                  <div className="flex flex-col items-start">
+                    <span className="font-medium text-sm sm:text-base hidden sm:inline">{user.name}</span>
+                    <span className="font-medium text-sm sm:hidden">{user.name.split(' ')[0]}</span>
+                    <span className="text-xs text-emerald-600 capitalize hidden sm:inline">
+                      {user.role === 'spa_owner' ? 'Spa Owner' : user.role}
+                    </span>
+                  </div>
                 </button>
 
                 {showDropdown && (
