@@ -110,7 +110,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent onClose={onClose} className="max-w-md max-h-[90vh] overflow-y-auto" data-testid="booking-modal">
+      <DialogContent onClose={onClose} className="max-w-lg w-full max-h-[85vh] overflow-y-auto" data-testid="booking-modal">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl">Book Your Spa Appointment</DialogTitle>
         </DialogHeader>
