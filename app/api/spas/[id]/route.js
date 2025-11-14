@@ -81,7 +81,8 @@ export async function DELETE(request, { params }) {
     }
 
     await dbConnect();
-    const spa = await Spa.findByIdAndDelete(params.id);
+    const { id } = await params;
+    const spa = await Spa.findByIdAndDelete(id);
 
     if (!spa) {
       return NextResponse.json({ error: 'Spa not found' }, { status: 404 });
