@@ -41,7 +41,8 @@ export async function PUT(request, { params }) {
     }
 
     await dbConnect();
-    const spa = await Spa.findById(params.id);
+    const { id } = await params;
+    const spa = await Spa.findById(id);
 
     if (!spa) {
       return NextResponse.json({ error: 'Spa not found' }, { status: 404 });
