@@ -55,7 +55,8 @@ export default function LoginPage() {
         name: formData.name,
       });
       toast.success('Login successful!');
-      router.push('/');
+      // Use window.location to force a full page reload with auth
+      window.location.href = '/';
     } catch (error) {
       toast.error(error.response?.data?.error || 'Invalid OTP');
     } finally {
