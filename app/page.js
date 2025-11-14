@@ -33,10 +33,12 @@ export default function Home() {
     try {
       setLoading(true);
       const response = await axios.get(`/api/spas?page=${page}&limit=6`);
-      setSpas(response.data.spas);
-      setTotalPages(response.data.pagination.pages);
+      setSpas(response.data.spas || []);
+      setTotalPages(response.data.pagination?.pages || 1);
     } catch (error) {
       console.error('Failed to fetch spas:', error);
+      setSpas([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
