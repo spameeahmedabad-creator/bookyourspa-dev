@@ -5,21 +5,27 @@ export function middleware(request) {
   const token = request.cookies.get('token')?.value;
   const { pathname } = request.nextUrl;
 
-  // Public paths
-  const publicPaths = ['/', '/login', '/spa'];
-  const isPublicPath = publicPaths.some(path => pathname === path || pathname.startsWith('/spa/'));
-  
-  // API routes that don't need auth
-  const publicApiPaths = ['/api/auth/send-otp', '/api/auth/verify-otp', '/api/spas', '/api/bookings'];
-  const isPublicApi = publicApiPaths.some(path => pathname.startsWith(path) && request.method === 'GET');
-
-  // If accessing protected route without token
-  if (!isPublicPath && !pathname.startsWith('/api') && !token) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  // Skip middleware for API routes and public assets
+  if (pathname.startsWith('/api') || pathname.startsWith('/_next') || pathname.startsWith('/favicon')) {
+    return NextResponse.next();
   }
 
-  // Verify token for protected routes
-  if (token && !isPublicPath) {
+  // Public paths that don't require authentication
+  const publicPaths = ['/', '/login'];
+  const isPublicPath = publicPaths.some(path => pathname === path);
+  const isSpaPath = pathname.startsWith('/spa/');
+
+  // Allow public paths and spa detail pages
+  if (isPublicPath || isSpaPath) {
+    return NextResponse.next();
+  }
+
+  // Protected routes (dashboard) require authentication
+  if (pathname.startsWith('/dashboard')) {
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+
     const decoded = verifyToken(token);
     if (!decoded) {
       const response = NextResponse.redirect(new URL('/login', request.url));
