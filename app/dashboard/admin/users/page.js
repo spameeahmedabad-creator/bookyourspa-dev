@@ -207,7 +207,7 @@ export default function AdminUsersPage() {
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
         <DialogContent onClose={() => setShowEditModal(false)} data-testid="edit-role-modal">
           <DialogHeader>
-            <DialogTitle>Change User Role</DialogTitle>
+            <DialogTitle>Update User Role</DialogTitle>
           </DialogHeader>
           
           {selectedUser && (
@@ -220,9 +220,11 @@ export default function AdminUsersPage() {
 
               <div>
                 <p className="text-sm font-medium text-gray-700 mb-3">
-                  Current Role: <span className="font-bold text-emerald-600 capitalize">{selectedUser.role}</span>
+                  Current Role: <span className={`font-bold capitalize ${selectedUser.role === 'spa_owner' ? 'text-emerald-600' : 'text-blue-600'}`}>
+                    {selectedUser.role === 'spa_owner' ? 'Spa Owner' : selectedUser.role}
+                  </span>
                 </p>
-                <p className="text-sm text-gray-600 mb-4">Select new role:</p>
+                <p className="text-sm text-gray-600 mb-4">Change role to:</p>
                 
                 <div className="space-y-2">
                   <Button
@@ -238,7 +240,7 @@ export default function AdminUsersPage() {
                   <Button
                     onClick={() => handleUpdateRole('spa_owner')}
                     variant={selectedUser.role === 'spa_owner' ? 'default' : 'outline'}
-                    className="w-full justify-start bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className={`w-full justify-start ${selectedUser.role !== 'spa_owner' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}`}
                     disabled={selectedUser.role === 'spa_owner'}
                   >
                     <UsersIcon className="w-4 h-4 mr-2" />
@@ -257,9 +259,9 @@ export default function AdminUsersPage() {
                 </div>
               </div>
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800">
-                  <strong>Important:</strong> User must logout and login again for role changes to take effect.
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> User must logout and login again for role changes to take effect.
                 </p>
               </div>
             </div>
