@@ -35,25 +35,6 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleCreateUser = async (e) => {
-    e.preventDefault();
-    
-    if (!formData.name || !formData.phone || !formData.role) {
-      toast.error('Please fill all fields');
-      return;
-    }
-
-    try {
-      const response = await axios.post('/api/admin/users', formData);
-      toast.success(response.data.message);
-      setShowCreateModal(false);
-      setFormData({ name: '', phone: '', role: 'spa_owner' });
-      fetchUsers();
-    } catch (error) {
-      toast.error(error.response?.data?.error || 'Failed to create user');
-    }
-  };
-
   const handleUpdateRole = async (newRole) => {
     if (!selectedUser) return;
 
