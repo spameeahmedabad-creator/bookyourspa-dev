@@ -124,7 +124,7 @@ backend:
     working: true
     file: "/app/app/api/admin/users/route.js"
     stuck_count: 0
-    priority: "high"
+    priority: "low"
     needs_retesting: false
     status_history:
       - working: "NA"
@@ -133,6 +133,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ TESTED SUCCESSFULLY: POST /api/admin/users working correctly. Successfully created spa_owner user with status 201. Proper validation: rejects duplicate phone numbers (400), invalid roles (400), missing required fields (400). Authorization working: returns 403 for non-admin users."
+      - working: true
+        agent: "main"
+        comment: "Not exposed in UI per user request. Users register through normal flow and admin promotes them. Backend endpoint kept but not used in UI."
 
   - task: "Admin Update Role API - POST update user role"
     implemented: true
