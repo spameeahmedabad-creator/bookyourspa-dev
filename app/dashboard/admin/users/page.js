@@ -95,19 +95,9 @@ export default function AdminUsersPage() {
       
       <div className="max-w-7xl mx-auto px-4 py-8" data-testid="admin-users-page">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-            <p className="text-gray-600 mt-2">Create and manage spa owners and users</p>
-          </div>
-          <Button 
-            onClick={() => setShowCreateModal(true)}
-            className="bg-emerald-600 hover:bg-emerald-700"
-            data-testid="create-user-button"
-          >
-            <UserPlus className="w-4 h-4 mr-2" />
-            Create Spa Owner
-          </Button>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
+          <p className="text-gray-600 mt-2">View all registered users and assign spa owner roles</p>
         </div>
 
         {/* Stats Cards */}
