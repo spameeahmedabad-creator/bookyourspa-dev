@@ -26,11 +26,13 @@ export async function POST(request) {
     await OTPSession.create({ phone, otp, expiresAt });
 
     // Send OTP via Twilio
-    const result = await sendOTP(phone, otp);
+    // const result = await sendOTP(phone, otp);
 
     return NextResponse.json({
       success: true,
-      message: result.message,
+      // message: result.message,
+      message: "We are in development mode so we can afford OTP cost",
+      otp,
       // In development, return OTP for testing (remove in production)
       ...(process.env.NODE_ENV === "development" && { otp }),
     });
