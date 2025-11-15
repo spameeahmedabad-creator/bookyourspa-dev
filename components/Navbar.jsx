@@ -101,6 +101,19 @@ export default function Navbar() {
                       <BookOpen className="w-4 h-4 mr-3" />
                       My Bookings
                     </Link>
+                    {user.role === 'admin' && (
+                      <Link
+                        href="/dashboard/admin/users"
+                        className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                        data-testid="manage-users-link"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        Manage Users
+                      </Link>
+                    )}
                     {(user.role === 'admin' || user.role === 'spa_owner') && (
                       <Link
                         href="/dashboard/add-listing"
