@@ -164,6 +164,9 @@ frontend:
       - working: "NA"
         agent: "main"
         comment: "Frontend page exists at /dashboard/admin/users with UI to view all users, create new users with role selection, and update existing user roles. Includes stats cards showing total users, spa owners, and customers."
+      - working: "NA"
+        agent: "main"
+        comment: "Updated UI per user request - removed create user functionality. Now focuses on viewing all registered users and updating their roles. Clean, simple interface for promoting customers to spa_owner role."
 
   - task: "Navbar - Admin User Management Link"
     implemented: true
