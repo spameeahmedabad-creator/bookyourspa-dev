@@ -1,30 +1,35 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from 'sonner';
-import axios from 'axios';
-import Link from 'next/link';
+import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from "sonner";
+import axios from "axios";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({ name: '', phone: '', otp: '' });
+  const [formData, setFormData] = useState({ name: "", phone: "", otp: "" });
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.phone) {
-      toast.error('Please enter your name and phone number');
+      toast.error("Please enter your name and phone number");
       return;
     }
 
     setLoading(true);
     try {
-      const response = await axios.post('/api/auth/send-otp', {
+      const response = await axios.post("/api/auth/send-otp", {
         name: formData.name,
         phone: formData.phone,
       });
@@ -34,7 +39,7 @@ export default function LoginPage() {
       }
       setStep(2);
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Failed to send OTP');
+      toast.error(error.response?.data?.error || "Failed to send OTP");
     } finally {
       setLoading(false);
     }
@@ -43,22 +48,22 @@ export default function LoginPage() {
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
     if (!formData.otp) {
-      toast.error('Please enter the OTP');
+      toast.error("Please enter the OTP");
       return;
     }
 
     setLoading(true);
     try {
-      const response = await axios.post('/api/auth/verify-otp', {
+      const response = await axios.post("/api/auth/verify-otp", {
         phone: formData.phone,
         otp: formData.otp,
         name: formData.name,
       });
-      toast.success('Login successful!');
+      toast.success("Login successful!");
       // Use window.location to force a full page reload with auth
-      window.location.href = '/';
+      window.location.href = "/";
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Invalid OTP');
+      toast.error(error.response?.data?.error || "Invalid OTP");
     } finally {
       setLoading(false);
     }
@@ -68,10 +73,25 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-between mb-8">
-          <Link href="/" className="flex items-center text-emerald-600 hover:text-emerald-700 transition-colors" data-testid="back-to-home">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-              <path d="m12 19-7-7 7-7"/>
-              <path d="M19 12H5"/>
+          <Link
+            href="/"
+            className="flex items-center text-emerald-600 hover:text-emerald-700 transition-colors"
+            data-testid="back-to-home"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mr-2"
+            >
+              <path d="m12 19-7-7 7-7" />
+              <path d="M19 12H5" />
             </svg>
             Back to Home
           </Link>
@@ -86,7 +106,9 @@ export default function LoginPage() {
           <CardHeader>
             <CardTitle>Welcome Back</CardTitle>
             <CardDescription>
-              {step === 1 ? 'Enter your details to get started' : 'Enter the OTP sent to your phone'}
+              {step === 1
+                ? "Enter your details to get started"
+                : "Enter the OTP sent to your phone"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -99,7 +121,9 @@ export default function LoginPage() {
                   <Input
                     type="text"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     placeholder="Enter your name"
                     required
                     data-testid="login-name-input"
@@ -113,15 +137,22 @@ export default function LoginPage() {
                   <Input
                     type="tel"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
                     placeholder="+91 1234567890"
                     required
                     data-testid="login-phone-input"
                   />
                 </div>
 
-                <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={loading} data-testid="send-otp-button">
-                  {loading ? 'Sending...' : 'Send OTP'}
+                <Button
+                  type="submit"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700"
+                  disabled={loading}
+                  data-testid="send-otp-button"
+                >
+                  {loading ? "Sending..." : "Send OTP"}
                 </Button>
               </form>
             ) : (
@@ -133,7 +164,9 @@ export default function LoginPage() {
                   <Input
                     type="text"
                     value={formData.otp}
-                    onChange={(e) => setFormData({ ...formData, otp: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, otp: e.target.value })
+                    }
                     placeholder="Enter 6-digit OTP"
                     maxLength={6}
                     required
@@ -141,11 +174,22 @@ export default function LoginPage() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={loading} data-testid="verify-otp-button">
-                  {loading ? 'Verifying...' : 'Verify & Login'}
+                <Button
+                  type="submit"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700"
+                  disabled={loading}
+                  data-testid="verify-otp-button"
+                >
+                  {loading ? "Verifying..." : "Verify & Login"}
                 </Button>
 
-                <Button type="button" variant="outline" className="w-full" onClick={() => setStep(1)} data-testid="back-button">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setStep(1)}
+                  data-testid="back-button"
+                >
                   Back
                 </Button>
               </form>
