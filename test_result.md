@@ -106,39 +106,48 @@ user_problem_statement: "Complete the Admin User Management feature by verifying
 backend:
   - task: "Admin Users API - GET all users"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/app/api/admin/users/route.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Backend API route exists at /api/admin/users (GET) to fetch all users. Protected by admin role check. Ready for testing."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED SUCCESSFULLY: GET /api/admin/users working correctly. Admin authentication verified, returns all users with required fields (name, phone, role, createdAt). Properly returns 401 for unauthenticated requests and 403 for non-admin users. Fetched 2 users including admin user."
 
   - task: "Admin Users API - POST create new user"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/app/api/admin/users/route.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Backend API route exists at /api/admin/users (POST) to create new users with name, phone, and role. Validates role and checks for duplicate phone numbers. Protected by admin role check."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED SUCCESSFULLY: POST /api/admin/users working correctly. Successfully created spa_owner user with status 201. Proper validation: rejects duplicate phone numbers (400), invalid roles (400), missing required fields (400). Authorization working: returns 403 for non-admin users."
 
   - task: "Admin Update Role API - POST update user role"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/app/api/admin/users/update-role/route.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Backend API route exists at /api/admin/users/update-role (POST) to update user roles. Takes userId and newRole as parameters. Protected by admin role check."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED SUCCESSFULLY: POST /api/admin/users/update-role working correctly. Successfully updated user role from spa_owner to customer. Proper validation: returns 404 for invalid userId, 400 for invalid role, 400 for missing parameters. Authorization working: returns 403 for non-admin users."
 
 frontend:
   - task: "Admin User Management Page"
