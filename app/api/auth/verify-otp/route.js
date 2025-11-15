@@ -47,7 +47,7 @@ export async function POST(request) {
 
     console.log("5");
     // Delete OTP session
-    // await OTPSession.deleteOne({ _id: otpSession._id });
+    await OTPSession.deleteOne({ _id: otpSession._id });
 
     // Generate JWT token
     const token = await signToken({
