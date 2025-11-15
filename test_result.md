@@ -101,7 +101,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Complete the Admin User Management feature by verifying that admin users can access the user management page, create new spa owners, and update user roles."
+user_problem_statement: "Complete the Admin User Management feature - admin users should be able to view all registered users and update their roles to spa_owner. No user creation needed - users register through normal flow and admin promotes them."
 
 backend:
   - task: "Admin Users API - GET all users"
