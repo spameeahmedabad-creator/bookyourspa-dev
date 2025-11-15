@@ -101,7 +101,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Complete the Admin User Management feature by verifying that admin users can access the user management page, create new spa owners, and update user roles."
+user_problem_statement: "Complete the Admin User Management feature - admin users should be able to view all registered users and update their roles to spa_owner. No user creation needed - users register through normal flow and admin promotes them."
 
 backend:
   - task: "Admin Users API - GET all users"
@@ -124,7 +124,7 @@ backend:
     working: true
     file: "/app/app/api/admin/users/route.js"
     stuck_count: 0
-    priority: "high"
+    priority: "low"
     needs_retesting: false
     status_history:
       - working: "NA"
@@ -133,6 +133,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ TESTED SUCCESSFULLY: POST /api/admin/users working correctly. Successfully created spa_owner user with status 201. Proper validation: rejects duplicate phone numbers (400), invalid roles (400), missing required fields (400). Authorization working: returns 403 for non-admin users."
+      - working: true
+        agent: "main"
+        comment: "Not exposed in UI per user request. Users register through normal flow and admin promotes them. Backend endpoint kept but not used in UI."
 
   - task: "Admin Update Role API - POST update user role"
     implemented: true
@@ -161,6 +164,9 @@ frontend:
       - working: "NA"
         agent: "main"
         comment: "Frontend page exists at /dashboard/admin/users with UI to view all users, create new users with role selection, and update existing user roles. Includes stats cards showing total users, spa owners, and customers."
+      - working: "NA"
+        agent: "main"
+        comment: "Updated UI per user request - removed create user functionality. Now focuses on viewing all registered users and updating their roles. Clean, simple interface for promoting customers to spa_owner role."
 
   - task: "Navbar - Admin User Management Link"
     implemented: true
@@ -196,3 +202,5 @@ agent_communication:
     message: "Admin user management feature is fully implemented with backend APIs and frontend UI. All components are ready for testing. Need to verify: 1) Admin can access the user management page, 2) Admin can view all users with their roles, 3) Admin can create new users with spa_owner role, 4) Admin can update existing user roles, 5) Navbar shows 'Manage Users' link only for admin users."
   - agent: "testing"
     message: "✅ BACKEND TESTING COMPLETE: All 3 admin user management APIs tested successfully with 11/11 test cases passing. Comprehensive testing included: authentication (OTP-based login), authorization (admin-only access), CRUD operations, input validation, error handling, and security controls. All APIs working correctly: GET /api/admin/users (fetch users), POST /api/admin/users (create users), POST /api/admin/users/update-role (update roles). Ready for frontend testing or production use."
+  - agent: "main"
+    message: "Updated frontend per user feedback - removed create user button/modal. UI now focuses solely on viewing registered users and updating their roles. Users register through normal OTP flow, then admin promotes them to spa_owner. Simpler workflow that matches actual use case."

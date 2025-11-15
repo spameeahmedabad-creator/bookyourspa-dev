@@ -3,24 +3,17 @@
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { UserPlus, Edit2, Shield, Users as UsersIcon } from 'lucide-react';
+import { Edit2, Shield, Users as UsersIcon } from 'lucide-react';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    role: 'spa_owner'
-  });
 
   useEffect(() => {
     fetchUsers();
@@ -39,25 +32,6 @@ export default function AdminUsersPage() {
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCreateUser = async (e) => {
-    e.preventDefault();
-    
-    if (!formData.name || !formData.phone || !formData.role) {
-      toast.error('Please fill all fields');
-      return;
-    }
-
-    try {
-      const response = await axios.post('/api/admin/users', formData);
-      toast.success(response.data.message);
-      setShowCreateModal(false);
-      setFormData({ name: '', phone: '', role: 'spa_owner' });
-      fetchUsers();
-    } catch (error) {
-      toast.error(error.response?.data?.error || 'Failed to create user');
     }
   };
 
@@ -121,19 +95,9 @@ export default function AdminUsersPage() {
       
       <div className="max-w-7xl mx-auto px-4 py-8" data-testid="admin-users-page">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-            <p className="text-gray-600 mt-2">Create and manage spa owners and users</p>
-          </div>
-          <Button 
-            onClick={() => setShowCreateModal(true)}
-            className="bg-emerald-600 hover:bg-emerald-700"
-            data-testid="create-user-button"
-          >
-            <UserPlus className="w-4 h-4 mr-2" />
-            Create Spa Owner
-          </Button>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
+          <p className="text-gray-600 mt-2">View all registered users and assign spa owner roles</p>
         </div>
 
         {/* Stats Cards */}
@@ -239,94 +203,11 @@ export default function AdminUsersPage() {
         </Card>
       </div>
 
-      {/* Create User Modal */}
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent onClose={() => setShowCreateModal(false)} data-testid="create-user-modal">
-          <DialogHeader>
-            <DialogTitle>Create New User</DialogTitle>
-          </DialogHeader>
-          
-          <form onSubmit={handleCreateUser} className="space-y-4 mt-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Name <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                placeholder="Enter full name"
-                required
-                data-testid="create-user-name"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                placeholder="+91 1234567890"
-                required
-                data-testid="create-user-phone"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                User will login with this phone number
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Role <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData({...formData, role: e.target.value})}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                required
-                data-testid="create-user-role"
-              >
-                <option value="spa_owner">Spa Owner</option>
-                <option value="customer">Customer</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-800">
-                <strong>Note:</strong> The user will be able to login immediately using their phone number. They will receive an OTP for verification.
-              </p>
-            </div>
-
-            <div className="flex space-x-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowCreateModal(false)}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                data-testid="submit-create-user"
-              >
-                Create User
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
       {/* Edit Role Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
         <DialogContent onClose={() => setShowEditModal(false)} data-testid="edit-role-modal">
           <DialogHeader>
-            <DialogTitle>Change User Role</DialogTitle>
+            <DialogTitle>Update User Role</DialogTitle>
           </DialogHeader>
           
           {selectedUser && (
@@ -339,9 +220,11 @@ export default function AdminUsersPage() {
 
               <div>
                 <p className="text-sm font-medium text-gray-700 mb-3">
-                  Current Role: <span className="font-bold text-emerald-600 capitalize">{selectedUser.role}</span>
+                  Current Role: <span className={`font-bold capitalize ${selectedUser.role === 'spa_owner' ? 'text-emerald-600' : 'text-blue-600'}`}>
+                    {selectedUser.role === 'spa_owner' ? 'Spa Owner' : selectedUser.role}
+                  </span>
                 </p>
-                <p className="text-sm text-gray-600 mb-4">Select new role:</p>
+                <p className="text-sm text-gray-600 mb-4">Change role to:</p>
                 
                 <div className="space-y-2">
                   <Button
@@ -357,7 +240,7 @@ export default function AdminUsersPage() {
                   <Button
                     onClick={() => handleUpdateRole('spa_owner')}
                     variant={selectedUser.role === 'spa_owner' ? 'default' : 'outline'}
-                    className="w-full justify-start bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className={`w-full justify-start ${selectedUser.role !== 'spa_owner' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}`}
                     disabled={selectedUser.role === 'spa_owner'}
                   >
                     <UsersIcon className="w-4 h-4 mr-2" />
@@ -376,9 +259,9 @@ export default function AdminUsersPage() {
                 </div>
               </div>
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800">
-                  <strong>Important:</strong> User must logout and login again for role changes to take effect.
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> User must logout and login again for role changes to take effect.
                 </p>
               </div>
             </div>
