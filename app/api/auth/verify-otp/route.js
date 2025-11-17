@@ -3,12 +3,12 @@ import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import OTPSession from "@/models/OTPSession";
 import { signToken } from "@/lib/jwt";
+import { validatePhone } from "@/lib/phone-validation";
 
 export async function POST(request) {
   try {
     await dbConnect();
     const { phone, otp, name } = await request.json();
-    console.log("1");
 
     if (!phone || !otp) {
       return NextResponse.json(
@@ -16,16 +16,30 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-    console.log("2");
+
+    const phoneValidation = validatePhone(phone, "IN");
+    if (!phoneValidation.isValid) {
+      return NextResponse.json(
+        { error: phoneValidation.error || "Invalid phone number" },
+        { status: 400 }
+      );
+    }
+
+    if (!/^\d{6}$/.test(otp)) {
+      return NextResponse.json(
+        { error: "OTP must be a 6-digit number" },
+        { status: 400 }
+      );
+    }
+
+    const formattedPhone = phoneValidation.formatted;
 
     // Find OTP session
     const otpSession = await OTPSession.findOne({
-      phone,
+      phone: formattedPhone,
       otp,
       expiresAt: { $gt: new Date() },
     });
-
-    console.log("3");
 
     if (!otpSession) {
       return NextResponse.json(
@@ -34,18 +48,19 @@ export async function POST(request) {
       );
     }
 
-    console.log("4");
-
     // Find or create user
-    let user = await User.findOne({ phone });
+    let user = await User.findOne({ phone: formattedPhone });
     if (!user) {
-      user = await User.create({ phone, name, role: "customer" });
-    } else if (name && user.name !== name) {
-      user.name = name;
+      user = await User.create({
+        phone: formattedPhone,
+        name: name?.trim(),
+        role: "customer",
+      });
+    } else if (name && user.name !== name.trim()) {
+      user.name = name.trim();
       await user.save();
     }
 
-    console.log("5");
     // Delete OTP session
     await OTPSession.deleteOne({ _id: otpSession._id });
 
@@ -56,8 +71,6 @@ export async function POST(request) {
       name: user.name,
       role: user.role,
     });
-
-    console.log("6");
 
     // Create response with cookie
     const response = NextResponse.json({
@@ -72,7 +85,6 @@ export async function POST(request) {
       token,
     });
 
-    console.log("7");
     response.cookies.set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

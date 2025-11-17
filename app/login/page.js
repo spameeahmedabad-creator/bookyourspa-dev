@@ -14,24 +14,62 @@ import {
 import { toast } from "sonner";
 import axios from "axios";
 import Link from "next/link";
+import { validatePhone, formatPhoneInput } from "@/lib/phone-validation";
 
 export default function LoginPage() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({ name: "", phone: "", otp: "" });
   const [loading, setLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
+
+  const handlePhoneChange = (e) => {
+    const value = e.target.value;
+    const formatted = formatPhoneInput(value, "IN");
+    setFormData({ ...formData, phone: formatted });
+    if (phoneError) {
+      setPhoneError("");
+    }
+  };
+
+  const handlePhoneBlur = () => {
+    if (!formData.phone) return;
+    const validation = validatePhone(formData.phone, "IN");
+    if (!validation.isValid) {
+      setPhoneError(validation.error);
+    } else {
+      setPhoneError("");
+    }
+  };
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.phone) {
-      toast.error("Please enter your name and phone number");
+    const trimmedName = formData.name.trim();
+
+    if (!trimmedName || trimmedName.length < 2) {
+      toast.error("Please enter your full name");
       return;
+    }
+
+    const phoneValidation = validatePhone(formData.phone, "IN");
+    if (!phoneValidation.isValid) {
+      setPhoneError(phoneValidation.error);
+      toast.error(phoneValidation.error);
+      return;
+    }
+
+    // Ensure formatted phone saved locally
+    if (
+      phoneValidation.formatted &&
+      formData.phone !== phoneValidation.formatted
+    ) {
+      setFormData((prev) => ({ ...prev, phone: phoneValidation.formatted }));
     }
 
     setLoading(true);
     try {
       const response = await axios.post("/api/auth/send-otp", {
-        name: formData.name,
-        phone: formData.phone,
+        name: trimmedName,
+        phone: phoneValidation.formatted,
       });
       toast.success(response.data.message);
       if (response.data.otp) {
@@ -47,6 +85,20 @@ export default function LoginPage() {
 
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
+    if (!formData.phone) {
+      toast.error("Please enter your phone number again");
+      setStep(1);
+      return;
+    }
+
+    const phoneValidation = validatePhone(formData.phone, "IN");
+    if (!phoneValidation.isValid) {
+      setPhoneError(phoneValidation.error);
+      toast.error(phoneValidation.error);
+      setStep(1);
+      return;
+    }
+
     if (!formData.otp) {
       toast.error("Please enter the OTP");
       return;
@@ -55,9 +107,9 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const response = await axios.post("/api/auth/verify-otp", {
-        phone: formData.phone,
+        phone: phoneValidation.formatted,
         otp: formData.otp,
-        name: formData.name,
+        name: formData.name.trim(),
       });
       toast.success("Login successful!");
       // Use window.location to force a full page reload with auth
@@ -137,13 +189,24 @@ export default function LoginPage() {
                   <Input
                     type="tel"
                     value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
+                    onChange={handlePhoneChange}
+                    onBlur={handlePhoneBlur}
                     placeholder="+91 1234567890"
                     required
                     data-testid="login-phone-input"
+                    className={
+                      phoneError
+                        ? "border-red-500 focus-visible:ring-red-500"
+                        : ""
+                    }
                   />
+                  {phoneError ? (
+                    <p className="text-red-500 text-xs mt-1">{phoneError}</p>
+                  ) : (
+                    <p className="text-gray-500 text-xs mt-1">
+                      Include country code, e.g. +91 9876543210
+                    </p>
+                  )}
                 </div>
 
                 <Button
