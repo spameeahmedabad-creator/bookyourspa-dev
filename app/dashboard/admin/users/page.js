@@ -1,13 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Navbar from '@/components/Navbar';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { toast } from 'sonner';
-import axios from 'axios';
-import { Edit2, Shield, Users as UsersIcon } from 'lucide-react';
+import { useState, useEffect } from "react";
+import Navbar from "@/components/Navbar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import axios from "axios";
+import { Edit2, Shield, Users as UsersIcon } from "lucide-react";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
@@ -22,52 +27,52 @@ export default function AdminUsersPage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/admin/users');
+      const response = await axios.get("/api/admin/users");
       setUsers(response.data.users);
     } catch (error) {
       if (error.response?.status === 403) {
-        toast.error('Admin access required');
+        toast.error("Admin access required");
       } else {
-        toast.error('Failed to load users');
+        toast.error("Failed to load users");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUpdateRole = async (newRole) => {
-    if (!selectedUser) return;
+  // const handleUpdateRole = async (newRole) => {
+  //   if (!selectedUser) return;
 
-    try {
-      const response = await axios.post('/api/admin/users/update-role', {
-        userId: selectedUser._id,
-        newRole
-      });
-      toast.success(response.data.message);
-      setShowEditModal(false);
-      setSelectedUser(null);
-      fetchUsers();
-    } catch (error) {
-      toast.error(error.response?.data?.error || 'Failed to update role');
-    }
-  };
+  //   try {
+  //     const response = await axios.post("/api/admin/users/update-role", {
+  //       userId: selectedUser._id,
+  //       newRole,
+  //     });
+  //     toast.success(response.data.message);
+  //     setShowEditModal(false);
+  //     setSelectedUser(null);
+  //     fetchUsers();
+  //   } catch (error) {
+  //     toast.error(error.response?.data?.error || "Failed to update role");
+  //   }
+  // };
 
   const getRoleBadgeColor = (role) => {
     switch (role) {
-      case 'admin':
-        return 'bg-red-100 text-red-700 border-red-200';
-      case 'spa_owner':
-        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case "admin":
+        return "bg-red-100 text-red-700 border-red-200";
+      case "spa_owner":
+        return "bg-emerald-100 text-emerald-700 border-emerald-200";
       default:
-        return 'bg-blue-100 text-blue-700 border-blue-200';
+        return "bg-blue-100 text-blue-700 border-blue-200";
     }
   };
 
   const getRoleIcon = (role) => {
     switch (role) {
-      case 'admin':
+      case "admin":
         return <Shield className="w-4 h-4" />;
-      case 'spa_owner':
+      case "spa_owner":
         return <UsersIcon className="w-4 h-4" />;
       default:
         return null;
@@ -92,12 +97,17 @@ export default function AdminUsersPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
-      <div className="max-w-7xl mx-auto px-4 py-8" data-testid="admin-users-page">
+
+      <div
+        className="max-w-7xl mx-auto px-4 py-8"
+        data-testid="admin-users-page"
+      >
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600 mt-2">View all registered users and assign spa owner roles</p>
+          <p className="text-gray-600 mt-2">
+            View all registered users and assign spa owner roles
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -107,7 +117,9 @@ export default function AdminUsersPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Total Users</p>
-                  <p className="text-3xl font-bold text-gray-900">{users.length}</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {users.length}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                   <UsersIcon className="w-6 h-6 text-blue-600" />
@@ -122,7 +134,7 @@ export default function AdminUsersPage() {
                 <div>
                   <p className="text-sm text-gray-600">Spa Owners</p>
                   <p className="text-3xl font-bold text-emerald-600">
-                    {users.filter(u => u.role === 'spa_owner').length}
+                    {users.filter((u) => u.role === "spa_owner").length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
@@ -138,7 +150,7 @@ export default function AdminUsersPage() {
                 <div>
                   <p className="text-sm text-gray-600">Customers</p>
                   <p className="text-3xl font-bold text-blue-600">
-                    {users.filter(u => u.role === 'customer').length}
+                    {users.filter((u) => u.role === "customer").length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -172,9 +184,16 @@ export default function AdminUsersPage() {
                       <td className="py-4 px-4 font-medium">{user.name}</td>
                       <td className="py-4 px-4 text-gray-600">{user.phone}</td>
                       <td className="py-4 px-4">
-                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${getRoleBadgeColor(user.role)}`}>
+                        <span
+                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${getRoleBadgeColor(
+                            user.role
+                          )}`}
+                        >
                           {getRoleIcon(user.role)}
-                          {user.role === 'spa_owner' ? 'Spa Owner' : user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                          {user.role === "spa_owner"
+                            ? "Spa Owner"
+                            : user.role.charAt(0).toUpperCase() +
+                              user.role.slice(1)}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-gray-600 text-sm">
@@ -205,11 +224,14 @@ export default function AdminUsersPage() {
 
       {/* Edit Role Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent onClose={() => setShowEditModal(false)} data-testid="edit-role-modal">
+        <DialogContent
+          onClose={() => setShowEditModal(false)}
+          data-testid="edit-role-modal"
+        >
           <DialogHeader>
             <DialogTitle>Update User Role</DialogTitle>
           </DialogHeader>
-          
+
           {selectedUser && (
             <div className="space-y-4 mt-4">
               <div className="bg-gray-50 rounded-lg p-4">
@@ -220,48 +242,68 @@ export default function AdminUsersPage() {
 
               <div>
                 <p className="text-sm font-medium text-gray-700 mb-3">
-                  Current Role: <span className={`font-bold capitalize ${selectedUser.role === 'spa_owner' ? 'text-emerald-600' : 'text-blue-600'}`}>
-                    {selectedUser.role === 'spa_owner' ? 'Spa Owner' : selectedUser.role}
+                  Current Role:{" "}
+                  <span
+                    className={`font-bold capitalize ${
+                      selectedUser.role === "spa_owner"
+                        ? "text-emerald-600"
+                        : "text-blue-600"
+                    }`}
+                  >
+                    {selectedUser.role === "spa_owner"
+                      ? "Spa Owner"
+                      : selectedUser.role}
                   </span>
                 </p>
                 <p className="text-sm text-gray-600 mb-4">Change role to:</p>
-                
+
                 <div className="space-y-2">
                   <Button
-                    onClick={() => handleUpdateRole('customer')}
-                    variant={selectedUser.role === 'customer' ? 'default' : 'outline'}
+                    onClick={() => handleUpdateRole("customer")}
+                    variant={
+                      selectedUser.role === "customer" ? "default" : "outline"
+                    }
                     className="w-full justify-start"
-                    disabled={selectedUser.role === 'customer'}
+                    disabled={selectedUser.role === "customer"}
                   >
                     <UsersIcon className="w-4 h-4 mr-2" />
                     Customer
                   </Button>
-                  
+
                   <Button
-                    onClick={() => handleUpdateRole('spa_owner')}
-                    variant={selectedUser.role === 'spa_owner' ? 'default' : 'outline'}
-                    className={`w-full justify-start ${selectedUser.role !== 'spa_owner' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}`}
-                    disabled={selectedUser.role === 'spa_owner'}
+                    onClick={() => handleUpdateRole("spa_owner")}
+                    variant={
+                      selectedUser.role === "spa_owner" ? "default" : "outline"
+                    }
+                    className={`w-full justify-start ${
+                      selectedUser.role !== "spa_owner"
+                        ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                        : ""
+                    }`}
+                    disabled={selectedUser.role === "spa_owner"}
                   >
                     <UsersIcon className="w-4 h-4 mr-2" />
                     Spa Owner
                   </Button>
-                  
-                  <Button
-                    onClick={() => handleUpdateRole('admin')}
-                    variant={selectedUser.role === 'admin' ? 'default' : 'outline'}
+
+                  {/* <Button
+                    onClick={() => handleUpdateRole("admin")}
+                    variant={
+                      selectedUser.role === "admin" ? "default" : "outline"
+                    }
                     className="w-full justify-start"
-                    disabled={selectedUser.role === 'admin'}
+                    disabled={selectedUser.role === "admin"}
                   >
                     <Shield className="w-4 h-4 mr-2" />
                     Admin
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                  <strong>Note:</strong> User must logout and login again for role changes to take effect.
+                  <strong>Note:</strong> User must logout and login again for
+                  role changes to take effect.
                 </p>
               </div>
             </div>

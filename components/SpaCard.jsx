@@ -1,17 +1,20 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { MapPin, Star } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import Link from "next/link";
+import { MapPin, Star } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function SpaCard({ spa }) {
   return (
-    <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300" data-testid={`spa-card-${spa._id}`}>
+    <Card
+      className="overflow-hidden hover:shadow-xl transition-shadow duration-300"
+      data-testid={`spa-card-${spa._id}`}
+    >
       <div className="relative h-40 sm:h-48 bg-gradient-to-br from-emerald-200 to-teal-200">
-        {spa.gallery?.[0] ? (
+        {spa.logo ? (
           <img
-            src={spa.gallery[0]}
+            src={spa.logo}
             alt={spa.title}
             className="w-full h-full object-cover"
           />
@@ -21,16 +24,21 @@ export default function SpaCard({ spa }) {
           </div>
         )}
       </div>
-      
+
       <CardContent className="p-4 sm:p-6">
-        <h3 className="text-base sm:text-xl font-bold text-gray-900 mb-2 line-clamp-1" data-testid={`spa-title-${spa._id}`}>
+        <h3
+          className="text-base sm:text-xl font-bold text-gray-900 mb-2 line-clamp-1"
+          data-testid={`spa-title-${spa._id}`}
+        >
           {spa.title}
         </h3>
-        
+
         <div className="flex items-start text-gray-600 mb-3">
           <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-2 mt-1 flex-shrink-0" />
           <span className="text-xs sm:text-sm line-clamp-2">
-            {spa.location?.address || spa.location?.region || 'Location not specified'}
+            {spa.location?.address ||
+              spa.location?.region ||
+              "Location not specified"}
           </span>
         </div>
 
@@ -46,14 +54,19 @@ export default function SpaCard({ spa }) {
                 </span>
               ))}
               {spa.services.length > 2 && (
-                <span className="text-xs text-gray-500">+{spa.services.length - 2}</span>
+                <span className="text-xs text-gray-500">
+                  +{spa.services.length - 2}
+                </span>
               )}
             </div>
           </div>
         )}
 
         <Link href={`/spa/${spa._id}`}>
-          <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-sm sm:text-base h-9 sm:h-10" data-testid={`view-details-${spa._id}`}>
+          <Button
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-sm sm:text-base h-9 sm:h-10"
+            data-testid={`view-details-${spa._id}`}
+          >
             View Details
           </Button>
         </Link>

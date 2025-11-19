@@ -1,13 +1,22 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import Navbar from '@/components/Navbar';
-import BookingModal from '@/components/BookingModal';
-import { Button } from '@/components/ui/button';
-import { MapPin, Phone, Mail, Globe, Facebook, Twitter, Instagram } from 'lucide-react';
-import axios from 'axios';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import Navbar from "@/components/Navbar";
+import BookingModal from "@/components/BookingModal";
+import GallerySlider from "@/components/GallerySlider";
+import { Button } from "@/components/ui/button";
+import {
+  MapPin,
+  Phone,
+  Mail,
+  Globe,
+  Facebook,
+  Twitter,
+  Instagram,
+} from "lucide-react";
+import axios from "axios";
+import { toast } from "sonner";
 
 export default function SpaDetailPage() {
   const params = useParams();
@@ -26,7 +35,7 @@ export default function SpaDetailPage() {
       const response = await axios.get(`/api/spas/${params.id}`);
       setSpa(response.data.spa);
     } catch (error) {
-      toast.error('Failed to load spa details');
+      toast.error("Failed to load spa details");
     } finally {
       setLoading(false);
     }
@@ -65,12 +74,15 @@ export default function SpaDetailPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="max-w-6xl mx-auto px-4 py-4 sm:py-8" data-testid="spa-detail-page">
-        {/* Gallery */}
-        {spa.gallery && spa.gallery.length > 0 && (
+      <div
+        className="max-w-6xl mx-auto px-4 py-4 sm:py-8"
+        data-testid="spa-detail-page"
+      >
+        {/* logo */}
+        {spa.logo && (
           <div className="mb-6 sm:mb-8 rounded-lg overflow-hidden">
             <img
-              src={spa.gallery[0]}
+              src={spa.logo}
               alt={spa.title}
               className="w-full h-48 sm:h-64 lg:h-96 object-cover"
             />
@@ -81,8 +93,13 @@ export default function SpaDetailPage() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4" data-testid="spa-detail-title">{spa.title}</h1>
-              
+              <h1
+                className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4"
+                data-testid="spa-detail-title"
+              >
+                {spa.title}
+              </h1>
+
               {spa.location && (
                 <div className="flex items-start text-gray-600 mb-4">
                   <MapPin className="w-5 h-5 mr-2 mt-1 flex-shrink-0" />
@@ -98,7 +115,9 @@ export default function SpaDetailPage() {
             {spa.description && (
               <div className="bg-white p-6 rounded-lg shadow">
                 <h2 className="text-2xl font-semibold mb-4">About</h2>
-                <p className="text-gray-700 leading-relaxed">{spa.description}</p>
+                <p className="text-gray-700 leading-relaxed">
+                  {spa.description}
+                </p>
               </div>
             )}
 
@@ -126,9 +145,13 @@ export default function SpaDetailPage() {
                     <div key={index} className="border-b pb-4 last:border-b-0">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="font-semibold text-gray-900">{item.title}</h3>
+                          <h3 className="font-semibold text-gray-900">
+                            {item.title}
+                          </h3>
                           {item.description && (
-                            <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {item.description}
+                            </p>
                           )}
                         </div>
                         <span className="text-lg font-bold text-emerald-600">
@@ -140,13 +163,20 @@ export default function SpaDetailPage() {
                 </div>
               </div>
             )}
+            {/* Gallery */}
+            {spa.gallery && spa.gallery.length > 0 && (
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h2 className="text-2xl font-semibold mb-4">Gallery</h2>
+                <GallerySlider images={spa.gallery} spaTitle={spa.title} />
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
           <div className="space-y-4 sm:space-y-6">
             <div className="bg-white p-4 sm:p-6 rounded-lg shadow lg:sticky lg:top-24">
-              <Button 
-                className="w-full bg-emerald-600 hover:bg-emerald-700 mb-4 sm:mb-6 h-10 sm:h-12 text-base sm:text-lg" 
+              <Button
+                className="w-full bg-emerald-600 hover:bg-emerald-700 mb-4 sm:mb-6 h-10 sm:h-12 text-base sm:text-lg"
                 onClick={() => setShowBookingModal(true)}
                 data-testid="book-now-detail-button"
               >
@@ -156,26 +186,33 @@ export default function SpaDetailPage() {
               {/* Contact Info */}
               {spa.contact && (
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-gray-900 mb-4">Contact Information</h3>
-                  
+                  <h3 className="font-semibold text-gray-900 mb-4">
+                    Contact Information
+                  </h3>
+
                   {spa.contact.phone && (
                     <div className="flex items-center text-gray-600">
                       <Phone className="w-4 h-4 mr-3" />
                       <span className="text-sm">{spa.contact.phone}</span>
                     </div>
                   )}
-                  
+
                   {spa.contact.email && (
                     <div className="flex items-center text-gray-600">
                       <Mail className="w-4 h-4 mr-3" />
                       <span className="text-sm">{spa.contact.email}</span>
                     </div>
                   )}
-                  
+
                   {spa.contact.website && (
                     <div className="flex items-center text-gray-600">
                       <Globe className="w-4 h-4 mr-3" />
-                      <a href={spa.contact.website} target="_blank" rel="noopener noreferrer" className="text-sm text-emerald-600 hover:underline">
+                      <a
+                        href={spa.contact.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-emerald-600 hover:underline"
+                      >
                         Visit Website
                       </a>
                     </div>
@@ -184,17 +221,32 @@ export default function SpaDetailPage() {
                   {/* Social Media */}
                   <div className="flex space-x-4 pt-4">
                     {spa.contact.facebook && (
-                      <a href={spa.contact.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-emerald-600">
+                      <a
+                        href={spa.contact.facebook}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-600 hover:text-emerald-600"
+                      >
                         <Facebook className="w-5 h-5" />
                       </a>
                     )}
                     {spa.contact.twitter && (
-                      <a href={spa.contact.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-emerald-600">
+                      <a
+                        href={spa.contact.twitter}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-600 hover:text-emerald-600"
+                      >
                         <Twitter className="w-5 h-5" />
                       </a>
                     )}
                     {spa.contact.instagram && (
-                      <a href={spa.contact.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-emerald-600">
+                      <a
+                        href={spa.contact.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-600 hover:text-emerald-600"
+                      >
                         <Instagram className="w-5 h-5" />
                       </a>
                     )}
@@ -207,9 +259,9 @@ export default function SpaDetailPage() {
       </div>
 
       {/* Booking Modal */}
-      <BookingModal 
-        open={showBookingModal} 
-        onClose={() => setShowBookingModal(false)} 
+      <BookingModal
+        open={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
         prefilledSpa={spa}
       />
     </div>
