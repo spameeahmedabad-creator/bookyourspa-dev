@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import OTPSession from "@/models/OTPSession";
-import { sendOTP } from "@/lib/twilio";
+import { sendOTP } from "@/lib/fast2sms";
 import { validatePhone } from "@/lib/phone-validation";
 
 export async function POST(request) {
@@ -36,14 +36,14 @@ export async function POST(request) {
     // Create new OTP session
     await OTPSession.create({ phone: formattedPhone, otp, expiresAt });
 
-    // Send OTP via Twilio
+    // Send OTP via Fast2SMS
     const result = await sendOTP(formattedPhone, otp);
 
     return NextResponse.json({
       success: true,
       message: result.message || "OTP sent successfully",
       // In development, return OTP for testing (remove in production)
-      ...(process.env.NODE_ENV === "development" && { otp }),
+      // ...(process.env.NODE_ENV === "development" && { otp }),
     });
   } catch (error) {
     console.error("Send OTP Error:", error);

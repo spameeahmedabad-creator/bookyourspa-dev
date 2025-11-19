@@ -7,7 +7,7 @@ import { verifyToken } from "@/lib/jwt";
 import {
   sendWhatsAppBookingConfirmation,
   sendWhatsAppSpaOwnerNotification,
-} from "@/lib/twilio";
+} from "@/lib/fast2sms";
 import { format } from "date-fns";
 
 // GET bookings (role-based)

@@ -72,9 +72,9 @@ export default function LoginPage() {
         phone: phoneValidation.formatted,
       });
       toast.success(response.data.message);
-      if (response.data.otp) {
-        toast.info(`Development OTP: ${response.data.otp}`);
-      }
+      // if (response.data.otp) {
+      //   toast.info(`Development OTP: ${response.data.otp}`);
+      // }
       setStep(2);
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to send OTP");
