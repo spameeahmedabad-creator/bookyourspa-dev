@@ -40,22 +40,22 @@ export default function AdminUsersPage() {
     }
   };
 
-  // const handleUpdateRole = async (newRole) => {
-  //   if (!selectedUser) return;
+  const handleUpdateRole = async (newRole) => {
+    if (!selectedUser) return;
 
-  //   try {
-  //     const response = await axios.post("/api/admin/users/update-role", {
-  //       userId: selectedUser._id,
-  //       newRole,
-  //     });
-  //     toast.success(response.data.message);
-  //     setShowEditModal(false);
-  //     setSelectedUser(null);
-  //     fetchUsers();
-  //   } catch (error) {
-  //     toast.error(error.response?.data?.error || "Failed to update role");
-  //   }
-  // };
+    try {
+      const response = await axios.post("/api/admin/users/update-role", {
+        userId: selectedUser._id,
+        newRole,
+      });
+      toast.success(response.data.message);
+      setShowEditModal(false);
+      setSelectedUser(null);
+      fetchUsers();
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Failed to update role");
+    }
+  };
 
   const getRoleBadgeColor = (role) => {
     switch (role) {
