@@ -29,6 +29,8 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [heroImages, setHeroImages] = useState([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const router = useRouter();
 
   // Memoize the callback to prevent unnecessary re-renders
@@ -38,7 +40,17 @@ export default function Home() {
 
   useEffect(() => {
     fetchSpas(currentPage);
+    fetchHeroImages();
   }, [currentPage]);
+
+  useEffect(() => {
+    if (heroImages.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
+      }, 5000); // Change image every 5 seconds
+      return () => clearInterval(interval);
+    }
+  }, [heroImages.length]);
 
   const fetchSpas = async (page) => {
     try {
@@ -55,6 +67,51 @@ export default function Home() {
     }
   };
 
+  const fetchHeroImages = async () => {
+    try {
+      const response = await axios.get("/api/spas?limit=10");
+      const allSpas = response.data.spas || [];
+
+      // Collect images from spa galleries
+      const images = [];
+      allSpas.forEach((spa) => {
+        if (spa.gallery && Array.isArray(spa.gallery)) {
+          spa.gallery.forEach((img) => {
+            if (img && img.trim() !== "") {
+              images.push(img);
+            }
+          });
+        }
+        // Also use logo if available
+        if (spa.logo && spa.logo.trim() !== "") {
+          images.push(spa.logo);
+        }
+      });
+
+      // If we have images, use them; otherwise use placeholder spa images
+      if (images.length > 0) {
+        setHeroImages(images.slice(0, 5)); // Use first 5 images
+      } else {
+        // Placeholder spa images from Unsplash
+        setHeroImages([
+          "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1920&q=80",
+          "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1920&q=80",
+          "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=1920&q=80",
+          "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=1920&q=80",
+          "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1920&q=80",
+        ]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch hero images:", error);
+      // Fallback to placeholder images
+      setHeroImages([
+        "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1920&q=80",
+        "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1920&q=80",
+        "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=1920&q=80",
+      ]);
+    }
+  };
+
   const handleSearch = (spa) => {
     router.push(`/spa/${spa._id}`);
   };
@@ -66,17 +123,44 @@ export default function Home() {
       </Suspense>
       <Navbar />
 
-      {/* Hero Section with Search */}
+      {/* Hero Section with Sliding Background Images */}
       <div
-        className="relative overflow-hidden bg-gradient-to-r from-emerald-600 to-teal-600 py-8 sm:py-12 lg:py-16"
+        className="relative overflow-hidden py-8 sm:py-12 lg:py-16 min-h-[400px] sm:min-h-[500px] flex items-center"
         data-testid="hero-section"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Sliding Background Images */}
+        <div className="absolute inset-0 z-0">
+          {heroImages.length > 0 ? (
+            <>
+              {heroImages.map((img, index) => (
+                <div
+                  key={index}
+                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                    index === currentImageIndex ? "opacity-100" : "opacity-0"
+                  }`}
+                >
+                  <img
+                    src={img}
+                    alt={`Spa background ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Gradient overlay for better text readability */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/80 via-teal-800/75 to-cyan-900/80"></div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600"></div>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="text-center mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4 px-2">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4 px-2 drop-shadow-lg">
               Discover Your Perfect Spa Experience
             </h1>
-            <p className="text-sm sm:text-lg lg:text-xl text-emerald-50 max-w-2xl mx-auto px-4">
+            <p className="text-sm sm:text-lg lg:text-xl text-emerald-50 max-w-2xl mx-auto px-4 drop-shadow-md">
               Find and book the best spa and wellness centers across Ahmedabad,
               Gandhinagar, and beyond
             </p>
@@ -84,11 +168,29 @@ export default function Home() {
 
           <SearchBar onSelectSpa={handleSearch} />
         </div>
+
+        {/* Image indicators */}
+        {heroImages.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex space-x-2">
+            {heroImages.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentImageIndex(index)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  index === currentImageIndex
+                    ? "w-8 bg-white"
+                    : "w-2 bg-white/50 hover:bg-white/75"
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Spa Listings */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
+        <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-6 sm:mb-8">
           Featured Spas
         </h2>
 
@@ -162,10 +264,10 @@ export default function Home() {
       </div>
 
       {/* Features Section */}
-      <div className="bg-white py-12 sm:py-16">
+      <div className="bg-gradient-to-b from-white via-emerald-50/30 to-white py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-4">
               Why Choose BookYourSpa?
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -174,10 +276,10 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="text-center p-6 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-emerald-100">
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <svg
-                  className="w-8 h-8 text-emerald-600"
+                  className="w-8 h-8 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -190,16 +292,18 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Verified Spas</h3>
+              <h3 className="text-xl font-semibold mb-2 text-gray-900">
+                Verified Spas
+              </h3>
               <p className="text-gray-600">
                 All spa centers are verified and trusted for quality services
               </p>
             </div>
 
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="text-center p-6 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-teal-100">
+              <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <svg
-                  className="w-8 h-8 text-emerald-600"
+                  className="w-8 h-8 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -212,16 +316,18 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Instant Booking</h3>
+              <h3 className="text-xl font-semibold mb-2 text-gray-900">
+                Instant Booking
+              </h3>
               <p className="text-gray-600">
                 Book your spa appointment in seconds with real-time confirmation
               </p>
             </div>
 
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="text-center p-6 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-cyan-100">
+              <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <svg
-                  className="w-8 h-8 text-emerald-600"
+                  className="w-8 h-8 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -234,7 +340,9 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Best Prices</h3>
+              <h3 className="text-xl font-semibold mb-2 text-gray-900">
+                Best Prices
+              </h3>
               <p className="text-gray-600">
                 Transparent pricing with no hidden charges
               </p>
@@ -244,10 +352,10 @@ export default function Home() {
       </div>
 
       {/* FAQ Section */}
-      <div className="bg-gray-50 py-12 sm:py-16">
+      <div className="bg-gradient-to-b from-gray-50 via-emerald-50/20 to-gray-50 py-12 sm:py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-4">
               Frequently Asked Questions
             </h2>
             <p className="text-lg text-gray-600">
@@ -256,7 +364,7 @@ export default function Home() {
           </div>
 
           <div className="space-y-4">
-            <details className="bg-white rounded-lg shadow-sm p-6 group">
+            <details className="bg-white rounded-lg shadow-sm hover:shadow-md p-6 group border border-emerald-100 transition-all duration-300">
               <summary className="font-semibold text-lg cursor-pointer list-none flex justify-between items-center">
                 How do I book a spa appointment?
                 <span className="text-emerald-600 transition group-open:rotate-180">
@@ -283,7 +391,7 @@ export default function Home() {
               </p>
             </details>
 
-            <details className="bg-white rounded-lg shadow-sm p-6 group">
+            <details className="bg-white rounded-lg shadow-sm hover:shadow-md p-6 group border border-emerald-100 transition-all duration-300">
               <summary className="font-semibold text-lg cursor-pointer list-none flex justify-between items-center">
                 Do I need to create an account to book?
                 <span className="text-emerald-600 transition group-open:rotate-180">
@@ -310,7 +418,7 @@ export default function Home() {
               </p>
             </details>
 
-            <details className="bg-white rounded-lg shadow-sm p-6 group">
+            <details className="bg-white rounded-lg shadow-sm hover:shadow-md p-6 group border border-emerald-100 transition-all duration-300">
               <summary className="font-semibold text-lg cursor-pointer list-none flex justify-between items-center">
                 What payment methods do you accept?
                 <span className="text-emerald-600 transition group-open:rotate-180">
@@ -336,7 +444,7 @@ export default function Home() {
               </p>
             </details>
 
-            <details className="bg-white rounded-lg shadow-sm p-6 group">
+            <details className="bg-white rounded-lg shadow-sm hover:shadow-md p-6 group border border-emerald-100 transition-all duration-300">
               <summary className="font-semibold text-lg cursor-pointer list-none flex justify-between items-center">
                 Can I cancel or reschedule my booking?
                 <span className="text-emerald-600 transition group-open:rotate-180">
@@ -363,7 +471,7 @@ export default function Home() {
               </p>
             </details>
 
-            <details className="bg-white rounded-lg shadow-sm p-6 group">
+            <details className="bg-white rounded-lg shadow-sm hover:shadow-md p-6 group border border-emerald-100 transition-all duration-300">
               <summary className="font-semibold text-lg cursor-pointer list-none flex justify-between items-center">
                 Are the spas verified?
                 <span className="text-emerald-600 transition group-open:rotate-180">
@@ -393,7 +501,7 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
