@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CldUploadButton } from "next-cloudinary";
 import { CldImage } from "next-cloudinary";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Upload, X, CheckCircle2, Loader2 } from "lucide-react";
 
 export default function CloudinaryUpload({
@@ -58,6 +58,7 @@ export default function CloudinaryUpload({
                 width="300"
                 height="200"
                 alt="Upload preview"
+                config={{ cloudName }}
                 className="max-w-full h-32 object-cover rounded-md border border-gray-300 bg-gray-50"
               />
             ) : (
@@ -122,28 +123,29 @@ export default function CloudinaryUpload({
           {cloudName ? (
             <CldUploadButton
               uploadPreset="bookyourspa_uploads"
-              onUpload={handleUpload}
-              cloudName={cloudName}
+              onSuccess={handleUpload}
+              config={{ cloudName }}
+              className={cn(
+                "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                "h-9 rounded-md px-3",
+                "w-full",
+                uploadStatus === "uploading" &&
+                  "disabled:pointer-events-none disabled:opacity-50"
+              )}
+              disabled={uploadStatus === "uploading"}
             >
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={uploadStatus === "uploading"}
-                className="w-full"
-              >
-                {uploadStatus === "uploading" ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Change Image
-                  </>
-                )}
-              </Button>
+              {uploadStatus === "uploading" ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Change Image
+                </>
+              )}
             </CldUploadButton>
           ) : (
             <p className="text-red-500 text-xs">
@@ -156,27 +158,29 @@ export default function CloudinaryUpload({
         <div className="space-y-2">
           <CldUploadButton
             uploadPreset="bookyourspa_uploads"
-            onUpload={handleUpload}
-            cloudName={cloudName}
+            onSuccess={handleUpload}
+            config={{ cloudName }}
+            className={cn(
+              "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+              "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+              "h-10 px-4 py-2",
+              "w-full",
+              uploadStatus === "uploading" &&
+                "disabled:pointer-events-none disabled:opacity-50"
+            )}
+            disabled={uploadStatus === "uploading"}
           >
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              disabled={uploadStatus === "uploading"}
-            >
-              {uploadStatus === "uploading" ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  {buttonText}
-                </>
-              )}
-            </Button>
+            {uploadStatus === "uploading" ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 mr-2" />
+                {buttonText}
+              </>
+            )}
           </CldUploadButton>
           {uploadStatus === "uploading" && (
             <p className="text-blue-600 text-xs flex items-center gap-1">
