@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CldUploadButton } from "next-cloudinary";
 import { CldImage } from "next-cloudinary";
 import { cn } from "@/lib/utils";
@@ -15,16 +15,87 @@ export default function CloudinaryUpload({
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const [uploadStatus, setUploadStatus] = useState(null); // 'uploading', 'success', 'error'
 
+  // Function to restore body scroll
+  const restoreBodyScroll = () => {
+    // Remove any inline styles that might prevent scrolling
+    if (document.body) {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.height = "";
+      document.body.style.width = "";
+    }
+    // Also check html element
+    if (document.documentElement) {
+      document.documentElement.style.overflow = "";
+      document.documentElement.style.position = "";
+    }
+  };
+
+  // Monitor for Cloudinary widget close and restore scroll
+  useEffect(() => {
+    // Function to check and restore scroll
+    const checkAndRestoreScroll = () => {
+      // Check if Cloudinary widget is still open by looking for its elements
+      const cloudinaryWidget =
+        document.querySelector("[data-cloudinary-widget]") ||
+        document.querySelector(".cloudinary-widget") ||
+        document.querySelector('[id*="cloudinary"]') ||
+        document.querySelector('iframe[src*="cloudinary"]');
+
+      // If widget is not visible and body is locked, restore scroll
+      if (!cloudinaryWidget) {
+        if (
+          document.body.style.overflow === "hidden" ||
+          document.documentElement.style.overflow === "hidden" ||
+          document.body.style.position === "fixed"
+        ) {
+          restoreBodyScroll();
+        }
+      }
+    };
+
+    // Set up interval to check and restore scroll after upload
+    const checkInterval = setInterval(checkAndRestoreScroll, 100);
+
+    // Also listen for focus events (widget closing often triggers focus)
+    const handleFocus = () => {
+      setTimeout(checkAndRestoreScroll, 200);
+    };
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("click", checkAndRestoreScroll);
+
+    // Cleanup on unmount
+    return () => {
+      clearInterval(checkInterval);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("click", checkAndRestoreScroll);
+      // Ensure scroll is restored on unmount
+      restoreBodyScroll();
+    };
+  }, []);
+
   const handleUpload = (result) => {
     setUploadStatus("uploading");
 
     if (result?.info?.secure_url) {
       setUploadStatus("success");
       onUpload(result.info.secure_url);
+
+      // Restore scroll immediately after upload completes
+      setTimeout(() => {
+        restoreBodyScroll();
+      }, 100);
+
       // Reset status after 3 seconds
       setTimeout(() => setUploadStatus(null), 3000);
     } else if (result?.error) {
       setUploadStatus("error");
+
+      // Restore scroll even on error
+      setTimeout(() => {
+        restoreBodyScroll();
+      }, 100);
+
       setTimeout(() => setUploadStatus(null), 3000);
     }
   };

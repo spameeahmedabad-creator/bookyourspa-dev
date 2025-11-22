@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,33 @@ export default function AddListingPage() {
     website: "",
     gallery: "",
   });
+
+  // Restore scroll on page load (in case it was locked from Cloudinary widget)
+  useEffect(() => {
+    const restoreScroll = () => {
+      if (document.body) {
+        document.body.style.overflow = "";
+        document.body.style.position = "";
+        document.body.style.height = "";
+        document.body.style.width = "";
+      }
+      if (document.documentElement) {
+        document.documentElement.style.overflow = "";
+        document.documentElement.style.position = "";
+      }
+      // Scroll to top to ensure page is accessible
+      window.scrollTo(0, 0);
+    };
+
+    // Restore scroll immediately on mount
+    restoreScroll();
+
+    // Also restore after a short delay to catch any delayed widget cleanup
+    const timeout = setTimeout(restoreScroll, 500);
+
+    return () => clearTimeout(timeout);
+  }, []);
+
   const [formData, setFormData] = useState({
     title: "",
     logo: "",
