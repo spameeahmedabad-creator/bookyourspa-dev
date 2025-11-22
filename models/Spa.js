@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const PricingItemSchema = new mongoose.Schema({
   image: String,
@@ -15,14 +15,17 @@ const SpaSchema = new mongoose.Schema({
     required: true,
   },
   logo: String,
-  services: [{
-    type: String,
-  }],
+  services: [
+    {
+      type: String,
+    },
+  ],
   location: {
     address: String,
     region: String,
     longitude: Number,
     latitude: Number,
+    googleMapsLink: String,
   },
   gallery: [String],
   description: String,
@@ -38,7 +41,7 @@ const SpaSchema = new mongoose.Schema({
   pricing: [PricingItemSchema],
   ownerId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "User",
     required: true,
   },
   createdAt: {
@@ -47,11 +50,16 @@ const SpaSchema = new mongoose.Schema({
   },
 });
 
-SpaSchema.index({ title: 'text', 'location.address': 'text', 'location.region': 'text', services: 'text' });
+SpaSchema.index({
+  title: "text",
+  "location.address": "text",
+  "location.region": "text",
+  services: "text",
+});
 
 // Delete model if it exists to avoid OverwriteModelError
 if (mongoose.models.Spa) {
   delete mongoose.models.Spa;
 }
 
-export default mongoose.model('Spa', SpaSchema);
+export default mongoose.model("Spa", SpaSchema);

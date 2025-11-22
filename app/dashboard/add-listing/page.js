@@ -76,6 +76,7 @@ export default function AddListingPage() {
       region: "",
       longitude: "",
       latitude: "",
+      googleMapsLink: "",
     },
     gallery: [""],
     description: "",
@@ -174,8 +175,20 @@ export default function AddListingPage() {
         }
       }
 
+      // Convert location coordinates to numbers
+      const locationData = {
+        ...formData.location,
+        latitude: formData.location.latitude
+          ? parseFloat(formData.location.latitude)
+          : undefined,
+        longitude: formData.location.longitude
+          ? parseFloat(formData.location.longitude)
+          : undefined,
+      };
+
       const response = await axios.post("/api/spas", {
         ...formData,
+        location: locationData,
         contact: contactData,
         gallery: formData.gallery.filter((g) => g.trim() !== ""),
         pricing: formData.pricing.filter((p) => p.title && p.price),
@@ -390,47 +403,28 @@ export default function AddListingPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Longitude
-                  </label>
-                  <Input
-                    type="number"
-                    step="any"
-                    value={formData.location.longitude}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        location: {
-                          ...formData.location,
-                          longitude: e.target.value,
-                        },
-                      })
-                    }
-                    placeholder="72.5714"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Latitude
-                  </label>
-                  <Input
-                    type="number"
-                    step="any"
-                    value={formData.location.latitude}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        location: {
-                          ...formData.location,
-                          latitude: e.target.value,
-                        },
-                      })
-                    }
-                    placeholder="23.0225"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Shop Location on Map
+                </label>
+                <Input
+                  type="url"
+                  value={formData.location.googleMapsLink}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      location: {
+                        ...formData.location,
+                        googleMapsLink: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder="https://maps.app.goo.gl/2PA7PpUudmCTwq4SA"
+                />
+                <p className="text-gray-500 text-xs mt-1">
+                  Enter your Google Maps share link (e.g.,
+                  https://maps.app.goo.gl/...)
+                </p>
               </div>
             </CardContent>
           </Card>

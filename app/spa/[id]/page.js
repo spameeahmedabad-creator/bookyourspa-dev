@@ -14,6 +14,7 @@ import {
   Facebook,
   Twitter,
   Instagram,
+  Navigation,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -107,6 +108,22 @@ export default function SpaDetailPage() {
                     <p>{spa.location.address}</p>
                     <p className="text-sm">{spa.location.region}</p>
                   </div>
+                </div>
+              )}
+
+              {/* Redirect to Shop/Map Button */}
+              {spa.location && spa.location.googleMapsLink && (
+                <div className="mb-4">
+                  <Button
+                    onClick={() => {
+                      window.open(spa.location.googleMapsLink, "_blank");
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    data-testid="redirect-to-shop-button"
+                  >
+                    <Navigation className="w-4 h-4 mr-2" />
+                    Redirect to SPA
+                  </Button>
                 </div>
               )}
             </div>
