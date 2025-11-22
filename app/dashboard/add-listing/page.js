@@ -15,6 +15,7 @@ import {
   validateWebsite,
   validateGallery,
 } from "@/lib/form-validation";
+import CloudinaryUpload from "@/components/CloudinaryUpload";
 
 const AVAILABLE_SERVICES = [
   "Couple Massage",
@@ -125,13 +126,7 @@ export default function AddListingPage() {
       }
     }
 
-    // Validate gallery - at least one image required
-    const galleryValidation = validateGallery(formData.gallery);
-    if (!galleryValidation.isValid) {
-      setErrors((prev) => ({ ...prev, gallery: galleryValidation.error }));
-      toast.error(galleryValidation.error);
-      return;
-    }
+    // Gallery validation removed - no longer required
 
     setLoading(true);
     try {
@@ -264,16 +259,24 @@ export default function AddListingPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Logo URL
+                  Logo
                 </label>
-                <Input
+                <CloudinaryUpload
                   value={formData.logo}
-                  onChange={(e) =>
-                    setFormData({ ...formData, logo: e.target.value })
-                  }
-                  placeholder="https://example.com/logo.png"
-                  data-testid="listing-logo-input"
+                  onUpload={(url) => setFormData({ ...formData, logo: url })}
+                  buttonText="Upload Logo"
                 />
+                {/* Show Logo URL below */}
+                {formData.logo && (
+                  <div className="mt-3 bg-blue-50 p-3 rounded-md border border-blue-200">
+                    <p className="text-xs font-semibold text-blue-900 mb-1">
+                      Logo Cloudinary URL:
+                    </p>
+                    <p className="text-xs text-blue-700 break-all font-mono bg-white p-2 rounded border">
+                      {formData.logo}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -410,7 +413,7 @@ export default function AddListingPage() {
             <CardContent className="p-6 space-y-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold text-gray-900">
-                  Gallery Images <span className="text-red-500">*</span>
+                  Gallery Images
                 </h2>
                 <Button type="button" size="sm" onClick={addGalleryImage}>
                   <PlusCircle className="w-4 h-4 mr-2" />
@@ -419,43 +422,65 @@ export default function AddListingPage() {
               </div>
 
               {formData.gallery.map((url, index) => (
-                <div key={index} className="flex gap-2">
-                  <div className="flex-1">
-                    <Input
-                      value={url}
-                      onChange={(e) => {
-                        updateGalleryImage(index, e.target.value);
-                        // Clear error when user starts typing
-                        if (errors.gallery) {
-                          setErrors((prev) => ({ ...prev, gallery: "" }));
-                        }
-                      }}
-                      placeholder="https://example.com/image.jpg"
-                      className={
-                        errors.gallery
-                          ? "border-red-500 focus-visible:ring-red-500"
-                          : ""
-                      }
-                    />
+                <div key={index} className="space-y-2">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1">
+                      <CloudinaryUpload
+                        value={url}
+                        onUpload={(imageUrl) => {
+                          updateGalleryImage(index, imageUrl);
+                          // Clear error when user uploads image
+                          if (errors.gallery) {
+                            setErrors((prev) => ({ ...prev, gallery: "" }));
+                          }
+                        }}
+                        buttonText={`Upload Gallery Image ${index + 1}`}
+                      />
+                    </div>
+                    {formData.gallery.length > 1 && (
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="destructive"
+                        onClick={() => removeGalleryImage(index)}
+                        className="mt-0"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
-                  {formData.gallery.length > 1 && (
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="destructive"
-                      onClick={() => removeGalleryImage(index)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
                 </div>
               ))}
               {errors.gallery && (
                 <p className="text-red-500 text-sm mt-1">{errors.gallery}</p>
               )}
-              <p className="text-gray-500 text-xs">
-                At least one gallery image is required
-              </p>
+
+              {/* Show all Gallery URLs below */}
+              {formData.gallery.some((url) => url && url.trim() !== "") && (
+                <div className="mt-4 bg-blue-50 p-3 rounded-md border border-blue-200">
+                  <p className="text-xs font-semibold text-blue-900 mb-2">
+                    Gallery Images Cloudinary URLs:
+                  </p>
+                  <div className="space-y-2">
+                    {formData.gallery.map((url, index) => {
+                      if (!url || url.trim() === "") return null;
+                      return (
+                        <div
+                          key={index}
+                          className="bg-white p-2 rounded border border-blue-100"
+                        >
+                          <p className="text-xs font-medium text-gray-700 mb-1">
+                            Image {index + 1}:
+                          </p>
+                          <p className="text-xs text-blue-700 break-all font-mono">
+                            {url}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
