@@ -32,7 +32,9 @@ export default function LoginPage() {
     } else if (error === "token_exchange_failed") {
       toast.error("Failed to authenticate with Google. Please try again.");
     } else if (error === "no_email") {
-      toast.error("Google account email not found. Please use a different account.");
+      toast.error(
+        "Google account email not found. Please use a different account."
+      );
     } else if (error === "oauth_error") {
       toast.error("OAuth error occurred. Please try again.");
     }
@@ -80,7 +82,9 @@ export default function LoginPage() {
       toast.success("Login successful!");
       window.location.href = "/";
     } catch (error) {
-      toast.error(error.response?.data?.error || "Login failed. Please try again.");
+      toast.error(
+        error.response?.data?.error || "Login failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -194,7 +198,9 @@ export default function LoginPage() {
                 <div className="w-full border-t border-gray-300"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                <span className="px-2 bg-white text-gray-500">
+                  Or continue with
+                </span>
               </div>
             </div>
 

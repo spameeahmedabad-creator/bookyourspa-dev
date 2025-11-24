@@ -53,10 +53,15 @@ export default function ForgotPasswordPage() {
       await axios.post("/api/auth/forgot-password", {
         email: email.trim().toLowerCase(),
       });
-      toast.success("If an account exists, a password reset link has been sent to your email.");
+      toast.success(
+        "If an account exists, a password reset link has been sent to your email."
+      );
       setSubmitted(true);
     } catch (error) {
-      toast.error(error.response?.data?.error || "Failed to send reset email. Please try again.");
+      toast.error(
+        error.response?.data?.error ||
+          "Failed to send reset email. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -75,7 +80,8 @@ export default function ForgotPasswordPage() {
           <CardHeader>
             <CardTitle>Forgot Password</CardTitle>
             <CardDescription>
-              Enter your email address and we'll send you a link to reset your password
+              Enter your email address and we'll send you a link to reset your
+              password
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -134,10 +140,12 @@ export default function ForgotPasswordPage() {
                   </svg>
                 </div>
                 <p className="text-gray-700">
-                  If an account exists with <strong>{email}</strong>, a password reset link has been sent.
+                  If an account exists with <strong>{email}</strong>, a password
+                  reset link has been sent.
                 </p>
                 <p className="text-sm text-gray-600">
-                  Please check your inbox and click the link to reset your password.
+                  Please check your inbox and click the link to reset your
+                  password.
                 </p>
                 <p className="text-xs text-gray-500">
                   The link will expire in 1 hour.
@@ -157,4 +165,3 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
-

@@ -10,7 +10,11 @@ export async function POST(request) {
   try {
     // Rate limiting
     const clientIP = getClientIP(request);
-    const rateLimitResult = rateLimit(`forgot-password:${clientIP}`, 3, 60 * 60 * 1000); // 3 attempts per hour
+    const rateLimitResult = rateLimit(
+      `forgot-password:${clientIP}`,
+      3,
+      60 * 60 * 1000
+    ); // 3 attempts per hour
 
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
@@ -36,8 +40,10 @@ export async function POST(request) {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Find user
-    const user = await User.findOne({ email: normalizedEmail });
+    // Find user (include password field to check if user has password)
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      "+password"
+    );
 
     // Don't reveal if user exists or not (security best practice)
     // But we'll still send a success message
@@ -45,7 +51,8 @@ export async function POST(request) {
       // Return success even if user doesn't exist (prevent email enumeration)
       return NextResponse.json({
         success: true,
-        message: "If an account exists with this email, a password reset link has been sent.",
+        message:
+          "If an account exists with this email, a password reset link has been sent.",
       });
     }
 
@@ -53,7 +60,8 @@ export async function POST(request) {
     if (!user.password) {
       return NextResponse.json({
         success: true,
-        message: "If an account exists with this email, a password reset link has been sent.",
+        message:
+          "If an account exists with this email, a password reset link has been sent.",
       });
     }
 
@@ -74,7 +82,8 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: "If an account exists with this email, a password reset link has been sent.",
+      message:
+        "If an account exists with this email, a password reset link has been sent.",
     });
   } catch (error) {
     console.error("Forgot Password Error:", error);
@@ -84,4 +93,3 @@ export async function POST(request) {
     );
   }
 }
-

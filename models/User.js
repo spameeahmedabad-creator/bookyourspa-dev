@@ -60,10 +60,8 @@ const UserSchema = new mongoose.Schema({
   },
 });
 
-// Index for faster lookups
-UserSchema.index({ email: 1 });
-UserSchema.index({ phone: 1 });
-UserSchema.index({ googleId: 1 });
+// Note: Indexes are automatically created by unique: true on email, phone, and googleId fields
+// No need for explicit index definitions
 
 // Delete model if it exists to avoid OverwriteModelError
 if (mongoose.models.User) {
