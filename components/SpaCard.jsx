@@ -1,11 +1,65 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { MapPin, Star } from "lucide-react";
+import { MapPin, Star, Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
+import { toast } from "sonner";
 
 export default function SpaCard({ spa }) {
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkAuthAndBookmarkStatus();
+  }, [spa._id]);
+
+  const checkAuthAndBookmarkStatus = async () => {
+    try {
+      const userRes = await axios.get("/api/auth/me");
+      setUser(userRes.data.user);
+      
+      // Check if spa is bookmarked
+      const bookmarksRes = await axios.get("/api/bookmarks");
+      const bookmarkedIds = bookmarksRes.data.bookmarks.map((b) => String(b._id || b));
+      const spaId = String(spa._id || spa);
+      setIsBookmarked(bookmarkedIds.includes(spaId));
+    } catch (error) {
+      // User not authenticated or no bookmarks
+      setUser(null);
+      setIsBookmarked(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBookmarkToggle = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      toast.error("Please login to bookmark spas");
+      return;
+    }
+
+    try {
+      if (isBookmarked) {
+        await axios.delete(`/api/bookmarks?spaId=${spa._id}`);
+        setIsBookmarked(false);
+        toast.success("Bookmark removed");
+      } else {
+        await axios.post("/api/bookmarks", { spaId: spa._id });
+        setIsBookmarked(true);
+        toast.success("Bookmark added");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Failed to update bookmark");
+    }
+  };
+
   return (
     <Card
       className="overflow-hidden hover:shadow-xl transition-shadow duration-300"
@@ -22,6 +76,22 @@ export default function SpaCard({ spa }) {
           <div className="w-full h-full flex items-center justify-center text-emerald-600 font-semibold text-xl">
             {spa.title?.charAt(0)}
           </div>
+        )}
+        {user && !loading && (
+          <button
+            onClick={handleBookmarkToggle}
+            className="absolute top-2 right-2 p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-all z-10"
+            data-testid={`bookmark-button-${spa._id}`}
+            aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
+          >
+            <Bookmark
+              className={`w-5 h-5 ${
+                isBookmarked
+                  ? "text-emerald-600 fill-emerald-600"
+                  : "text-gray-400 hover:text-emerald-600"
+              } transition-colors`}
+            />
+          </button>
         )}
       </div>
 

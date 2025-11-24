@@ -15,6 +15,7 @@ import {
   MessageCircle,
   Instagram,
   Navigation,
+  Bookmark,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -24,10 +25,14 @@ export default function SpaDetailPage() {
   const [spa, setSpa] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [user, setUser] = useState(null);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
   useEffect(() => {
     if (params.id) {
       fetchSpaDetails();
+      checkBookmarkStatus();
     }
   }, [params.id]);
 
@@ -39,6 +44,45 @@ export default function SpaDetailPage() {
       toast.error("Failed to load spa details");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkBookmarkStatus = async () => {
+    try {
+      const userRes = await axios.get("/api/auth/me");
+      setUser(userRes.data.user);
+      
+      const bookmarksRes = await axios.get("/api/bookmarks");
+      const bookmarkedIds = bookmarksRes.data.bookmarks.map((b) => String(b._id || b));
+      setIsBookmarked(bookmarkedIds.includes(String(params.id)));
+    } catch (error) {
+      // User not authenticated
+      setUser(null);
+      setIsBookmarked(false);
+    }
+  };
+
+  const handleBookmarkToggle = async () => {
+    if (!user) {
+      toast.error("Please login to bookmark spas");
+      return;
+    }
+
+    setBookmarkLoading(true);
+    try {
+      if (isBookmarked) {
+        await axios.delete(`/api/bookmarks?spaId=${params.id}`);
+        setIsBookmarked(false);
+        toast.success("Bookmark removed");
+      } else {
+        await axios.post("/api/bookmarks", { spaId: params.id });
+        setIsBookmarked(true);
+        toast.success("Bookmark added");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Failed to update bookmark");
+    } finally {
+      setBookmarkLoading(false);
     }
   };
 
@@ -193,12 +237,29 @@ export default function SpaDetailPage() {
           <div className="space-y-4 sm:space-y-6">
             <div className="bg-white p-4 sm:p-6 rounded-lg shadow lg:sticky lg:top-24">
               <Button
-                className="w-full bg-emerald-600 hover:bg-emerald-700 mb-4 sm:mb-6 h-10 sm:h-12 text-base sm:text-lg"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 mb-3 sm:mb-4 h-10 sm:h-12 text-base sm:text-lg"
                 onClick={() => setShowBookingModal(true)}
                 data-testid="book-now-detail-button"
               >
                 Book Now
               </Button>
+
+              {user && (
+                <Button
+                  variant="outline"
+                  className="w-full mb-4 sm:mb-6 h-10 sm:h-12 text-base sm:text-lg border-emerald-600 text-emerald-600 hover:bg-emerald-50"
+                  onClick={handleBookmarkToggle}
+                  disabled={bookmarkLoading}
+                  data-testid="bookmark-detail-button"
+                >
+                  <Bookmark
+                    className={`w-4 h-4 mr-2 ${
+                      isBookmarked ? "fill-current" : ""
+                    }`}
+                  />
+                  {isBookmarked ? "Bookmarked" : "Bookmark"}
+                </Button>
+              )}
 
               {/* Contact Info */}
               {spa.contact && (
