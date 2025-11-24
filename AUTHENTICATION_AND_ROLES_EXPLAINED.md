@@ -9,7 +9,7 @@
 1. User visits /login
 2. Enters Name + Phone Number
 3. Clicks "Send OTP"
-4. System sends 6-digit OTP to phone via Twilio
+4. System sends 6-digit OTP to phone via Fast2SMS
 5. User enters OTP
 6. System verifies OTP
 7. User is logged in ✅

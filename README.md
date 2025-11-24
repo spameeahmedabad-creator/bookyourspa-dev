@@ -5,7 +5,7 @@ A comprehensive Next.js application for discovering and booking spa and wellness
 ## 🚀 Features
 
 ### Authentication
-- **OTP-based Login**: Phone number + OTP verification via Twilio
+- **OTP-based Login**: Phone number + OTP verification via Fast2SMS
 - **Role-based Access**: Customer, Spa Owner, and Admin roles
 - **JWT Authentication**: Secure session management
 
@@ -42,7 +42,7 @@ A comprehensive Next.js application for discovering and booking spa and wellness
 - Node.js 18+ 
 - MongoDB
 - Yarn package manager
-- Twilio account (for SMS/WhatsApp - optional, mocked by default)
+- Fast2SMS account (for SMS - see FAST2SMS_SETUP_GUIDE.md)
 
 ## 🛠️ Installation
 
@@ -58,13 +58,10 @@ Edit `.env.local` file:
 MONGODB_URI=mongodb://localhost:27017/bookyourspa
 JWT_SECRET=your-secret-key
 
-# Twilio Credentials (Optional - currently mocked)
-TWILIO_ACCOUNT_SID=your_account_sid
-TWILIO_AUTH_TOKEN=your_auth_token
-TWILIO_PHONE_NUMBER=your_phone_number
-TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
+# Fast2SMS Credentials (for SMS OTP)
+FAST2SMS_API_KEY=your_fast2sms_api_key
 
-NEXT_PUBLIC_APP_URL=http://localhost:3002
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 3. **Seed sample data** (optional):
@@ -77,7 +74,7 @@ node scripts/seed.js
 yarn dev
 ```
 
-Visit: http://localhost:3002
+Visit: http://localhost:3000
 
 ## 🏗️ Project Structure
 
@@ -107,7 +104,7 @@ bookyourspa/
 ├── lib/                  # Utilities
 │   ├── mongodb.js       # DB connection
 │   ├── jwt.js           # JWT helpers
-│   ├── twilio.js        # Twilio integration
+│   ├── fast2sms.js      # Fast2SMS integration
 │   └── utils.js         # Helper functions
 ├── models/               # MongoDB models
 │   ├── User.js
@@ -173,42 +170,18 @@ After running the seed script:
 - Royal Retreat Spa & Wellness (Ahmedabad)
 - Bliss Spa Gandhinagar (Gandhinagar)
 
-## 🔐 Twilio Integration
+## 🔐 Fast2SMS Integration
 
-### Currently Mocked
-The application is set up with mocked Twilio integration. All SMS/WhatsApp messages are logged to console.
+The application uses Fast2SMS for sending OTP messages via SMS.
 
-### To Enable Real Twilio:
-1. Sign up at [Twilio](https://www.twilio.com/)
-2. Get your Account SID, Auth Token, and Phone Number
-3. Update `.env.local` with real credentials
-4. The app will automatically switch from mocked to real API calls
+### Setup Instructions
+See `FAST2SMS_SETUP_GUIDE.md` for detailed setup instructions.
 
-### WhatsApp Messages
-
-**Customer Confirmation**:
-```
-Hi [Customer Name]
-
-Your spa booking has been confirmed by [Spa Name]
-
-Service: [Service Name]
-Location: [Spa Location]
-Date and Time: [Booking DateTime]
-```
-
-**Spa Owner Notification**:
-```
-Hello [Spa Owner Name]
-
-A new spa booking has been confirmed.
-
-Spa name: [Spa Name]
-Customer name: [Customer Name]
-Customer's phone no: [Customer Phone]
-Service: [Service Name]
-Date and Time: [Booking DateTime]
-```
+### Quick Setup:
+1. Sign up at [Fast2SMS](https://www.fast2sms.com/)
+2. Get your API key from the dashboard
+3. Update `.env.local` with `FAST2SMS_API_KEY`
+4. The app will automatically use Fast2SMS for OTP delivery
 
 ## 🎨 Design Features
 
@@ -226,8 +199,8 @@ Date and Time: [Booking DateTime]
 - **Frontend**: Next.js 15, React 19, Tailwind CSS
 - **Backend**: Next.js API Routes
 - **Database**: MongoDB with Mongoose
-- **Authentication**: JWT, Twilio OTP
-- **Notifications**: Twilio SMS/WhatsApp
+- **Authentication**: JWT, Fast2SMS OTP
+- **Notifications**: Fast2SMS SMS
 - **UI Components**: Custom components with Radix UI primitives
 - **Icons**: Lucide React
 
@@ -254,7 +227,7 @@ Date and Time: [Booking DateTime]
 - Payment integration
 - Image uploads (currently URL-based)
 - Email notifications
-- SMS notifications (in addition to WhatsApp)
+- WhatsApp notifications
 
 ## 📄 License
 
