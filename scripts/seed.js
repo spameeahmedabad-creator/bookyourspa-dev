@@ -126,7 +126,7 @@ async function seed() {
         email: String,
         website: String,
         facebook: String,
-        twitter: String,
+        whatsapp: String,
         instagram: String,
         skype: String
       },

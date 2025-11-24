@@ -85,7 +85,7 @@ export default function AddListingPage() {
       website: "",
       email: "",
       facebook: "",
-      twitter: "",
+      whatsapp: "",
       instagram: "",
       skype: "",
     },
@@ -684,21 +684,24 @@ export default function AddListingPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Twitter
+                    WhatsApp
                   </label>
                   <Input
-                    value={formData.contact.twitter}
+                    value={formData.contact.whatsapp}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
                         contact: {
                           ...formData.contact,
-                          twitter: e.target.value,
+                          whatsapp: e.target.value,
                         },
                       })
                     }
-                    placeholder="https://twitter.com/spa"
+                    placeholder="+91 98765 43210 or https://wa.me/919876543210"
                   />
+                  <p className="text-gray-500 text-xs mt-1">
+                    Enter phone number or WhatsApp link
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

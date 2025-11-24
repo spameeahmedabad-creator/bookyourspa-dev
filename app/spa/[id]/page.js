@@ -12,7 +12,7 @@ import {
   Mail,
   Globe,
   Facebook,
-  Twitter,
+  MessageCircle,
   Instagram,
   Navigation,
 } from "lucide-react";
@@ -247,14 +247,18 @@ export default function SpaDetailPage() {
                         <Facebook className="w-5 h-5" />
                       </a>
                     )}
-                    {spa.contact.twitter && (
+                    {spa.contact.whatsapp && (
                       <a
-                        href={spa.contact.twitter}
+                        href={
+                          spa.contact.whatsapp.startsWith("http")
+                            ? spa.contact.whatsapp
+                            : `https://wa.me/${spa.contact.whatsapp.replace(/[^0-9]/g, "")}`
+                        }
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-gray-600 hover:text-emerald-600"
                       >
-                        <Twitter className="w-5 h-5" />
+                        <MessageCircle className="w-5 h-5" />
                       </a>
                     )}
                     {spa.contact.instagram && (
