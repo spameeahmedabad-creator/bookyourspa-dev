@@ -138,7 +138,7 @@ export default function Navbar() {
                         Manage Users
                       </Link>
                     )}
-                    {(user.role === "admin" || user.role === "spa_owner") && (
+                    {user.role === "admin" && (
                       <Link
                         href="/dashboard/add-listing"
                         className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"

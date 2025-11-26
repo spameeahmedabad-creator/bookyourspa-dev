@@ -158,7 +158,7 @@ export default function Home() {
         <div className="relative z-50 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="text-center mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4 px-2 drop-shadow-lg">
-              Discover Your Perfect Spa Experience
+              Book The Best Spa & Massage in Ahmedabad and Gandhinagar
             </h1>
             <p className="text-sm sm:text-lg lg:text-xl text-emerald-50 max-w-2xl mx-auto px-4 drop-shadow-md">
               Find and book the best spa and wellness centers across Ahmedabad,

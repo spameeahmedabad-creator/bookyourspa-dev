@@ -207,7 +207,13 @@ export default function AdminUsersPage() {
                             setSelectedUser(user);
                             setShowEditModal(true);
                           }}
+                          disabled={user.role === "admin"}
                           data-testid={`edit-user-${user._id}`}
+                          title={
+                            user.role === "admin"
+                              ? "Cannot change role for admin users"
+                              : "Change user role"
+                          }
                         >
                           <Edit2 className="w-4 h-4 mr-1" />
                           Change Role
