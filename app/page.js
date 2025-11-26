@@ -125,11 +125,11 @@ export default function Home() {
 
       {/* Hero Section with Sliding Background Images */}
       <div
-        className="relative overflow-hidden py-8 sm:py-12 lg:py-16 min-h-[400px] sm:min-h-[500px] flex items-center"
+        className="relative py-8 sm:py-12 lg:py-16 min-h-[400px] sm:min-h-[500px] flex items-center"
         data-testid="hero-section"
       >
         {/* Sliding Background Images */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-0 overflow-hidden">
           {heroImages.length > 0 ? (
             <>
               {heroImages.map((img, index) => (
@@ -155,7 +155,7 @@ export default function Home() {
         </div>
 
         {/* Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div className="relative z-50 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="text-center mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4 px-2 drop-shadow-lg">
               Discover Your Perfect Spa Experience
@@ -172,7 +172,7 @@ export default function Home() {
         {/* Image indicators */}
         {heroImages.length > 1 && (
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex space-x-2">
-            {heroImages.map((_, index) => (
+            {/* {heroImages.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentImageIndex(index)}
@@ -183,7 +183,7 @@ export default function Home() {
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
               />
-            ))}
+            ))} */}
           </div>
         )}
       </div>
@@ -347,155 +347,6 @@ export default function Home() {
                 Transparent pricing with no hidden charges
               </p>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* FAQ Section */}
-      <div className="bg-gradient-to-b from-gray-50 via-emerald-50/20 to-gray-50 py-12 sm:py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-4">
-              Frequently Asked Questions
-            </h2>
-            <p className="text-lg text-gray-600">
-              Got questions? We've got answers
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <details className="bg-white rounded-lg shadow-sm hover:shadow-md p-6 group border border-emerald-100 transition-all duration-300">
-              <summary className="font-semibold text-lg cursor-pointer list-none flex justify-between items-center">
-                How do I book a spa appointment?
-                <span className="text-emerald-600 transition group-open:rotate-180">
-                  <svg
-                    width="20"
-                    height="20"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </span>
-              </summary>
-              <p className="mt-4 text-gray-600">
-                Simply search for your preferred spa, select your desired
-                service, choose date and time, and confirm your booking. You'll
-                receive instant confirmation via WhatsApp.
-              </p>
-            </details>
-
-            <details className="bg-white rounded-lg shadow-sm hover:shadow-md p-6 group border border-emerald-100 transition-all duration-300">
-              <summary className="font-semibold text-lg cursor-pointer list-none flex justify-between items-center">
-                Do I need to create an account to book?
-                <span className="text-emerald-600 transition group-open:rotate-180">
-                  <svg
-                    width="20"
-                    height="20"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </span>
-              </summary>
-              <p className="mt-4 text-gray-600">
-                No, you can book as a guest. However, creating an account allows
-                you to track bookings, save favorite spas, and get faster
-                checkout.
-              </p>
-            </details>
-
-            <details className="bg-white rounded-lg shadow-sm hover:shadow-md p-6 group border border-emerald-100 transition-all duration-300">
-              <summary className="font-semibold text-lg cursor-pointer list-none flex justify-between items-center">
-                What payment methods do you accept?
-                <span className="text-emerald-600 transition group-open:rotate-180">
-                  <svg
-                    width="20"
-                    height="20"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </span>
-              </summary>
-              <p className="mt-4 text-gray-600">
-                Currently, payment is made directly at the spa. Online payment
-                integration is coming soon!
-              </p>
-            </details>
-
-            <details className="bg-white rounded-lg shadow-sm hover:shadow-md p-6 group border border-emerald-100 transition-all duration-300">
-              <summary className="font-semibold text-lg cursor-pointer list-none flex justify-between items-center">
-                Can I cancel or reschedule my booking?
-                <span className="text-emerald-600 transition group-open:rotate-180">
-                  <svg
-                    width="20"
-                    height="20"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </span>
-              </summary>
-              <p className="mt-4 text-gray-600">
-                Yes, you can manage your bookings from the 'My Bookings'
-                section. Contact the spa directly for cancellation or
-                rescheduling.
-              </p>
-            </details>
-
-            <details className="bg-white rounded-lg shadow-sm hover:shadow-md p-6 group border border-emerald-100 transition-all duration-300">
-              <summary className="font-semibold text-lg cursor-pointer list-none flex justify-between items-center">
-                Are the spas verified?
-                <span className="text-emerald-600 transition group-open:rotate-180">
-                  <svg
-                    width="20"
-                    height="20"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </span>
-              </summary>
-              <p className="mt-4 text-gray-600">
-                Absolutely! All spas listed on BookYourSpa are verified for
-                quality, safety, and professional service standards.
-              </p>
-            </details>
           </div>
         </div>
       </div>

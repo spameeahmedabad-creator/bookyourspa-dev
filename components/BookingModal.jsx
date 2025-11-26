@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Combobox } from "@/components/ui/combobox";
+import Select from "react-select";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -23,6 +23,8 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
     service: "",
     datetime: "",
   });
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
   const [spas, setSpas] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -33,6 +35,9 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       if (!prefilledSpa) {
         fetchSpas();
       }
+      // Reset form when modal opens
+      setDate("");
+      setTime("");
     }
   }, [open, prefilledSpa]);
 
@@ -46,6 +51,16 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       setServices(prefilledSpa.services || []);
     }
   }, [prefilledSpa]);
+
+  // Update datetime when date or time changes
+  useEffect(() => {
+    if (date && time) {
+      const datetimeString = `${date}T${time}`;
+      setFormData((prev) => ({ ...prev, datetime: datetimeString }));
+    } else {
+      setFormData((prev) => ({ ...prev, datetime: "" }));
+    }
+  }, [date, time]);
 
   const fetchUser = async () => {
     try {
@@ -71,18 +86,63 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
     }
   };
 
-  const handleSpaChange = async (spaId) => {
-    const selectedSpa = spas.find((s) => s._id === spaId);
-    if (selectedSpa) {
+  const handleSpaChange = async (selectedOption) => {
+    if (selectedOption) {
+      const selectedSpa = spas.find((s) => s._id === selectedOption.value);
+      if (selectedSpa) {
+        setFormData((prev) => ({
+          ...prev,
+          spaId: selectedSpa._id,
+          spaName: selectedSpa.title,
+          service: "",
+        }));
+        setServices(selectedSpa.services || []);
+      }
+    } else {
       setFormData((prev) => ({
         ...prev,
-        spaId: selectedSpa._id,
-        spaName: selectedSpa.title,
+        spaId: "",
+        spaName: "",
         service: "",
       }));
-      setServices(selectedSpa.services || []);
+      setServices([]);
     }
   };
+
+  const handleServiceChange = (selectedOption) => {
+    if (selectedOption) {
+      setFormData((prev) => ({ ...prev, service: selectedOption.value }));
+    } else {
+      setFormData((prev) => ({ ...prev, service: "" }));
+    }
+  };
+
+  // Transform spas to react-select format
+  const spaOptions = spas.map((spa) => ({
+    value: spa._id,
+    label: spa.title,
+  }));
+
+  // Transform services to react-select format
+  const serviceOptions = services.map((service) => {
+    if (typeof service === "string") {
+      return { value: service, label: service };
+    }
+    return {
+      value: service.value || service.name || String(service),
+      label: service.name || service.label || String(service),
+    };
+  });
+
+  // Get selected spa option
+  const selectedSpaOption = spaOptions.find(
+    (option) => option.value === formData.spaId
+  );
+
+  // Get selected service option
+  const selectedServiceOption = serviceOptions.find(
+    (option) => option.value === formData.service
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -123,6 +183,8 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
         service: "",
         datetime: "",
       });
+      setDate("");
+      setTime("");
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to create booking");
     } finally {
@@ -180,16 +242,40 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Select Spa <span className="text-red-500">*</span>
             </label>
-            <Combobox
-              options={spas}
-              value={formData.spaId}
-              onChange={(spaId) => handleSpaChange(spaId)}
+            <Select
+              options={spaOptions}
+              value={selectedSpaOption}
+              onChange={handleSpaChange}
               placeholder="Select a spa..."
-              disabled={!!prefilledSpa}
-              searchPlaceholder="Search spas..."
-              getOptionLabel={(spa) => spa.title}
-              getOptionValue={(spa) => spa._id}
+              isDisabled={!!prefilledSpa}
+              isSearchable={true}
+              isClearable={true}
+              className="react-select-container"
+              classNamePrefix="react-select"
               data-testid="booking-spa-select"
+              styles={{
+                control: (baseStyles, state) => ({
+                  ...baseStyles,
+                  minHeight: "40px",
+                  borderColor: state.isFocused ? "#10b981" : "#d1d5db",
+                  boxShadow: state.isFocused ? "0 0 0 1px #10b981" : "none",
+                  "&:hover": {
+                    borderColor: state.isFocused ? "#10b981" : "#9ca3af",
+                  },
+                }),
+                option: (baseStyles, state) => ({
+                  ...baseStyles,
+                  backgroundColor: state.isSelected
+                    ? "#10b981"
+                    : state.isFocused
+                      ? "#d1fae5"
+                      : "white",
+                  color: state.isSelected ? "white" : "#111827",
+                  "&:hover": {
+                    backgroundColor: state.isSelected ? "#10b981" : "#d1fae5",
+                  },
+                }),
+              }}
             />
           </div>
 
@@ -197,24 +283,40 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Select Service <span className="text-red-500">*</span>
             </label>
-            <Combobox
-              options={services}
-              value={formData.service}
-              onChange={(service) => setFormData({ ...formData, service })}
+            <Select
+              options={serviceOptions}
+              value={selectedServiceOption}
+              onChange={handleServiceChange}
               placeholder="Select a service..."
-              disabled={!formData.spaId}
-              searchPlaceholder="Search services..."
-              getOptionLabel={(option) =>
-                typeof option === "string"
-                  ? option
-                  : option.name || String(option)
-              }
-              getOptionValue={(option) =>
-                typeof option === "string"
-                  ? option
-                  : option.value || String(option)
-              }
+              isDisabled={!formData.spaId}
+              isSearchable={true}
+              isClearable={true}
+              className="react-select-container"
+              classNamePrefix="react-select"
               data-testid="booking-service-select"
+              styles={{
+                control: (baseStyles, state) => ({
+                  ...baseStyles,
+                  minHeight: "40px",
+                  borderColor: state.isFocused ? "#10b981" : "#d1d5db",
+                  boxShadow: state.isFocused ? "0 0 0 1px #10b981" : "none",
+                  "&:hover": {
+                    borderColor: state.isFocused ? "#10b981" : "#9ca3af",
+                  },
+                }),
+                option: (baseStyles, state) => ({
+                  ...baseStyles,
+                  backgroundColor: state.isSelected
+                    ? "#10b981"
+                    : state.isFocused
+                      ? "#d1fae5"
+                      : "white",
+                  color: state.isSelected ? "white" : "#111827",
+                  "&:hover": {
+                    backgroundColor: state.isSelected ? "#10b981" : "#d1fae5",
+                  },
+                }),
+              }}
             />
           </div>
 
@@ -222,16 +324,29 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Date & Time <span className="text-red-500">*</span>
             </label>
-            <Input
-              type="datetime-local"
-              value={formData.datetime}
-              onChange={(e) =>
-                setFormData({ ...formData, datetime: e.target.value })
-              }
-              min={new Date().toISOString().slice(0, 16)}
-              required
-              data-testid="booking-datetime-input"
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]}
+                  required
+                  data-testid="booking-date-input"
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <Input
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  required
+                  data-testid="booking-time-input"
+                  className="w-full"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="flex space-x-3 pt-4">

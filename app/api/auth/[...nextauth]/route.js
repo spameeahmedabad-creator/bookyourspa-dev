@@ -3,6 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import { signToken } from "@/lib/jwt";
+import { NextRequest } from "next/server";
 
 const handler = NextAuth({
   providers: [
@@ -58,7 +59,10 @@ const handler = NextAuth({
         try {
           await dbConnect();
           const dbUser = await User.findOne({
-            $or: [{ email: user.email.toLowerCase() }, { googleId: account.providerAccountId }],
+            $or: [
+              { email: user.email.toLowerCase() },
+              { googleId: account.providerAccountId },
+            ],
           });
 
           if (dbUser) {
@@ -89,5 +93,10 @@ const handler = NextAuth({
   },
 });
 
-export { handler as GET, handler as POST };
+export async function GET(request, context) {
+  return handler(request, context);
+}
 
+export async function POST(request, context) {
+  return handler(request, context);
+}

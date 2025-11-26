@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,12 +16,8 @@ import Link from "next/link";
 import { validateEmail } from "@/lib/form-validation";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export default function LoginPage() {
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const [loading, setLoading] = useState(false);
-  const [emailError, setEmailError] = useState("");
+function ErrorHandler() {
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   useEffect(() => {
     const error = searchParams.get("error");
@@ -39,6 +35,15 @@ export default function LoginPage() {
       toast.error("OAuth error occurred. Please try again.");
     }
   }, [searchParams]);
+
+  return null;
+}
+
+function LoginForm() {
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const router = useRouter();
 
   const handleEmailChange = (e) => {
     const value = e.target.value;
@@ -246,5 +251,16 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <>
+      <Suspense fallback={null}>
+        <ErrorHandler />
+      </Suspense>
+      <LoginForm />
+    </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import axios from "axios";
 import Link from "next/link";
 import { validatePassword, validatePasswordMatch } from "@/lib/form-validation";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
@@ -96,10 +96,15 @@ export default function ResetPasswordPage() {
         token,
         newPassword: formData.password,
       });
-      toast.success("Password reset successful! You can now login with your new password.");
+      toast.success(
+        "Password reset successful! You can now login with your new password."
+      );
       router.push("/login");
     } catch (error) {
-      toast.error(error.response?.data?.error || "Failed to reset password. Please try again.");
+      toast.error(
+        error.response?.data?.error ||
+          "Failed to reset password. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -158,9 +163,7 @@ export default function ResetPasswordPage() {
         <Card>
           <CardHeader>
             <CardTitle>Reset Password</CardTitle>
-            <CardDescription>
-              Enter your new password below
-            </CardDescription>
+            <CardDescription>Enter your new password below</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -231,3 +234,30 @@ export default function ResetPasswordPage() {
   );
 }
 
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md">
+            <Link href="/" className="block text-center mb-8">
+              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                BookYourSpa
+              </h1>
+            </Link>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <div className="mx-auto w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p className="text-gray-700">Loading...</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
+  );
+}
