@@ -123,6 +123,12 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
     label: spa.title,
   }));
 
+  // If prefilledSpa is provided, add it to options if not already present
+  const allSpaOptions =
+    prefilledSpa && !spaOptions.find((opt) => opt.value === prefilledSpa._id)
+      ? [{ value: prefilledSpa._id, label: prefilledSpa.title }, ...spaOptions]
+      : spaOptions;
+
   // Transform services to react-select format
   const serviceOptions = services.map((service) => {
     if (typeof service === "string") {
@@ -135,7 +141,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   });
 
   // Get selected spa option
-  const selectedSpaOption = spaOptions.find(
+  const selectedSpaOption = allSpaOptions.find(
     (option) => option.value === formData.spaId
   );
 
@@ -243,7 +249,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
               Select Spa <span className="text-red-500">*</span>
             </label>
             <Select
-              options={spaOptions}
+              options={allSpaOptions}
               value={selectedSpaOption}
               onChange={handleSpaChange}
               placeholder="Select a spa..."
