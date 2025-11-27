@@ -4,11 +4,23 @@ import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function GallerySlider({ images, spaTitle }) {
-  const [currentIndex, setCurrentIndex] = useState(0);
+export default function GallerySlider({
+  images,
+  spaTitle,
+  initialIndex = 0,
+  disableFullscreen = false,
+}) {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
+
+  // Update currentIndex when initialIndex changes (e.g., when modal opens)
+  useEffect(() => {
+    if (initialIndex >= 0 && initialIndex < images.length) {
+      setCurrentIndex(initialIndex);
+    }
+  }, [initialIndex, images.length]);
 
   // Minimum swipe distance (in pixels)
   const minSwipeDistance = 50;
@@ -104,8 +116,14 @@ export default function GallerySlider({ images, spaTitle }) {
         <img
           src={images[currentIndex]}
           alt={`${spaTitle} - Image ${currentIndex + 1}`}
-          className="w-full h-full object-contain cursor-pointer transition-opacity duration-300"
-          onClick={() => !isFullscreenMode && setIsFullscreen(true)}
+          className="w-full h-full object-contain transition-opacity duration-300"
+          style={{
+            cursor:
+              !isFullscreenMode && !disableFullscreen ? "pointer" : "default",
+          }}
+          onClick={() =>
+            !isFullscreenMode && !disableFullscreen && setIsFullscreen(true)
+          }
         />
 
         {/* Navigation Arrows */}
@@ -206,4 +224,3 @@ export default function GallerySlider({ images, spaTitle }) {
     </>
   );
 }
-

@@ -16,6 +16,7 @@ import {
   Instagram,
   Navigation,
   Bookmark,
+  X,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -28,6 +29,9 @@ export default function SpaDetailPage() {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [user, setUser] = useState(null);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [pricingExpanded, setPricingExpanded] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -35,6 +39,25 @@ export default function SpaDetailPage() {
       checkBookmarkStatus();
     }
   }, [params.id]);
+
+  // Prevent body scroll when gallery modal is open and handle ESC key
+  useEffect(() => {
+    if (showGalleryModal) {
+      document.body.style.overflow = "hidden";
+      const handleEsc = (e) => {
+        if (e.key === "Escape") {
+          setShowGalleryModal(false);
+        }
+      };
+      window.addEventListener("keydown", handleEsc);
+      return () => {
+        document.body.style.overflow = "unset";
+        window.removeEventListener("keydown", handleEsc);
+      };
+    } else {
+      document.body.style.overflow = "unset";
+    }
+  }, [showGalleryModal]);
 
   const fetchSpaDetails = async () => {
     try {
@@ -51,9 +74,11 @@ export default function SpaDetailPage() {
     try {
       const userRes = await axios.get("/api/auth/me");
       setUser(userRes.data.user);
-      
+
       const bookmarksRes = await axios.get("/api/bookmarks");
-      const bookmarkedIds = bookmarksRes.data.bookmarks.map((b) => String(b._id || b));
+      const bookmarkedIds = bookmarksRes.data.bookmarks.map((b) =>
+        String(b._id || b)
+      );
       setIsBookmarked(bookmarkedIds.includes(String(params.id)));
     } catch (error) {
       // User not authenticated
@@ -123,8 +148,33 @@ export default function SpaDetailPage() {
         className="max-w-6xl mx-auto px-4 py-4 sm:py-8"
         data-testid="spa-detail-page"
       >
-        {/* logo */}
-        {spa.logo && (
+        {/* Gallery Grid - Replaces logo section */}
+        {spa.gallery && spa.gallery.length > 0 && (
+          <div className="mb-6 sm:mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
+              {spa.gallery.map((image, index) => (
+                <div
+                  key={index}
+                  className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group hover:opacity-90 transition-opacity"
+                  onClick={() => {
+                    setSelectedImageIndex(index);
+                    setShowGalleryModal(true);
+                  }}
+                >
+                  <img
+                    src={image}
+                    alt={`${spa.title} - Image ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Fallback to logo if no gallery */}
+        {(!spa.gallery || spa.gallery.length === 0) && spa.logo && (
           <div className="mb-6 sm:mb-8 rounded-lg overflow-hidden">
             <img
               src={spa.logo}
@@ -202,7 +252,10 @@ export default function SpaDetailPage() {
               <div className="bg-white p-6 rounded-lg shadow">
                 <h2 className="text-2xl font-semibold mb-4">Pricing</h2>
                 <div className="space-y-4">
-                  {spa.pricing.map((item, index) => (
+                  {(pricingExpanded
+                    ? spa.pricing
+                    : spa.pricing.slice(0, 6)
+                  ).map((item, index) => (
                     <div key={index} className="border-b pb-4 last:border-b-0">
                       <div className="flex justify-between items-start">
                         <div>
@@ -222,13 +275,19 @@ export default function SpaDetailPage() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-            {/* Gallery */}
-            {spa.gallery && spa.gallery.length > 0 && (
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h2 className="text-2xl font-semibold mb-4">Gallery</h2>
-                <GallerySlider images={spa.gallery} spaTitle={spa.title} />
+                {spa.pricing.length > 6 && (
+                  <div className="mt-4 text-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => setPricingExpanded(!pricingExpanded)}
+                      className="text-emerald-600 border-emerald-600 hover:bg-emerald-50"
+                    >
+                      {pricingExpanded
+                        ? "Show Less"
+                        : `Show All (${spa.pricing.length - 6} more)`}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -346,6 +405,34 @@ export default function SpaDetailPage() {
         onClose={() => setShowBookingModal(false)}
         prefilledSpa={spa}
       />
+
+      {/* Gallery Modal */}
+      {showGalleryModal && spa.gallery && spa.gallery.length > 0 && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+          onClick={() => setShowGalleryModal(false)}
+        >
+          <button
+            onClick={() => setShowGalleryModal(false)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 z-50 p-2"
+            aria-label="Close gallery"
+          >
+            <X className="w-8 h-8" />
+          </button>
+
+          <div
+            className="relative w-full max-w-7xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GallerySlider
+              images={spa.gallery}
+              spaTitle={spa.title}
+              initialIndex={selectedImageIndex}
+              disableFullscreen={true}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
