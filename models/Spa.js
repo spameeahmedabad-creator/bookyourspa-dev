@@ -38,6 +38,22 @@ const SpaSchema = new mongoose.Schema({
     instagram: String,
     skype: String,
   },
+  storeHours: {
+    openingTime: {
+      type: String,
+      required: true,
+      default: "09:00",
+    },
+    closingTime: {
+      type: String,
+      required: true,
+      default: "21:00",
+    },
+    sundayClosed: {
+      type: Boolean,
+      default: false,
+    },
+  },
   pricing: [PricingItemSchema],
   ownerId: {
     type: mongoose.Schema.Types.ObjectId,

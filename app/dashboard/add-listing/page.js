@@ -107,6 +107,11 @@ function AddListingPageContent() {
           instagram: spa.contact?.instagram || "",
           skype: spa.contact?.skype || "",
         },
+        storeHours: {
+          openingTime: spa.storeHours?.openingTime || "09:00",
+          closingTime: spa.storeHours?.closingTime || "21:00",
+          sundayClosed: spa.storeHours?.sundayClosed || false,
+        },
         pricing:
           spa.pricing && spa.pricing.length > 0
             ? spa.pricing.map((p) => ({
@@ -158,6 +163,11 @@ function AddListingPageContent() {
       instagram: "",
       skype: "",
     },
+    storeHours: {
+      openingTime: "09:00",
+      closingTime: "21:00",
+      sundayClosed: false,
+    },
     pricing: [
       {
         image: "",
@@ -193,24 +203,30 @@ function AddListingPageContent() {
       return;
     }
 
-    // Validate phone (if provided)
-    if (formData.contact.phone && formData.contact.phone.trim() !== "") {
-      const phoneValidation = validatePhone(formData.contact.phone, "IN");
-      if (!phoneValidation.isValid) {
-        setErrors((prev) => ({ ...prev, phone: phoneValidation.error }));
-        toast.error(`Phone: ${phoneValidation.error}`);
-        return;
-      }
+    // Validate phone (required)
+    if (!formData.contact.phone || formData.contact.phone.trim() === "") {
+      setErrors((prev) => ({ ...prev, phone: "Phone number is required" }));
+      toast.error("Phone number is required");
+      return;
+    }
+    const phoneValidation = validatePhone(formData.contact.phone, "IN");
+    if (!phoneValidation.isValid) {
+      setErrors((prev) => ({ ...prev, phone: phoneValidation.error }));
+      toast.error(`Phone: ${phoneValidation.error}`);
+      return;
     }
 
-    // Validate email (if provided)
-    if (formData.contact.email && formData.contact.email.trim() !== "") {
-      const emailValidation = validateEmail(formData.contact.email);
-      if (!emailValidation.isValid) {
-        setErrors((prev) => ({ ...prev, email: emailValidation.error }));
-        toast.error(`Email: ${emailValidation.error}`);
-        return;
-      }
+    // Validate email (required)
+    if (!formData.contact.email || formData.contact.email.trim() === "") {
+      setErrors((prev) => ({ ...prev, email: "Email is required" }));
+      toast.error("Email is required");
+      return;
+    }
+    const emailValidation = validateEmail(formData.contact.email);
+    if (!emailValidation.isValid) {
+      setErrors((prev) => ({ ...prev, email: emailValidation.error }));
+      toast.error(`Email: ${emailValidation.error}`);
+      return;
     }
 
     // Validate website (if provided)
@@ -447,6 +463,73 @@ function AddListingPageContent() {
                   data-testid="listing-description-input"
                 />
               </div>
+
+              <div className="border-t pt-4 mt-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Store Hours
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Opening Time <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      type="time"
+                      value={formData.storeHours.openingTime}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          storeHours: {
+                            ...formData.storeHours,
+                            openingTime: e.target.value,
+                          },
+                        })
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Closing Time <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      type="time"
+                      value={formData.storeHours.closingTime}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          storeHours: {
+                            ...formData.storeHours,
+                            closingTime: e.target.value,
+                          },
+                        })
+                      }
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.storeHours.sundayClosed}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          storeHours: {
+                            ...formData.storeHours,
+                            sundayClosed: e.target.checked,
+                          },
+                        })
+                      }
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Closed on Sunday
+                    </span>
+                  </label>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -607,7 +690,7 @@ function AddListingPageContent() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone
+                    Phone <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="tel"
@@ -627,7 +710,7 @@ function AddListingPageContent() {
                       }
                     }}
                     onBlur={() => {
-                      // Validate on blur if phone is provided
+                      // Validate on blur
                       if (
                         formData.contact.phone &&
                         formData.contact.phone.trim() !== ""
@@ -645,6 +728,7 @@ function AddListingPageContent() {
                       }
                     }}
                     placeholder="+91 98765 43210"
+                    required
                     className={
                       errors.phone
                         ? "border-red-500 focus-visible:ring-red-500"
@@ -660,7 +744,7 @@ function AddListingPageContent() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
+                    Email <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="email"
@@ -676,7 +760,7 @@ function AddListingPageContent() {
                       }
                     }}
                     onBlur={() => {
-                      // Validate on blur if email is provided
+                      // Validate on blur
                       if (
                         formData.contact.email &&
                         formData.contact.email.trim() !== ""
@@ -693,6 +777,7 @@ function AddListingPageContent() {
                       }
                     }}
                     placeholder="contact@spa.com"
+                    required
                     className={
                       errors.email
                         ? "border-red-500 focus-visible:ring-red-500"

@@ -18,6 +18,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const [formData, setFormData] = useState({
     customerName: "",
     customerPhone: "",
+    customerEmail: "",
     spaId: "",
     spaName: "",
     service: "",
@@ -27,7 +28,9 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const [time, setTime] = useState("");
   const [spas, setSpas] = useState([]);
   const [services, setServices] = useState([]);
+  const [selectedSpaData, setSelectedSpaData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [timeError, setTimeError] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -49,18 +52,67 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
         spaName: prefilledSpa.title,
       }));
       setServices(prefilledSpa.services || []);
+      setSelectedSpaData(prefilledSpa);
     }
   }, [prefilledSpa]);
+
+  // Validate time against store hours
+  const validateBookingTime = (selectedDate, selectedTime) => {
+    if (!selectedSpaData || !selectedDate || !selectedTime) {
+      setTimeError("");
+      return true;
+    }
+
+    const bookingDate = new Date(selectedDate);
+    const dayOfWeek = bookingDate.getDay(); // 0 = Sunday
+
+    // Check if booking is on Sunday and spa is closed on Sunday
+    if (dayOfWeek === 0 && selectedSpaData.storeHours?.sundayClosed) {
+      setTimeError("This spa is closed on Sundays. Please select another day.");
+      return false;
+    }
+
+    // Validate time is within store hours
+    if (
+      selectedSpaData.storeHours?.openingTime &&
+      selectedSpaData.storeHours?.closingTime
+    ) {
+      const openingTime = selectedSpaData.storeHours.openingTime;
+      const closingTime = selectedSpaData.storeHours.closingTime;
+
+      const timeToMinutes = (timeStr) => {
+        const [hours, minutes] = timeStr.split(":").map(Number);
+        return hours * 60 + minutes;
+      };
+
+      const openingMinutes = timeToMinutes(openingTime);
+      const closingMinutes = timeToMinutes(closingTime);
+      const bookingMinutes = timeToMinutes(selectedTime);
+
+      if (bookingMinutes < openingMinutes || bookingMinutes >= closingMinutes) {
+        setTimeError(
+          `Booking time must be between ${openingTime} and ${closingTime}. This spa is open from ${openingTime} to ${closingTime}.`
+        );
+        return false;
+      }
+    }
+
+    setTimeError("");
+    return true;
+  };
 
   // Update datetime when date or time changes
   useEffect(() => {
     if (date && time) {
       const datetimeString = `${date}T${time}`;
       setFormData((prev) => ({ ...prev, datetime: datetimeString }));
+      // Validate time
+      validateBookingTime(date, time);
     } else {
       setFormData((prev) => ({ ...prev, datetime: "" }));
+      setTimeError("");
     }
-  }, [date, time]);
+  }, [date, time, selectedSpaData]);
 
   const fetchUser = async () => {
     try {
@@ -71,6 +123,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
         ...prev,
         customerName: userData.name,
         customerPhone: userData.phone,
+        customerEmail: userData.email || "",
       }));
     } catch (error) {
       setUser(null);
@@ -90,13 +143,30 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
     if (selectedOption) {
       const selectedSpa = spas.find((s) => s._id === selectedOption.value);
       if (selectedSpa) {
-        setFormData((prev) => ({
-          ...prev,
-          spaId: selectedSpa._id,
-          spaName: selectedSpa.title,
-          service: "",
-        }));
-        setServices(selectedSpa.services || []);
+        // Fetch full spa details including store hours
+        try {
+          const response = await axios.get(`/api/spas/${selectedSpa._id}`);
+          const fullSpaData = response.data.spa;
+          setSelectedSpaData(fullSpaData);
+          setFormData((prev) => ({
+            ...prev,
+            spaId: fullSpaData._id,
+            spaName: fullSpaData.title,
+            service: "",
+          }));
+          setServices(fullSpaData.services || []);
+        } catch (error) {
+          console.error("Failed to fetch spa details:", error);
+          // Fallback to basic data
+          setSelectedSpaData(selectedSpa);
+          setFormData((prev) => ({
+            ...prev,
+            spaId: selectedSpa._id,
+            spaName: selectedSpa.title,
+            service: "",
+          }));
+          setServices(selectedSpa.services || []);
+        }
       }
     } else {
       setFormData((prev) => ({
@@ -106,6 +176,8 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
         service: "",
       }));
       setServices([]);
+      setSelectedSpaData(null);
+      setTimeError("");
     }
   };
 
@@ -164,6 +236,12 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       return;
     }
 
+    // Validate booking time before submitting
+    if (!validateBookingTime(date, time)) {
+      toast.error(timeError);
+      return;
+    }
+
     setLoading(true);
     try {
       // Parse datetime to separate date and time for API compatibility
@@ -179,11 +257,15 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       delete bookingData.datetime;
 
       const response = await axios.post("/api/bookings", bookingData);
-      toast.success("Booking confirmed! Check your WhatsApp for confirmation.");
+      const emailMessage = formData.customerEmail
+        ? " Check your email and WhatsApp for confirmation."
+        : " Check your WhatsApp for confirmation.";
+      toast.success("Booking confirmed!" + emailMessage);
       onClose();
       setFormData({
         customerName: "",
         customerPhone: "",
+        customerEmail: "",
         spaId: "",
         spaName: "",
         service: "",
@@ -241,6 +323,21 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
               placeholder="+91 1234567890"
               required
               data-testid="booking-phone-input"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email Address{" "}
+            </label>
+            <Input
+              type="email"
+              value={formData.customerEmail}
+              onChange={(e) =>
+                setFormData({ ...formData, customerEmail: e.target.value })
+              }
+              placeholder="your.email@example.com"
+              data-testid="booking-email-input"
             />
           </div>
 
@@ -335,24 +432,65 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
                 <Input
                   type="date"
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={(e) => {
+                    setDate(e.target.value);
+                    // Re-validate when date changes
+                    if (e.target.value && time) {
+                      validateBookingTime(e.target.value, time);
+                    }
+                  }}
                   min={new Date().toISOString().split("T")[0]}
                   required
                   data-testid="booking-date-input"
-                  className="w-full"
+                  className={`w-full ${
+                    timeError && timeError.includes("Sunday")
+                      ? "border-red-500"
+                      : ""
+                  }`}
                 />
               </div>
               <div>
                 <Input
                   type="time"
                   value={time}
-                  onChange={(e) => setTime(e.target.value)}
+                  onChange={(e) => {
+                    setTime(e.target.value);
+                    // Re-validate when time changes
+                    if (date && e.target.value) {
+                      validateBookingTime(date, e.target.value);
+                    }
+                  }}
+                  min={
+                    selectedSpaData?.storeHours?.openingTime
+                      ? selectedSpaData.storeHours.openingTime
+                      : undefined
+                  }
+                  max={
+                    selectedSpaData?.storeHours?.closingTime
+                      ? selectedSpaData.storeHours.closingTime
+                      : undefined
+                  }
                   required
                   data-testid="booking-time-input"
-                  className="w-full"
+                  className={`w-full ${
+                    timeError && !timeError.includes("Sunday")
+                      ? "border-red-500"
+                      : ""
+                  }`}
                 />
               </div>
             </div>
+            {timeError && (
+              <p className="text-red-500 text-xs mt-1">{timeError}</p>
+            )}
+            {selectedSpaData?.storeHours && (
+              <p className="text-gray-500 text-xs mt-1">
+                Store hours: {selectedSpaData.storeHours.openingTime} -{" "}
+                {selectedSpaData.storeHours.closingTime}
+                {selectedSpaData.storeHours.sundayClosed &&
+                  " (Closed on Sunday)"}
+              </p>
+            )}
           </div>
 
           <div className="flex space-x-3 pt-4">
