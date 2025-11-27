@@ -921,6 +921,18 @@ export default function Home() {
 
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
             <p>&copy; 2025 BookYourSpa. All rights reserved.</p>
+            <p className="mt-2">
+              Created by{" "}
+              <a
+                href="https://www.thitainfo.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                ThitaInfo
+              </a>{" "}
+              with ❤️
+            </p>
           </div>
         </div>
       </footer>

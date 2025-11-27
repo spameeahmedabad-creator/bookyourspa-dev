@@ -1,210 +1,178 @@
-# BookYourSpa - Spa Booking Platform
+# BookYourSpa
 
-A comprehensive Next.js application for discovering and booking spa and wellness centers across cities.
+A modern spa booking platform built with Next.js for discovering and booking spa and wellness centers.
 
-## 🚀 Features
+## Overview
 
-### Authentication
-- **OTP-based Login**: Phone number + OTP verification via Fast2SMS
-- **Role-based Access**: Customer, Spa Owner, and Admin roles
-- **JWT Authentication**: Secure session management
+BookYourSpa is a comprehensive web application that connects customers with spa and wellness centers. Users can search, discover, and book spa services with ease, while spa owners can manage their listings and bookings through an intuitive dashboard.
+
+## Features
+
+### Authentication & User Management
+
+- **Multiple Login Options**: Email/password, Google OAuth, and phone OTP authentication
+- **Email Verification**: Secure email verification for new registrations
+- **Password Recovery**: Forgot password functionality with email reset links
+- **Role-Based Access**: Three user roles - Customer, Spa Owner, and Admin
+- **Secure Sessions**: JWT-based authentication with secure cookie management
 
 ### Spa Discovery
-- **Search Functionality**: Search by spa name, location, or services
-- **Auto-complete Suggestions**: Real-time search results
-- **Paginated Listings**: 3 columns × 2 rows per page
-- **Spa Detail Pages**: Complete information with gallery, services, pricing
+
+- **Advanced Search**: Search spas by name, location, or services
+- **Real-time Suggestions**: Auto-complete search functionality
+- **Filtering**: Filter by city and service type
+- **Detailed Listings**: Comprehensive spa information including gallery, services, pricing, and contact details
+- **Responsive Design**: Optimized for mobile, tablet, and desktop devices
 
 ### Booking System
-- **Guest & Authenticated Booking**: Book with or without login
-- **Auto-fill for Logged Users**: Name and phone pre-filled
-- **WhatsApp Notifications**: 
-  - Customer confirmation messages
-  - Spa owner booking notifications
-- **Real-time Dashboard Sync**: Bookings visible across all relevant dashboards
+
+- **Flexible Booking**: Book appointments as a guest or authenticated user
+- **Smart Forms**: Auto-filled booking forms for logged-in users
+- **Booking Management**: View and manage bookings through personalized dashboards
+- **Role-Specific Views**: Different booking views for customers, spa owners, and admins
 
 ### Dashboard Features
-- **My Bookings**: Role-filtered booking views
-  - Customers: See their own bookings
-  - Spa Owners: See bookings for their spas
-  - Admin: See all bookings
-- **Add Listing**: Create new spa listings with:
-  - Basic info (title, logo, services, description)
-  - Location details (address, region, coordinates)
-  - Gallery images
-  - Contact information (phone, email, social media)
-  - Pricing with multiple service options
-- **Bookmarks**: Save favorite spas (coming soon)
-- **Messages**: Communication hub (coming soon)
 
-## 📋 Prerequisites
+- **My Bookings**: View all bookings filtered by user role
+- **Add Listing**: Spa owners can create and manage their spa listings
+- **Image Management**: Upload and manage spa images using Cloudinary
+- **Admin Panel**: Comprehensive admin dashboard for managing users, spas, and bookings
+- **Bookmarks**: Save favorite spas for quick access
+- **Messages**: Communication hub for users
 
-- Node.js 18+ 
-- MongoDB
-- Yarn package manager
-- Fast2SMS account (for SMS - see FAST2SMS_SETUP_GUIDE.md)
+### Additional Features
 
-## 🛠️ Installation
+- **Modern UI**: Beautiful, responsive interface built with Tailwind CSS
+- **Toast Notifications**: User-friendly notifications for all actions
+- **Form Validation**: Comprehensive client and server-side validation
+- **Rate Limiting**: Protection against abuse and spam
+- **Image Uploads**: Cloudinary integration for seamless image management
 
-1. **Install dependencies**:
-```bash
-cd /app/bookyourspa
-yarn install
-```
+## Tech Stack
 
-2. **Set up environment variables**:
-Edit `.env.local` file:
-```env
-MONGODB_URI=mongodb://localhost:27017/bookyourspa
-JWT_SECRET=your-secret-key
-
-# Fast2SMS Credentials (for SMS OTP)
-FAST2SMS_API_KEY=your_fast2sms_api_key
-
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-3. **Seed sample data** (optional):
-```bash
-node scripts/seed.js
-```
-
-4. **Run development server**:
-```bash
-yarn dev
-```
-
-Visit: http://localhost:3000
-
-## 🏗️ Project Structure
-
-```
-bookyourspa/
-├── app/
-│   ├── api/              # API routes
-│   │   ├── auth/         # Authentication endpoints
-│   │   ├── spas/         # Spa CRUD & search
-│   │   └── bookings/     # Booking management
-│   ├── dashboard/        # Dashboard pages
-│   │   ├── bookings/
-│   │   ├── add-listing/
-│   │   ├── bookmarks/
-│   │   └── messages/
-│   ├── login/            # Login page
-│   ├── spa/[id]/         # Spa detail page
-│   ├── layout.js         # Root layout
-│   ├── page.js           # Home page
-│   └── globals.css       # Global styles
-├── components/           # React components
-│   ├── ui/              # UI components
-│   ├── Navbar.jsx
-│   ├── SearchBar.jsx
-│   ├── SpaCard.jsx
-│   └── BookingModal.jsx
-├── lib/                  # Utilities
-│   ├── mongodb.js       # DB connection
-│   ├── jwt.js           # JWT helpers
-│   ├── fast2sms.js      # Fast2SMS integration
-│   └── utils.js         # Helper functions
-├── models/               # MongoDB models
-│   ├── User.js
-│   ├── Spa.js
-│   ├── Booking.js
-│   └── OTPSession.js
-├── middleware.js         # Next.js middleware
-└── scripts/
-    └── seed.js          # Database seeding
-
-```
-
-## 🎯 API Endpoints
-
-### Authentication
-- `POST /api/auth/send-otp` - Send OTP to phone
-- `POST /api/auth/verify-otp` - Verify OTP and login
-- `POST /api/auth/logout` - Logout user
-- `GET /api/auth/me` - Get current user
-
-### Spas
-- `GET /api/spas` - List all spas (paginated)
-- `GET /api/spas/[id]` - Get single spa
-- `POST /api/spas` - Create spa (Admin/Owner)
-- `PUT /api/spas/[id]` - Update spa (Owner/Admin)
-- `DELETE /api/spas/[id]` - Delete spa (Admin)
-- `GET /api/spas/search?q=query` - Search spas
-
-### Bookings
-- `GET /api/bookings` - Get bookings (role-filtered)
-- `POST /api/bookings` - Create booking
-
-## 👥 User Roles
-
-### Customer
-- Browse and search spas
-- View spa details
-- Book appointments
-- View own bookings
-- Bookmark spas
-
-### Spa Owner
-- All Customer permissions
-- Add/edit their own spa listings
-- View bookings for their spas
-
-### Admin
-- All permissions
-- View all bookings
-- Manage all spas
-- User management
-
-## 🧪 Test Credentials
-
-After running the seed script:
-
-**Admin Account**:
-- Phone: `+919999999999`
-- Login to get OTP (displayed in console during development)
-
-**Sample Spas**:
-- Serenity Wellness Spa (Ahmedabad)
-- Royal Retreat Spa & Wellness (Ahmedabad)
-- Bliss Spa Gandhinagar (Gandhinagar)
-
-## 🔐 Fast2SMS Integration
-
-The application uses Fast2SMS for sending OTP messages via SMS.
-
-### Setup Instructions
-See `FAST2SMS_SETUP_GUIDE.md` for detailed setup instructions.
-
-### Quick Setup:
-1. Sign up at [Fast2SMS](https://www.fast2sms.com/)
-2. Get your API key from the dashboard
-3. Update `.env.local` with `FAST2SMS_API_KEY`
-4. The app will automatically use Fast2SMS for OTP delivery
-
-## 🎨 Design Features
-
-- Modern, clean UI with Tailwind CSS
-- Gradient backgrounds (emerald to teal theme)
-- Responsive design (mobile, tablet, desktop)
-- Loading states and animations
-- Toast notifications (sonner)
-- Form validation
-- Search autocomplete
-- Pagination
-
-## 🔧 Tech Stack
-
-- **Frontend**: Next.js 15, React 19, Tailwind CSS
-- **Backend**: Next.js API Routes
+- **Framework**: Next.js 15
+- **UI Library**: React 19
+- **Styling**: Tailwind CSS
 - **Database**: MongoDB with Mongoose
-- **Authentication**: JWT, Fast2SMS OTP
-- **Notifications**: Fast2SMS SMS
+- **Authentication**: NextAuth.js, JWT
+- **Image Storage**: Cloudinary
+- **Email**: Nodemailer with React Email
+- **SMS**: Fast2SMS
 - **UI Components**: Custom components with Radix UI primitives
 - **Icons**: Lucide React
 
-## 📝 Available Services
+## Prerequisites
+
+- Node.js 18 or higher
+- MongoDB database
+- Yarn package manager
+- Fast2SMS account (for SMS OTP)
+- Cloudinary account (for image uploads)
+- Email service (for email verification and password reset)
+- Google OAuth credentials (for Google login)
+
+## Getting Started
+
+1. **Clone the repository**
+
+   ```bash
+   git clone <repository-url>
+   cd bookyourspa
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   yarn install
+   ```
+
+3. **Set up environment variables**
+
+   Create a `.env.local` file in the root directory with the following variables:
+
+   ```env
+   # Database
+   MONGODB_URI=your_mongodb_connection_string
+
+   # Authentication
+   JWT_SECRET=your_jwt_secret_key
+   NEXT_AUTH_SECRET=your_nextauth_secret
+   NEXT_AUTH_URL=http://localhost:3000
+
+   # Google OAuth
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+   # Fast2SMS (for SMS OTP)
+   FAST2SMS_API_KEY=your_fast2sms_api_key
+
+   # Cloudinary (for image uploads)
+   CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+   CLOUDINARY_API_KEY=your_cloudinary_api_key
+   CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+
+   # Email Configuration
+   EMAIL_HOST=your_email_smtp_host
+   EMAIL_PORT=587
+   EMAIL_USER=your_email_address
+   EMAIL_PASSWORD=your_email_password
+   EMAIL_FROM=your_from_email_address
+
+   # App Configuration
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
+   ```
+
+4. **Run database migrations** (if applicable)
+
+   ```bash
+   node scripts/migrate-users-to-email.js
+   ```
+
+5. **Seed sample data** (optional)
+
+   ```bash
+   node scripts/seed.js
+   ```
+
+6. **Start the development server**
+
+   ```bash
+   yarn dev
+   ```
+
+7. **Open your browser**
+
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## User Roles
+
+### Customer
+
+- Browse and search spas
+- View detailed spa information
+- Book spa appointments
+- Manage personal bookings
+- Bookmark favorite spas
+
+### Spa Owner
+
+- All customer features
+- Create and manage spa listings
+- Upload spa images
+- View bookings for their spas
+- Manage spa information and pricing
+
+### Admin
+
+- Full system access
+- Manage all users and spas
+- View all bookings
+- User role management
+- System administration
+
+## Available Services
+
+The platform supports various spa services including:
 
 - Couple Massage
 - Deep Tissue Massage
@@ -218,21 +186,27 @@ See `FAST2SMS_SETUP_GUIDE.md` for detailed setup instructions.
 - Shirodhara Massage
 - Swedish Massage
 
-## 🚧 Coming Soon
+## Project Structure
 
-- Bookmarks functionality
-- Messages/Chat system
-- Advanced filters
-- Rating and reviews
-- Payment integration
-- Image uploads (currently URL-based)
-- Email notifications
-- WhatsApp notifications
+The project follows Next.js App Router conventions with organized directories for:
 
-## 📄 License
+- API routes for backend functionality
+- React components for UI
+- Database models and utilities
+- Authentication and middleware
+- Configuration files
+
+## Development
+
+- **Development Server**: `yarn dev`
+- **Build**: `yarn build`
+- **Production**: `yarn start`
+- **Linting**: `yarn lint`
+
+## License
 
 Private project for BookYourSpa
 
-## 🤝 Support
+## Support
 
-For support, contact the development team or refer to the documentation.
+For support and inquiries, please contact the development team.
