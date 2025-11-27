@@ -31,7 +31,7 @@ const AVAILABLE_SERVICES = [
   "Swedish Massage",
 ];
 
-export default function AddListingPage() {
+function AddListingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editSpaId = searchParams.get("edit");
@@ -919,5 +919,25 @@ export default function AddListingPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function AddListingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50">
+          <Navbar />
+          <div className="max-w-4xl mx-auto px-4 py-4 sm:py-8">
+            <div className="animate-pulse space-y-4">
+              <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-64 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <AddListingPageContent />
+    </Suspense>
   );
 }

@@ -49,9 +49,30 @@ export default function Navbar() {
     router.push("/?booking=true");
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showDropdown &&
+        !event.target.closest('[data-testid="user-menu-button"]') &&
+        !event.target.closest('[data-testid="user-dropdown"]')
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDropdown]);
+
   return (
     <nav
-      className="bg-white shadow-md sticky top-0 z-40"
+      className="bg-white shadow-md sticky top-0 z-[100]"
       data-testid="main-navbar"
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -110,7 +131,8 @@ export default function Navbar() {
 
                 {showDropdown && (
                   <div
-                    className="absolute right-0 mt-2 w-48 sm:w-56 bg-white rounded-lg shadow-lg border py-2 z-50"
+                    className="absolute right-0 mt-2 w-48 sm:w-56 bg-white rounded-lg shadow-2xl border border-gray-200 py-2 z-[9999]"
+                    style={{ isolation: "isolate" }}
                     data-testid="user-dropdown"
                   >
                     <Link
