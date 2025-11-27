@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,11 @@ const AVAILABLE_SERVICES = [
 
 export default function AddListingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editSpaId = searchParams.get("edit");
+  const isEditMode = !!editSpaId;
   const [loading, setLoading] = useState(false);
+  const [fetchingSpa, setFetchingSpa] = useState(isEditMode);
   const [errors, setErrors] = useState({
     phone: "",
     email: "",
@@ -66,6 +70,71 @@ export default function AddListingPage() {
 
     return () => clearTimeout(timeout);
   }, []);
+
+  // Fetch spa data if in edit mode
+  useEffect(() => {
+    if (isEditMode && editSpaId) {
+      fetchSpaData(editSpaId);
+    }
+  }, [isEditMode, editSpaId]);
+
+  const fetchSpaData = async (spaId) => {
+    try {
+      setFetchingSpa(true);
+      const response = await axios.get(`/api/spas/${spaId}`);
+      const spa = response.data.spa;
+
+      // Pre-populate form with spa data
+      setFormData({
+        title: spa.title || "",
+        logo: spa.logo || "",
+        services: spa.services || [],
+        location: {
+          address: spa.location?.address || "",
+          region: spa.location?.region || "",
+          longitude: spa.location?.longitude?.toString() || "",
+          latitude: spa.location?.latitude?.toString() || "",
+          googleMapsLink: spa.location?.googleMapsLink || "",
+        },
+        gallery: spa.gallery && spa.gallery.length > 0 ? spa.gallery : [""],
+        description: spa.description || "",
+        contact: {
+          phone: spa.contact?.phone || "",
+          website: spa.contact?.website || "",
+          email: spa.contact?.email || "",
+          facebook: spa.contact?.facebook || "",
+          whatsapp: spa.contact?.whatsapp || "",
+          instagram: spa.contact?.instagram || "",
+          skype: spa.contact?.skype || "",
+        },
+        pricing:
+          spa.pricing && spa.pricing.length > 0
+            ? spa.pricing.map((p) => ({
+                image: p.image || "",
+                title: p.title || "",
+                description: p.description || "",
+                price: p.price?.toString() || "",
+                multiplier: p.multiplier || "per session",
+                quantity: p.quantity || 1,
+              }))
+            : [
+                {
+                  image: "",
+                  title: "",
+                  description: "",
+                  price: "",
+                  multiplier: "per session",
+                  quantity: 1,
+                },
+              ],
+      });
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Failed to load spa data");
+      router.push("/dashboard/admin/spas");
+    } finally {
+      setFetchingSpa(false);
+    }
+  };
 
   const [formData, setFormData] = useState({
     title: "",
@@ -186,16 +255,31 @@ export default function AddListingPage() {
           : undefined,
       };
 
-      const response = await axios.post("/api/spas", {
-        ...formData,
-        location: locationData,
-        contact: contactData,
-        gallery: formData.gallery.filter((g) => g.trim() !== ""),
-        pricing: formData.pricing.filter((p) => p.title && p.price),
-      });
+      if (isEditMode) {
+        // Update existing spa
+        const response = await axios.put(`/api/spas/${editSpaId}`, {
+          ...formData,
+          location: locationData,
+          contact: contactData,
+          gallery: formData.gallery.filter((g) => g.trim() !== ""),
+          pricing: formData.pricing.filter((p) => p.title && p.price),
+        });
 
-      toast.success("Spa listing created successfully!");
-      router.push(`/spa/${response.data.spa._id}`);
+        toast.success("Spa listing updated successfully!");
+        router.push(`/spa/${response.data.spa._id}`);
+      } else {
+        // Create new spa
+        const response = await axios.post("/api/spas", {
+          ...formData,
+          location: locationData,
+          contact: contactData,
+          gallery: formData.gallery.filter((g) => g.trim() !== ""),
+          pricing: formData.pricing.filter((p) => p.title && p.price),
+        });
+
+        toast.success("Spa listing created successfully!");
+        router.push(`/spa/${response.data.spa._id}`);
+      }
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to create listing");
     } finally {
@@ -271,8 +355,14 @@ export default function AddListingPage() {
         data-testid="add-listing-page"
       >
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
-          Add New Spa Listing
+          {isEditMode ? "Edit Spa Listing" : "Add New Spa Listing"}
         </h1>
+
+        {fetchingSpa && (
+          <div className="mb-6 text-center text-gray-600">
+            Loading spa data...
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
           {/* Basic Information */}
@@ -305,6 +395,7 @@ export default function AddListingPage() {
                   value={formData.logo}
                   onUpload={(url) => setFormData({ ...formData, logo: url })}
                   buttonText="Upload Logo"
+                  showPreview={!isEditMode}
                 />
                 {/* Show Logo URL below */}
                 {formData.logo && (
@@ -456,6 +547,7 @@ export default function AddListingPage() {
                           }
                         }}
                         buttonText={`Upload Gallery Image ${index + 1}`}
+                        showPreview={!isEditMode}
                       />
                     </div>
                     {formData.gallery.length > 1 && (
@@ -811,11 +903,17 @@ export default function AddListingPage() {
             </Button>
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || fetchingSpa}
               className="flex-1 bg-emerald-600 hover:bg-emerald-700"
               data-testid="submit-listing-button"
             >
-              {loading ? "Creating..." : "Create Listing"}
+              {loading
+                ? isEditMode
+                  ? "Updating..."
+                  : "Creating..."
+                : isEditMode
+                  ? "Update Listing"
+                  : "Create Listing"}
             </Button>
           </div>
         </form>
