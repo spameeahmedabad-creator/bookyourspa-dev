@@ -10,6 +10,7 @@ export default function CloudinaryUpload({
   onUpload,
   value,
   buttonText = "Upload Image",
+  showPreview = true,
 }) {
   // Get cloud name from environment variable (must be NEXT_PUBLIC_* for client-side access)
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
@@ -106,12 +107,37 @@ export default function CloudinaryUpload({
   };
 
   // Extract public_id from Cloudinary URL for CldImage
+  // Also handles cases where value is already a public_id
   const getPublicId = (url) => {
     if (!url) return null;
-    if (!url.startsWith("http") || !url.includes("cloudinary.com")) return null;
-    // Extract public_id from URL like: https://res.cloudinary.com/cloud_name/image/upload/v1234567/public_id.jpg
-    const match = url.match(/\/upload\/[^\/]+\/(.+?)(?:\.[^.]+)?$/);
-    return match ? match[1] : null;
+    const trimmedUrl = url.trim();
+
+    // If it's already a public_id (no http/https protocol)
+    // Public IDs are typically simple strings without protocol
+    if (
+      !trimmedUrl.startsWith("http://") &&
+      !trimmedUrl.startsWith("https://")
+    ) {
+      // It's likely already a public_id - return it directly
+      // CldImage can handle public_ids directly
+      return trimmedUrl;
+    }
+
+    // If it's a Cloudinary URL, extract the public_id
+    if (trimmedUrl.includes("cloudinary.com")) {
+      // Extract public_id from URL like: https://res.cloudinary.com/cloud_name/image/upload/v1234567/public_id.jpg
+      // or: https://res.cloudinary.com/cloud_name/image/upload/v1234567/folder/public_id.jpg
+      const match = trimmedUrl.match(/\/upload\/[^\/]+\/(.+?)(?:\.[^.]+)?$/);
+      if (match) {
+        return match[1];
+      }
+      // If extraction fails, try to get everything after /upload/
+      const uploadMatch = trimmedUrl.match(/\/upload\/[^\/]+\/(.+)$/);
+      return uploadMatch ? uploadMatch[1] : null;
+    }
+
+    // If it's a regular URL (not Cloudinary), return null to use regular img tag
+    return null;
   };
 
   const publicId = getPublicId(value);
@@ -119,11 +145,12 @@ export default function CloudinaryUpload({
 
   return (
     <div className="space-y-2">
-      {hasImage ? (
+      {hasImage && showPreview ? (
         <div className="space-y-2">
-          {/* Image Preview */}
+          {/* Image Preview - Only show if showPreview is true */}
           <div className="relative inline-block">
-            {publicId && cloudName ? (
+            {publicId && cloudName && value.startsWith("http") ? (
+              // Only use CldImage for full Cloudinary URLs
               <CldImage
                 src={publicId}
                 width="300"
@@ -131,18 +158,28 @@ export default function CloudinaryUpload({
                 alt="Upload preview"
                 config={{ cloudName }}
                 className="max-w-full h-32 object-cover rounded-md border border-gray-300 bg-gray-50"
-              />
-            ) : (
-              <img
-                src={value}
-                alt="Upload preview"
-                className="max-w-full h-32 object-cover rounded-md border border-gray-300 bg-gray-50"
                 onError={(e) => {
+                  // Fallback to regular img if CldImage fails
                   e.target.style.display = "none";
-                  e.target.nextSibling.style.display = "block";
+                  const fallback =
+                    e.target.parentElement.querySelector(".fallback-img");
+                  if (fallback) fallback.style.display = "block";
                 }}
               />
-            )}
+            ) : null}
+            {/* Fallback img tag - always render but hidden if CldImage is used */}
+            <img
+              src={value}
+              alt="Upload preview"
+              className={`max-w-full h-32 object-cover rounded-md border border-gray-300 bg-gray-50 fallback-img ${
+                publicId && cloudName && value.startsWith("http")
+                  ? "hidden"
+                  : ""
+              }`}
+              onError={(e) => {
+                e.target.style.display = "none";
+              }}
+            />
             <button
               type="button"
               onClick={handleRemove}

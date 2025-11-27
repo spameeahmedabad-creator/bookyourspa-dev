@@ -4,6 +4,39 @@ import User from "@/models/User";
 import Spa from "@/models/Spa";
 import { verifyToken } from "@/lib/jwt";
 
+// GET - Fetch user's bookmarks
+export async function GET(request) {
+  try {
+    const token = request.cookies.get("token")?.value;
+    if (!token) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const decoded = await verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    await dbConnect();
+
+    const user = await User.findById(decoded.userId).populate("bookmarks");
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      bookmarks: user.bookmarks || [],
+    });
+  } catch (error) {
+    console.error("Get bookmarks error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch bookmarks" },
+      { status: 500 }
+    );
+  }
+}
+
 // POST - Add bookmark
 export async function POST(request) {
   try {

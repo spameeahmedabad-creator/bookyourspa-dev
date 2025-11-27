@@ -34,7 +34,7 @@ const SpaSchema = new mongoose.Schema({
     email: String,
     website: String,
     facebook: String,
-    twitter: String,
+    whatsapp: String,
     instagram: String,
     skype: String,
   },
