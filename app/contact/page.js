@@ -1,30 +1,30 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Navbar from '@/components/Navbar';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Mail, Phone, MapPin, Send } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from "react";
+import Navbar from "@/components/Navbar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Mail, Phone, MapPin, Send } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    subject: '',
-    message: ''
+    name: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: "",
   });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     // Simulate form submission
     setTimeout(() => {
-      toast.success('Thank you! We\'ll get back to you soon.');
-      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+      toast.success("Thank you! We'll get back to you soon.");
+      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
       setLoading(false);
     }, 1000);
   };
@@ -32,7 +32,7 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-emerald-600 to-teal-600 py-16 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -40,7 +40,8 @@ export default function ContactPage() {
             Get in Touch
           </h1>
           <p className="text-lg sm:text-xl text-emerald-50 max-w-3xl mx-auto">
-            Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+            Have questions? We'd love to hear from you. Send us a message and
+            we'll respond as soon as possible.
           </p>
         </div>
       </div>
@@ -57,7 +58,9 @@ export default function ContactPage() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">Email Us</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    Email Us
+                  </h3>
                   <p className="text-gray-600">support@bookyourspa.com</p>
                   <p className="text-gray-600">info@bookyourspa.com</p>
                 </div>
@@ -72,7 +75,9 @@ export default function ContactPage() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">Call Us</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    Call Us
+                  </h3>
                   <p className="text-gray-600">+91 79 1234 5678</p>
                   <p className="text-gray-600">Mon-Sat: 9 AM - 8 PM</p>
                 </div>
@@ -87,7 +92,9 @@ export default function ContactPage() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">Visit Us</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    Visit Us
+                  </h3>
                   <p className="text-gray-600">C.G. Road, Ahmedabad</p>
                   <p className="text-gray-600">Gujarat, India - 380009</p>
                 </div>
@@ -116,8 +123,10 @@ export default function ContactPage() {
           {/* Contact Form */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-md p-6 sm:p-8">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Send us a Message</h2>
-              
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
+                Send us a Message
+              </h2>
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
@@ -127,7 +136,9 @@ export default function ContactPage() {
                     <Input
                       type="text"
                       value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
                       placeholder="John Doe"
                       required
                       data-testid="contact-name-input"
@@ -141,7 +152,9 @@ export default function ContactPage() {
                     <Input
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
                       placeholder="john@example.com"
                       required
                       data-testid="contact-email-input"
@@ -157,7 +170,9 @@ export default function ContactPage() {
                     <Input
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      onChange={(e) =>
+                        setFormData({ ...formData, phone: e.target.value })
+                      }
                       placeholder="+91 1234567890"
                       data-testid="contact-phone-input"
                     />
@@ -170,7 +185,9 @@ export default function ContactPage() {
                     <Input
                       type="text"
                       value={formData.subject}
-                      onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                      onChange={(e) =>
+                        setFormData({ ...formData, subject: e.target.value })
+                      }
                       placeholder="How can we help?"
                       required
                       data-testid="contact-subject-input"
@@ -184,7 +201,9 @@ export default function ContactPage() {
                   </label>
                   <textarea
                     value={formData.message}
-                    onChange={(e) => setFormData({...formData, message: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({ ...formData, message: e.target.value })
+                    }
                     rows={6}
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     placeholder="Tell us more about your inquiry..."
@@ -199,7 +218,9 @@ export default function ContactPage() {
                   className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 px-8"
                   data-testid="contact-submit-button"
                 >
-                  {loading ? 'Sending...' : (
+                  {loading ? (
+                    "Sending..."
+                  ) : (
                     <>
                       <Send className="w-4 h-4 mr-2" />
                       Send Message
@@ -229,26 +250,60 @@ export default function ContactPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-xl font-bold mb-4">BookYourSpa</h3>
-              <p className="text-gray-400">Your trusted platform for booking spa and wellness services.</p>
+              <p className="text-gray-400">
+                Your trusted platform for booking spa and wellness services.
+              </p>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="/" className="hover:text-white transition-colors">Home</a></li>
-                <li><a href="/about" className="hover:text-white transition-colors">About Us</a></li>
-                <li><a href="/contact" className="hover:text-white transition-colors">Contact</a></li>
+                <li>
+                  <a href="/" className="hover:text-white transition-colors">
+                    Home
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/about"
+                    className="hover:text-white transition-colors"
+                  >
+                    About Us
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/contact"
+                    className="hover:text-white transition-colors"
+                  >
+                    Contact
+                  </a>
+                </li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="/terms" className="hover:text-white transition-colors">Terms & Conditions</a></li>
-                <li><a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a></li>
+                <li>
+                  <a
+                    href="/terms"
+                    className="hover:text-white transition-colors"
+                  >
+                    Terms & Conditions
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/privacy"
+                    className="hover:text-white transition-colors"
+                  >
+                    Privacy Policy
+                  </a>
+                </li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4">Contact</h4>
               <ul className="space-y-2 text-gray-400">
@@ -257,7 +312,7 @@ export default function ContactPage() {
               </ul>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
             <p>&copy; 2025 BookYourSpa. All rights reserved.</p>
           </div>
