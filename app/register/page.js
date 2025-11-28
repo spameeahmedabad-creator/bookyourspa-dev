@@ -13,7 +13,12 @@ import {
 import { toast } from "sonner";
 import axios from "axios";
 import Link from "next/link";
-import { validateEmail, validatePassword, validatePasswordMatch } from "@/lib/form-validation";
+import BackToHome from "@/components/BackToHome";
+import {
+  validateEmail,
+  validatePassword,
+  validatePasswordMatch,
+} from "@/lib/form-validation";
 import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
@@ -104,7 +109,9 @@ export default function RegisterPage() {
       toast.success(response.data.message);
       router.push("/verify-email?email=" + encodeURIComponent(formData.email));
     } catch (error) {
-      toast.error(error.response?.data?.error || "Registration failed. Please try again.");
+      toast.error(
+        error.response?.data?.error || "Registration failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -118,27 +125,7 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-between mb-8">
-          <Link
-            href="/"
-            className="flex items-center text-emerald-600 hover:text-emerald-700 transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mr-2"
-            >
-              <path d="m12 19-7-7 7-7" />
-              <path d="M19 12H5" />
-            </svg>
-            Back to Home
-          </Link>
+          <BackToHome noWrapper className="transition-colors" />
         </div>
         <Link href="/" className="block text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
@@ -265,7 +252,9 @@ export default function RegisterPage() {
                 <div className="w-full border-t border-gray-300"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                <span className="px-2 bg-white text-gray-500">
+                  Or continue with
+                </span>
               </div>
             </div>
 
@@ -312,4 +301,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-

@@ -1,7 +1,8 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import Link from "next/link";
+import Footer from "@/components/Footer";
+import BackToHome from "@/components/BackToHome";
 
 export default function TermsPage() {
   return (
@@ -184,101 +185,10 @@ export default function TermsPage() {
           </div>
         </div>
 
-        <div className="mt-8 text-center">
-          <Link
-            href="/"
-            className="text-emerald-600 hover:text-emerald-700 font-medium"
-          >
-            ← Back to Home
-          </Link>
-        </div>
+        <BackToHome />
       </div>
 
-      <footer className="bg-gray-900 text-white py-12 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-xl font-bold mb-4">BookYourSpa</h3>
-              <p className="text-gray-400">
-                Your trusted platform for booking spa and wellness services.
-              </p>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <a href="/" className="hover:text-white transition-colors">
-                    Home
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="/about"
-                    className="hover:text-white transition-colors"
-                  >
-                    About Us
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="/contact"
-                    className="hover:text-white transition-colors"
-                  >
-                    Contact
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <a
-                    href="/terms"
-                    className="hover:text-white transition-colors"
-                  >
-                    Terms & Conditions
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="/privacy"
-                    className="hover:text-white transition-colors"
-                  >
-                    Privacy Policy
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Contact</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>Ahmedabad, Gujarat</li>
-                <li>support@bookyourspa.com</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 BookYourSpa. All rights reserved.</p>
-            <p className="mt-2">
-              Created by{" "}
-              <a
-                href="https://www.thitainfo.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-emerald-400 hover:text-emerald-300 transition-colors"
-              >
-                ThitaInfo
-              </a>{" "}
-              with ❤️
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer variant="full" fourthColumn="contact" />
     </div>
   );
 }

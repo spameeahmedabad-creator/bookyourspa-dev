@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 import axios from "axios";
 import Link from "next/link";
+import BackToHome from "@/components/BackToHome";
 import { validateEmail } from "@/lib/form-validation";
 import { useSearchParams, useRouter } from "next/navigation";
 
@@ -103,28 +104,11 @@ function LoginForm() {
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-between mb-8">
-          <Link
-            href="/"
-            className="flex items-center text-emerald-600 hover:text-emerald-700 transition-colors"
+          <BackToHome
+            noWrapper
+            className="transition-colors"
             data-testid="back-to-home"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mr-2"
-            >
-              <path d="m12 19-7-7 7-7" />
-              <path d="M19 12H5" />
-            </svg>
-            Back to Home
-          </Link>
+          />
         </div>
         <Link href="/" className="block text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
