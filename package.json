@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@react-email/components": "^0.5.7",
+    "@vercel/speed-insights": "^1.2.0",
     "axios": "^1.8.4",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
