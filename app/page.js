@@ -48,12 +48,17 @@ export default function Home() {
     setShowBookingModal(true);
   }, []);
 
+  // Fetch spas when pagination or filters change
   useEffect(() => {
     fetchSpas(currentPage, cityFilter, serviceFilter);
+  }, [currentPage, cityFilter, serviceFilter]);
+
+  // Fetch static data once
+  useEffect(() => {
     fetchHeroImages();
     fetchCityCounts();
     fetchServiceImages();
-  }, [currentPage, cityFilter, serviceFilter]);
+  }, []);
 
   useEffect(() => {
     if (heroImages.length > 0) {
@@ -488,6 +493,7 @@ export default function Home() {
           </h2>
           {(cityFilter || serviceFilter) && (
             <Button
+              type="button"
               variant="outline"
               onClick={() => {
                 setCityFilter("");
@@ -534,11 +540,14 @@ export default function Home() {
                 data-testid="pagination"
               >
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(1, prev - 1))
-                  }
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setCurrentPage((prev) => Math.max(1, prev - 1));
+                  }}
                   disabled={currentPage === 1}
                   data-testid="prev-page-button"
                   className="text-xs sm:text-sm"
@@ -552,11 +561,14 @@ export default function Home() {
                 </span>
 
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                  }
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                  }}
                   disabled={currentPage === totalPages}
                   data-testid="next-page-button"
                   className="text-xs sm:text-sm"

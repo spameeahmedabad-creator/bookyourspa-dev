@@ -381,13 +381,14 @@ function AddListingPageContent() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
-          {/* Basic Information */}
+          {/* Primary Details: Title, Location & Photos */}
           <Card>
             <CardContent className="p-6 space-y-4">
               <h2 className="text-xl font-semibold text-gray-900">
-                Basic Information
+                Spa Details
               </h2>
 
+              {/* Title */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Title <span className="text-red-500">*</span>
@@ -402,6 +403,160 @@ function AddListingPageContent() {
                   data-testid="listing-title-input"
                 />
               </div>
+
+              {/* Location */}
+              <div className="border-t pt-4 mt-4 space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Location
+                </h3>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Address
+                  </label>
+                  <Input
+                    value={formData.location.address}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        location: {
+                          ...formData.location,
+                          address: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="Street address"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Region / City <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    value={formData.location.region}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        location: {
+                          ...formData.location,
+                          region: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="e.g., Ahmedabad, Gandhinagar"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Shop Location on Map
+                  </label>
+                  <Input
+                    type="url"
+                    value={formData.location.googleMapsLink}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        location: {
+                          ...formData.location,
+                          googleMapsLink: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="https://maps.app.goo.gl/2PA7PpUudmCTwq4SA"
+                  />
+                  <p className="text-gray-500 text-xs mt-1">
+                    Enter your Google Maps share link (e.g.,
+                    https://maps.app.goo.gl/...)
+                  </p>
+                </div>
+              </div>
+
+              {/* Photos / Gallery */}
+              <div className="border-t pt-4 mt-4 space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Photos / Gallery
+                  </h3>
+                  <Button type="button" size="sm" onClick={addGalleryImage}>
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    Add Image
+                  </Button>
+                </div>
+
+                {formData.gallery.map((url, index) => (
+                  <div key={index} className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1">
+                        <CloudinaryUpload
+                          value={url}
+                          onUpload={(imageUrl) => {
+                            updateGalleryImage(index, imageUrl);
+                            // Clear error when user uploads image
+                            if (errors.gallery) {
+                              setErrors((prev) => ({ ...prev, gallery: "" }));
+                            }
+                          }}
+                          buttonText={`Upload Gallery Image ${index + 1}`}
+                          showPreview={!isEditMode}
+                        />
+                      </div>
+                      {formData.gallery.length > 1 && (
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="destructive"
+                          onClick={() => removeGalleryImage(index)}
+                          className="mt-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {errors.gallery && (
+                  <p className="text-red-500 text-sm mt-1">{errors.gallery}</p>
+                )}
+
+                {/* Show all Gallery URLs below */}
+                {formData.gallery.some((url) => url && url.trim() !== "") && (
+                  <div className="mt-4 bg-blue-50 p-3 rounded-md border border-blue-200">
+                    <p className="text-xs font-semibold text-blue-900 mb-2">
+                      Gallery Images Cloudinary URLs:
+                    </p>
+                    <div className="space-y-2">
+                      {formData.gallery.map((url, index) => {
+                        if (!url || url.trim() === "") return null;
+                        return (
+                          <div
+                            key={index}
+                            className="bg-white p-2 rounded border border-blue-100"
+                          >
+                            <p className="text-xs font-medium text-gray-700 mb-1">
+                              Image {index + 1}:
+                            </p>
+                            <p className="text-xs text-blue-700 break-all font-mono">
+                              {url}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Additional Details */}
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Additional Details
+              </h2>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -530,153 +685,6 @@ function AddListingPageContent() {
                   </label>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Location */}
-          <Card>
-            <CardContent className="p-6 space-y-4">
-              <h2 className="text-xl font-semibold text-gray-900">Location</h2>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Address
-                </label>
-                <Input
-                  value={formData.location.address}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      location: {
-                        ...formData.location,
-                        address: e.target.value,
-                      },
-                    })
-                  }
-                  placeholder="Street address"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Region / City <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  value={formData.location.region}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      location: {
-                        ...formData.location,
-                        region: e.target.value,
-                      },
-                    })
-                  }
-                  placeholder="e.g., Ahmedabad, Gandhinagar"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Shop Location on Map
-                </label>
-                <Input
-                  type="url"
-                  value={formData.location.googleMapsLink}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      location: {
-                        ...formData.location,
-                        googleMapsLink: e.target.value,
-                      },
-                    })
-                  }
-                  placeholder="https://maps.app.goo.gl/2PA7PpUudmCTwq4SA"
-                />
-                <p className="text-gray-500 text-xs mt-1">
-                  Enter your Google Maps share link (e.g.,
-                  https://maps.app.goo.gl/...)
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Gallery */}
-          <Card>
-            <CardContent className="p-6 space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Gallery Images
-                </h2>
-                <Button type="button" size="sm" onClick={addGalleryImage}>
-                  <PlusCircle className="w-4 h-4 mr-2" />
-                  Add Image
-                </Button>
-              </div>
-
-              {formData.gallery.map((url, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-start gap-2">
-                    <div className="flex-1">
-                      <CloudinaryUpload
-                        value={url}
-                        onUpload={(imageUrl) => {
-                          updateGalleryImage(index, imageUrl);
-                          // Clear error when user uploads image
-                          if (errors.gallery) {
-                            setErrors((prev) => ({ ...prev, gallery: "" }));
-                          }
-                        }}
-                        buttonText={`Upload Gallery Image ${index + 1}`}
-                        showPreview={!isEditMode}
-                      />
-                    </div>
-                    {formData.gallery.length > 1 && (
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="destructive"
-                        onClick={() => removeGalleryImage(index)}
-                        className="mt-0"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {errors.gallery && (
-                <p className="text-red-500 text-sm mt-1">{errors.gallery}</p>
-              )}
-
-              {/* Show all Gallery URLs below */}
-              {formData.gallery.some((url) => url && url.trim() !== "") && (
-                <div className="mt-4 bg-blue-50 p-3 rounded-md border border-blue-200">
-                  <p className="text-xs font-semibold text-blue-900 mb-2">
-                    Gallery Images Cloudinary URLs:
-                  </p>
-                  <div className="space-y-2">
-                    {formData.gallery.map((url, index) => {
-                      if (!url || url.trim() === "") return null;
-                      return (
-                        <div
-                          key={index}
-                          className="bg-white p-2 rounded border border-blue-100"
-                        >
-                          <p className="text-xs font-medium text-gray-700 mb-1">
-                            Image {index + 1}:
-                          </p>
-                          <p className="text-xs text-blue-700 break-all font-mono">
-                            {url}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
 

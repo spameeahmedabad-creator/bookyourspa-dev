@@ -320,7 +320,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
               onChange={(e) =>
                 setFormData({ ...formData, customerPhone: e.target.value })
               }
-              placeholder="+91 1234567890"
+              placeholder="Enter your phone number"
               required
               data-testid="booking-phone-input"
             />
@@ -336,7 +336,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
               onChange={(e) =>
                 setFormData({ ...formData, customerEmail: e.target.value })
               }
-              placeholder="your.email@example.com"
+              placeholder="Enter your email"
               data-testid="booking-email-input"
             />
           </div>

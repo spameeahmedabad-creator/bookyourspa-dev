@@ -59,6 +59,20 @@ export default function SearchBar({ onSelectSpa }) {
     };
   }, [showSuggestions, query, suggestions]);
 
+  // Close dropdown on scroll
+  useEffect(() => {
+    if (!showSuggestions) return;
+
+    const handleScroll = () => {
+      setShowSuggestions(false);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [showSuggestions]);
+
   useEffect(() => {
     const searchSpas = async () => {
       if (query.trim().length < 2) {
