@@ -9,6 +9,8 @@ export default function GallerySlider({
   spaTitle,
   initialIndex = 0,
   disableFullscreen = false,
+  autoPlay = false,
+  autoPlayInterval = 5000,
 }) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -84,6 +86,17 @@ export default function GallerySlider({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isFullscreen, currentIndex, images.length]);
 
+  // Auto-play slider when enabled
+  useEffect(() => {
+    if (!autoPlay || images.length <= 1) return;
+
+    const interval = setInterval(() => {
+      goToNext();
+    }, autoPlayInterval);
+
+    return () => clearInterval(interval);
+  }, [autoPlay, autoPlayInterval, images.length]);
+
   // Prevent body scroll when fullscreen
   useEffect(() => {
     if (isFullscreen) {
@@ -125,32 +138,31 @@ export default function GallerySlider({
             !isFullscreenMode && !disableFullscreen && setIsFullscreen(true)
           }
         />
-
-        {/* Navigation Arrows */}
-        {images.length > 1 && (
-          <>
-            <button
-              onClick={goToPrevious}
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all z-10"
-              aria-label="Previous image"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button
-              onClick={goToNext}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all z-10"
-              aria-label="Next image"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-          </>
-        )}
-
-        {/* Image Counter */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-          {currentIndex + 1} / {images.length}
-        </div>
       </div>
+
+      {/* Navigation Arrows (below main image, left aligned) */}
+      {images.length > 1 && (
+        <div className="mt-3 flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={goToPrevious}
+            aria-label="Previous image"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={goToNext}
+            aria-label="Next image"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
 
       {/* Thumbnail Navigation */}
       {images.length > 1 && (

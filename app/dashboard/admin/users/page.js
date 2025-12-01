@@ -12,13 +12,23 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import axios from "axios";
-import { Edit2, Shield, Users as UsersIcon } from "lucide-react";
+import {
+  Edit2,
+  Shield,
+  Users as UsersIcon,
+  Building2,
+  ExternalLink,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function AdminUsersPage() {
+  const router = useRouter();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [userSpas, setUserSpas] = useState([]);
+  const [loadingSpas, setLoadingSpas] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -79,6 +89,40 @@ export default function AdminUsersPage() {
     }
   };
 
+  const getAuthProviderLabel = (user) => {
+    if (user.googleId) return "Google";
+    if (user.email) return "Email";
+    if (user.phone) return "Phone";
+    return "Unknown";
+  };
+
+  const fetchUserSpas = async (userId) => {
+    if (!userId) return;
+    try {
+      setLoadingSpas(true);
+      const response = await axios.get(
+        `/api/spas?ownerId=${userId}&limit=1000`
+      );
+      setUserSpas(response.data.spas || []);
+    } catch (error) {
+      console.error("Failed to fetch user spas:", error);
+      setUserSpas([]);
+    } finally {
+      setLoadingSpas(false);
+    }
+  };
+
+  const handleOpenEditModal = (user) => {
+    setSelectedUser(user);
+    setShowEditModal(true);
+    // Fetch spas if user is a spa owner
+    if (user.role === "spa_owner") {
+      fetchUserSpas(user._id);
+    } else {
+      setUserSpas([]);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -106,7 +150,7 @@ export default function AdminUsersPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
           <p className="text-gray-600 mt-2">
-            View all registered users and assign spa owner roles
+            View all registered users, see spa owners, and manage their roles
           </p>
         </div>
 
@@ -172,17 +216,32 @@ export default function AdminUsersPage() {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left py-3 px-4">Name</th>
-                    <th className="text-left py-3 px-4">Phone</th>
+                    <th className="text-left py-3 px-4">Contact</th>
                     <th className="text-left py-3 px-4">Role</th>
+                    <th className="text-left py-3 px-4">Auth</th>
                     <th className="text-left py-3 px-4">Created</th>
                     <th className="text-center py-3 px-4">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {users.map((user) => (
-                    <tr key={user._id} className="border-b hover:bg-gray-50">
-                      <td className="py-4 px-4 font-medium">{user.name}</td>
-                      <td className="py-4 px-4 text-gray-600">{user.phone}</td>
+                    <tr
+                      key={user._id}
+                      className={`border-b hover:bg-gray-50 ${
+                        user.role === "spa_owner" ? "bg-emerald-50/40" : ""
+                      }`}
+                    >
+                      <td className="py-4 px-4 font-medium">
+                        <div className="text-gray-900">{user.name}</div>
+                        {user.email && (
+                          <div className="text-xs text-gray-500 truncate max-w-[200px]">
+                            {user.email}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-4 px-4 text-gray-600">
+                        <div className="text-sm">{user.phone || "—"}</div>
+                      </td>
                       <td className="py-4 px-4">
                         <span
                           className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${getRoleBadgeColor(
@@ -197,16 +256,16 @@ export default function AdminUsersPage() {
                         </span>
                       </td>
                       <td className="py-4 px-4 text-gray-600 text-sm">
+                        {getAuthProviderLabel(user)}
+                      </td>
+                      <td className="py-4 px-4 text-gray-600 text-sm">
                         {new Date(user.createdAt).toLocaleDateString()}
                       </td>
                       <td className="py-4 px-4 text-center">
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setShowEditModal(true);
-                          }}
+                          onClick={() => handleOpenEditModal(user)}
                           disabled={user.role === "admin"}
                           data-testid={`edit-user-${user._id}`}
                           title={
@@ -243,7 +302,17 @@ export default function AdminUsersPage() {
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-600">User</p>
                 <p className="text-lg font-semibold">{selectedUser.name}</p>
-                <p className="text-sm text-gray-600">{selectedUser.phone}</p>
+                {selectedUser.email && (
+                  <p className="text-sm text-gray-600">{selectedUser.email}</p>
+                )}
+                {selectedUser.phone && (
+                  <p className="text-sm text-gray-600">
+                    Phone: {selectedUser.phone}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Auth: {getAuthProviderLabel(selectedUser)}
+                </p>
               </div>
 
               <div>
@@ -306,11 +375,85 @@ export default function AdminUsersPage() {
                 </div>
               </div>
 
+              {/* Show Spas Owned by this User */}
+              {selectedUser.role === "spa_owner" && (
+                <div className="border-t pt-4 mt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-medium text-gray-700">
+                      Spas Owned ({userSpas.length})
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setShowEditModal(false);
+                        router.push("/dashboard/admin/spas");
+                      }}
+                      className="text-xs"
+                    >
+                      Manage Spas
+                      <ExternalLink className="w-3 h-3 ml-1" />
+                    </Button>
+                  </div>
+                  {loadingSpas ? (
+                    <div className="text-sm text-gray-500">Loading spas...</div>
+                  ) : userSpas.length === 0 ? (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                      <p className="text-sm text-amber-800">
+                        <strong>No spas assigned yet.</strong> Go to Spas page
+                        to assign spas to this owner.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {userSpas.map((spa) => (
+                        <div
+                          key={spa._id}
+                          className="bg-gray-50 rounded-lg p-3 border border-gray-200"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-900">
+                                {spa.title}
+                              </p>
+                              {spa.location?.region && (
+                                <p className="text-xs text-gray-600 mt-1">
+                                  <Building2 className="w-3 h-3 inline mr-1" />
+                                  {spa.location.region}
+                                </p>
+                              )}
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setShowEditModal(false);
+                                router.push(`/spa/${spa._id}`);
+                              }}
+                              className="text-xs"
+                            >
+                              View
+                              <ExternalLink className="w-3 h-3 ml-1" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
                   <strong>Note:</strong> User must logout and login again for
                   role changes to take effect.
                 </p>
+                {selectedUser.role === "spa_owner" && userSpas.length === 0 && (
+                  <p className="text-sm text-blue-800 mt-2">
+                    <strong>Tip:</strong> After assigning Spa Owner role, go to
+                    Spas page to assign specific spas to this owner.
+                  </p>
+                )}
               </div>
             </div>
           )}

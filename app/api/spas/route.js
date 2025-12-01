@@ -11,13 +11,21 @@ export async function GET(request) {
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 6;
     const skip = (page - 1) * limit;
+    const ownerId = searchParams.get("ownerId");
 
-    const spas = await Spa.find()
+    // Build query
+    const query = {};
+    if (ownerId) {
+      query.ownerId = ownerId;
+    }
+
+    const spas = await Spa.find(query)
+      .populate("ownerId", "name email role")
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
 
-    const total = await Spa.countDocuments();
+    const total = await Spa.countDocuments(query);
 
     return NextResponse.json({
       spas,

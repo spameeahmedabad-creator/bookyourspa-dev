@@ -29,8 +29,6 @@ export default function SpaDetailPage() {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [user, setUser] = useState(null);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
-  const [showGalleryModal, setShowGalleryModal] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [pricingExpanded, setPricingExpanded] = useState(false);
 
   useEffect(() => {
@@ -39,25 +37,6 @@ export default function SpaDetailPage() {
       checkBookmarkStatus();
     }
   }, [params.id]);
-
-  // Prevent body scroll when gallery modal is open and handle ESC key
-  useEffect(() => {
-    if (showGalleryModal) {
-      document.body.style.overflow = "hidden";
-      const handleEsc = (e) => {
-        if (e.key === "Escape") {
-          setShowGalleryModal(false);
-        }
-      };
-      window.addEventListener("keydown", handleEsc);
-      return () => {
-        document.body.style.overflow = "unset";
-        window.removeEventListener("keydown", handleEsc);
-      };
-    } else {
-      document.body.style.overflow = "unset";
-    }
-  }, [showGalleryModal]);
 
   const fetchSpaDetails = async () => {
     try {
@@ -148,28 +127,15 @@ export default function SpaDetailPage() {
         className="max-w-6xl mx-auto px-4 py-4 sm:py-8"
         data-testid="spa-detail-page"
       >
-        {/* Gallery Grid - Replaces logo section */}
+        {/* Main Gallery Slider */}
         {spa.gallery && spa.gallery.length > 0 && (
           <div className="mb-6 sm:mb-8">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
-              {spa.gallery.map((image, index) => (
-                <div
-                  key={index}
-                  className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group hover:opacity-90 transition-opacity"
-                  onClick={() => {
-                    setSelectedImageIndex(index);
-                    setShowGalleryModal(true);
-                  }}
-                >
-                  <img
-                    src={image}
-                    alt={`${spa.title} - Image ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
-                </div>
-              ))}
-            </div>
+            <GallerySlider
+              images={spa.gallery}
+              spaTitle={spa.title}
+              autoPlay={true}
+              autoPlayInterval={5000}
+            />
           </div>
         )}
 
@@ -179,7 +145,7 @@ export default function SpaDetailPage() {
             <img
               src={spa.logo}
               alt={spa.title}
-              className="w-full h-48 sm:h-64 lg:h-96 object-cover"
+              className="w-full h-64 sm:h-80 lg:h-[500px] object-cover"
             />
           </div>
         )}
@@ -405,34 +371,6 @@ export default function SpaDetailPage() {
         onClose={() => setShowBookingModal(false)}
         prefilledSpa={spa}
       />
-
-      {/* Gallery Modal */}
-      {showGalleryModal && spa.gallery && spa.gallery.length > 0 && (
-        <div
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
-          onClick={() => setShowGalleryModal(false)}
-        >
-          <button
-            onClick={() => setShowGalleryModal(false)}
-            className="absolute top-4 right-4 text-white hover:text-gray-300 z-50 p-2"
-            aria-label="Close gallery"
-          >
-            <X className="w-8 h-8" />
-          </button>
-
-          <div
-            className="relative w-full max-w-7xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <GallerySlider
-              images={spa.gallery}
-              spaTitle={spa.title}
-              initialIndex={selectedImageIndex}
-              disableFullscreen={true}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

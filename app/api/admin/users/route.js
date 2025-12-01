@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { verifyToken } from "@/lib/jwt";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
+import Spa from "@/models/Spa";
 
 // GET all users (Admin only)
 export async function GET(request) {
@@ -21,11 +22,33 @@ export async function GET(request) {
     }
 
     await dbConnect();
-    const users = await User.find({})
-      .select("name phone role createdAt")
-      .sort({ createdAt: -1 });
+    const { searchParams } = new URL(request.url);
+    const roleFilter = searchParams.get("role");
 
-    return NextResponse.json({ users });
+    const userQuery = {};
+    if (roleFilter) {
+      userQuery.role = roleFilter;
+    }
+
+    const users = await User.find(userQuery)
+      .select("name email phone role googleId createdAt")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Attach spa counts for spa owners
+    const userIds = users.map((u) => u._id);
+    const spaCounts = await Spa.aggregate([
+      { $match: { ownerId: { $in: userIds } } },
+      { $group: { _id: "$ownerId", count: { $sum: 1 } } },
+    ]);
+    const countMap = new Map(spaCounts.map((sc) => [String(sc._id), sc.count]));
+
+    const enrichedUsers = users.map((u) => ({
+      ...u,
+      spasOwned: countMap.get(String(u._id)) || 0,
+    }));
+
+    return NextResponse.json({ users: enrichedUsers });
   } catch (error) {
     console.error("Get users error:", error);
     return NextResponse.json(
