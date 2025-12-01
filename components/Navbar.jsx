@@ -17,6 +17,7 @@ import axios from "axios";
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
+  const [spaCount, setSpaCount] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const router = useRouter();
 
@@ -27,7 +28,24 @@ export default function Navbar() {
   const fetchUser = async () => {
     try {
       const response = await axios.get("/api/auth/me");
-      setUser(response.data.user);
+      const userData = response.data.user;
+      setUser(userData);
+
+      // If spa owner, fetch number of spas owned
+      if (userData.role === "spa_owner") {
+        try {
+          const spasRes = await axios.get(
+            `/api/spas?ownerId=${userData.id}&limit=1000`
+          );
+          setSpaCount((spasRes.data.spas || []).length);
+        } catch (err) {
+          // Non-blocking, just log
+          console.error("Failed to fetch spa count for owner:", err);
+          setSpaCount(null);
+        }
+      } else {
+        setSpaCount(null);
+      }
     } catch (error) {
       // User not logged in
       setUser(null);
@@ -144,6 +162,23 @@ export default function Navbar() {
                       <BookOpen className="w-4 h-4 mr-3" />
                       My Bookings
                     </Link>
+                    {user.role === "spa_owner" && (
+                      <Link
+                        href="/dashboard/spas"
+                        className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <Building2 className="w-4 h-4 mr-3" />
+                        <span className="flex items-center gap-1">
+                          My Spas
+                          {typeof spaCount === "number" && (
+                            <span className="text-xs text-gray-500">
+                              ({spaCount})
+                            </span>
+                          )}
+                        </span>
+                      </Link>
+                    )}
                     {user.role === "admin" && (
                       <Link
                         href="/dashboard/admin/users"
