@@ -1,7 +1,8 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import Link from "next/link";
+import Footer from "@/components/Footer";
+import BackToHome from "@/components/BackToHome";
 
 export default function PrivacyPage() {
   return (
@@ -86,33 +87,10 @@ export default function PrivacyPage() {
           </div>
         </div>
 
-        <div className="mt-8 text-center">
-          <Link
-            href="/"
-            className="text-emerald-600 hover:text-emerald-700 font-medium"
-          >
-            ← Back to Home
-          </Link>
-        </div>
+        <BackToHome />
       </div>
 
-      <footer className="bg-gray-900 text-white py-12 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400">
-          <p>&copy; 2025 BookYourSpa. All rights reserved.</p>
-          <p className="mt-2">
-            Created by{" "}
-            <a
-              href="https://www.thitainfo.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-emerald-400 hover:text-emerald-300 transition-colors"
-            >
-              ThitaInfo
-            </a>{" "}
-            with ❤️
-          </p>
-        </div>
-      </footer>
+      <Footer variant="simple" />
     </div>
   );
 }
