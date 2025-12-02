@@ -99,12 +99,14 @@ export default function Navbar() {
           <div className="flex items-center space-x-3 sm:space-x-8">
             <Link
               href="/"
-              className="flex items-center space-x-2"
+              className="flex items-center"
               data-testid="logo-link"
             >
-              <div className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                BookYourSpa
-              </div>
+              <img
+                src="/img/Your Spa.png"
+                alt="BookYourSpa Logo"
+                className="h-16 sm:h-18 md:h-22 lg:h-24 xl:h-28 w-auto object-contain"
+              />
             </Link>
             <Link
               href="/"
