@@ -24,7 +24,8 @@ function BookingModalHandler({ onBookingDetected }) {
   return null;
 }
 
-export default function Home() {
+function HomeContent() {
+  const searchParams = useSearchParams();
   const [spas, setSpas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -48,6 +49,15 @@ export default function Home() {
   const handleBookingDetected = useCallback(() => {
     setShowBookingModal(true);
   }, []);
+
+  // Read city from URL params on mount and when params change
+  useEffect(() => {
+    const cityParam = searchParams.get("city");
+    if (cityParam) {
+      setCityFilter(cityParam);
+      setCurrentPage(1); // Reset to first page when filter changes
+    }
+  }, [searchParams]);
 
   // Fetch spas when pagination or filters change
   useEffect(() => {
@@ -873,5 +883,13 @@ export default function Home() {
         }}
       />
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
   );
 }

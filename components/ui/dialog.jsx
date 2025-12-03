@@ -6,12 +6,12 @@ const Dialog = ({ open, onOpenChange, children }) => {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[110] flex items-start sm:items-center justify-center p-2 sm:p-4 overflow-y-auto">
       <div
         className="fixed inset-0 bg-black/50"
         onClick={() => onOpenChange(false)}
       />
-      <div className="relative z-50 w-full flex items-center justify-center min-h-full py-8">
+      <div className="relative z-[110] w-full flex items-start sm:items-center justify-center min-h-full pt-16 sm:pt-4 pb-4 sm:py-8">
         {children}
       </div>
     </div>
@@ -23,7 +23,7 @@ const DialogContent = React.forwardRef(
     <div
       ref={ref}
       className={cn(
-        "relative bg-white rounded-lg shadow-lg p-6 w-full mx-auto",
+        "relative bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full mx-auto",
         className
       )}
       {...props}

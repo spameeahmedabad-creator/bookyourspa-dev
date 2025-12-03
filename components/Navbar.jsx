@@ -11,6 +11,8 @@ import {
   Bookmark,
   PlusCircle,
   Building2,
+  MapPin,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -19,6 +21,7 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const [spaCount, setSpaCount] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -67,6 +70,19 @@ export default function Navbar() {
     router.push("/?booking=true");
   };
 
+  const handleCitySelect = (city) => {
+    setShowCityDropdown(false);
+    // Navigate to homepage with city filter
+    router.push(`/?city=${encodeURIComponent(city)}`);
+    // Scroll to spa listings section after a short delay
+    setTimeout(() => {
+      const element = document.getElementById("spa-listings");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 100);
+  };
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -77,16 +93,23 @@ export default function Navbar() {
       ) {
         setShowDropdown(false);
       }
+      if (
+        showCityDropdown &&
+        !event.target.closest('[data-testid="city-menu-button"]') &&
+        !event.target.closest('[data-testid="city-dropdown"]')
+      ) {
+        setShowCityDropdown(false);
+      }
     };
 
-    if (showDropdown) {
+    if (showDropdown || showCityDropdown) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showDropdown]);
+  }, [showDropdown, showCityDropdown]);
 
   return (
     <nav
@@ -115,6 +138,40 @@ export default function Navbar() {
             >
               Home
             </Link>
+
+            {/* Spa Near Me Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowCityDropdown(!showCityDropdown)}
+                className="hidden sm:flex items-center space-x-1 text-gray-700 hover:text-emerald-600 font-medium transition-colors"
+                data-testid="city-menu-button"
+              >
+                <MapPin className="w-4 h-4" />
+                <span>Spa Near Me</span>
+                <ChevronDown className="w-4 h-4" />
+              </button>
+
+              {showCityDropdown && (
+                <div
+                  className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-2xl border border-gray-200 py-2 z-[9999]"
+                  style={{ isolation: "isolate" }}
+                  data-testid="city-dropdown"
+                >
+                  <button
+                    onClick={() => handleCitySelect("Ahmedabad")}
+                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    Ahmedabad
+                  </button>
+                  <button
+                    onClick={() => handleCitySelect("Gandhinagar")}
+                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    Gandhinagar
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right Side - Book Now & User Menu */}
