@@ -13,6 +13,10 @@ export default function CloudinaryUpload({
   showPreview = true,
   sources = ["local"], // Only show "My Files" by default
 }) {
+  // Create options object with sources array
+  const uploadOptions = {
+    sources: sources,
+  };
   // Get cloud name from environment variable (must be NEXT_PUBLIC_* for client-side access)
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const [uploadStatus, setUploadStatus] = useState(null); // 'uploading', 'success', 'error'
@@ -234,7 +238,7 @@ export default function CloudinaryUpload({
               uploadPreset="bookyourspa_uploads"
               onSuccess={handleUpload}
               config={{ cloudName }}
-              options={sources}
+              options={uploadOptions}
               className={cn(
                 "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
                 "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
@@ -270,7 +274,7 @@ export default function CloudinaryUpload({
             uploadPreset="bookyourspa_uploads"
             onSuccess={handleUpload}
             config={{ cloudName }}
-            options={sources}
+            options={uploadOptions}
             className={cn(
               "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
               "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
