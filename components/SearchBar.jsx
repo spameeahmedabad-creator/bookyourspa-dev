@@ -39,9 +39,11 @@ export default function SearchBar({ onSelectSpa }) {
     const updateDropdownPosition = () => {
       if (inputRef.current) {
         const rect = inputRef.current.getBoundingClientRect();
+        // Since dropdown uses 'fixed' positioning, we use viewport coordinates directly
+        // getBoundingClientRect() already returns viewport-relative coordinates
         setDropdownPosition({
-          top: rect.bottom + window.scrollY + 8,
-          left: rect.left + window.scrollX,
+          top: rect.bottom + 8, // 8px gap below the input
+          left: rect.left,
           width: rect.width,
         });
       }
@@ -49,6 +51,7 @@ export default function SearchBar({ onSelectSpa }) {
 
     if (showSuggestions) {
       updateDropdownPosition();
+      // Update position on scroll/resize to keep dropdown aligned with input
       window.addEventListener("scroll", updateDropdownPosition, true);
       window.addEventListener("resize", updateDropdownPosition);
     }

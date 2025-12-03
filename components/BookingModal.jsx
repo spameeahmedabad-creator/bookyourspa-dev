@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import Select from "react-select";
 import { toast } from "sonner";
 import axios from "axios";
+import { validatePhone10Digits } from "@/lib/phone-validation";
 
 export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const [user, setUser] = useState(null);
@@ -31,6 +32,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const [selectedSpaData, setSelectedSpaData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [timeError, setTimeError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -41,6 +43,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       // Reset form when modal opens
       setDate("");
       setTime("");
+      setPhoneError("");
     }
   }, [open, prefilledSpa]);
 
@@ -119,10 +122,14 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       const response = await axios.get("/api/auth/me");
       const userData = response.data.user;
       setUser(userData);
+      // Strip non-digits from phone number if it exists
+      const phoneDigits = userData.phone
+        ? userData.phone.replace(/\D/g, "").substring(0, 10)
+        : "";
       setFormData((prev) => ({
         ...prev,
         customerName: userData.name,
-        customerPhone: userData.phone,
+        customerPhone: phoneDigits,
         customerEmail: userData.email || "",
       }));
     } catch (error) {
@@ -201,16 +208,47 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       ? [{ value: prefilledSpa._id, label: prefilledSpa.title }, ...spaOptions]
       : spaOptions;
 
-  // Transform services to react-select format
-  const serviceOptions = services.map((service) => {
-    if (typeof service === "string") {
-      return { value: service, label: service };
-    }
-    return {
-      value: service.value || service.name || String(service),
-      label: service.name || service.label || String(service),
-    };
-  });
+  // Transform services to react-select format with price
+  // Only include services that have pricing information
+  const serviceOptions = services
+    .map((service) => {
+      const serviceName =
+        typeof service === "string"
+          ? service
+          : service.value || service.name || String(service);
+
+      // Try to find matching pricing item
+      let priceLabel = "";
+      let hasPrice = false;
+      if (selectedSpaData?.pricing && Array.isArray(selectedSpaData.pricing)) {
+        const pricingItem = selectedSpaData.pricing.find(
+          (item) =>
+            item.title &&
+            item.title.toLowerCase().trim() === serviceName.toLowerCase().trim()
+        );
+
+        if (pricingItem && pricingItem.price) {
+          hasPrice = true;
+          // Format price with currency symbol (₹ for Indian Rupees)
+          const formattedPrice = new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 0,
+          }).format(pricingItem.price);
+          priceLabel = ` - ${formattedPrice}`;
+        }
+      }
+
+      // Only return services that have pricing
+      if (hasPrice) {
+        return {
+          value: serviceName,
+          label: `${serviceName}${priceLabel}`,
+        };
+      }
+      return null;
+    })
+    .filter((option) => option !== null); // Remove services without pricing
 
   // Get selected spa option
   const selectedSpaOption = allSpaOptions.find(
@@ -233,6 +271,14 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       !formData.datetime
     ) {
       toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Validate phone number before submitting
+    const phoneValidation = validatePhone10Digits(formData.customerPhone);
+    if (!phoneValidation.isValid) {
+      setPhoneError(phoneValidation.error);
+      toast.error(phoneValidation.error);
       return;
     }
 
@@ -273,6 +319,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       });
       setDate("");
       setTime("");
+      setPhoneError("");
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to create booking");
     } finally {
@@ -317,13 +364,33 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
             <Input
               type="tel"
               value={formData.customerPhone}
-              onChange={(e) =>
-                setFormData({ ...formData, customerPhone: e.target.value })
-              }
+              onChange={(e) => {
+                const inputValue = e.target.value;
+                // Remove all non-digit characters
+                const digitsOnly = inputValue.replace(/\D/g, "");
+                // Limit to 10 digits
+                const limitedDigits = digitsOnly.substring(0, 10);
+
+                setFormData({ ...formData, customerPhone: limitedDigits });
+
+                // Real-time validation
+                const validation = validatePhone10Digits(limitedDigits);
+                if (validation.isValid) {
+                  setPhoneError("");
+                } else {
+                  setPhoneError(validation.error);
+                }
+              }}
               placeholder="Enter your phone number"
               required
               data-testid="booking-phone-input"
+              className={
+                phoneError ? "border-red-500 focus-visible:ring-red-500" : ""
+              }
             />
+            {phoneError && (
+              <p className="text-red-500 text-xs mt-1">{phoneError}</p>
+            )}
           </div>
 
           <div>
@@ -355,6 +422,10 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
               className="react-select-container"
               classNamePrefix="react-select"
               data-testid="booking-spa-select"
+              menuPortalTarget={
+                typeof document !== "undefined" ? document.body : null
+              }
+              menuPosition="fixed"
               styles={{
                 control: (baseStyles, state) => ({
                   ...baseStyles,
@@ -376,6 +447,14 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
                   "&:hover": {
                     backgroundColor: state.isSelected ? "#10b981" : "#d1fae5",
                   },
+                }),
+                menuPortal: (base) => ({
+                  ...base,
+                  zIndex: 9999,
+                }),
+                menu: (base) => ({
+                  ...base,
+                  zIndex: 9999,
                 }),
               }}
             />
@@ -395,6 +474,10 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
               className="react-select-container"
               classNamePrefix="react-select"
               data-testid="booking-service-select"
+              menuPortalTarget={
+                typeof document !== "undefined" ? document.body : null
+              }
+              menuPosition="fixed"
               styles={{
                 control: (baseStyles, state) => ({
                   ...baseStyles,
@@ -416,6 +499,14 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
                   "&:hover": {
                     backgroundColor: state.isSelected ? "#10b981" : "#d1fae5",
                   },
+                }),
+                menuPortal: (base) => ({
+                  ...base,
+                  zIndex: 9999,
+                }),
+                menu: (base) => ({
+                  ...base,
+                  zIndex: 9999,
                 }),
               }}
             />
