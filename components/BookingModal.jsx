@@ -13,6 +13,7 @@ import Select from "react-select";
 import { toast } from "sonner";
 import axios from "axios";
 import { validatePhone10Digits } from "@/lib/phone-validation";
+import Link from "next/link";
 
 export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const [user, setUser] = useState(null);
@@ -33,6 +34,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const [loading, setLoading] = useState(false);
   const [timeError, setTimeError] = useState("");
   const [phoneError, setPhoneError] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -44,6 +46,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       setDate("");
       setTime("");
       setPhoneError("");
+      setAcceptedTerms(false);
     }
   }, [open, prefilledSpa]);
 
@@ -288,6 +291,14 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       return;
     }
 
+    // Validate terms and conditions acceptance
+    if (!acceptedTerms) {
+      toast.error(
+        "Please accept the Terms & Conditions to proceed with booking"
+      );
+      return;
+    }
+
     setLoading(true);
     try {
       // Parse datetime to separate date and time for API compatibility
@@ -320,6 +331,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       setDate("");
       setTime("");
       setPhoneError("");
+      setAcceptedTerms(false);
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to create booking");
     } finally {
@@ -582,6 +594,32 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
             )}
           </div>
 
+          <div className="flex items-start space-x-2 pt-2">
+            <input
+              type="checkbox"
+              id="acceptTerms"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-1 h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+              data-testid="booking-terms-checkbox"
+            />
+            <label
+              htmlFor="acceptTerms"
+              className="text-sm text-gray-700 cursor-pointer"
+            >
+              I accept the{" "}
+              <Link
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-600 hover:text-emerald-700 underline"
+              >
+                Terms & Conditions
+              </Link>
+              <span className="text-red-500">*</span>
+            </label>
+          </div>
+
           <div className="flex space-x-3 pt-4">
             <Button
               type="button"
@@ -594,8 +632,8 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
             </Button>
             <Button
               type="submit"
-              disabled={loading}
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+              disabled={loading || !acceptedTerms}
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="booking-submit-button"
             >
               {loading ? "Booking..." : "Confirm Booking"}
