@@ -98,7 +98,17 @@ export default function TermsPage() {
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              7. Intellectual Property
+              7. Platform Scope and Limitations
+            </h2>
+            <p className="text-gray-700 mb-6">
+              We are only promoting spa & wellness services through BookYourSpa.
+              Whatever happens inside the spa is solely the responsibility of
+              the spa management. BookYourSpa has no involvement in their
+              internal operations.
+            </p>
+
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              8. Intellectual Property
             </h2>
             <p className="text-gray-700 mb-6">
               All content on BookYourSpa, including text, graphics, logos, and
@@ -108,7 +118,7 @@ export default function TermsPage() {
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              8. Privacy and Data Protection
+              9. Privacy and Data Protection
             </h2>
             <p className="text-gray-700 mb-6">
               We collect and process personal data in accordance with our
@@ -117,7 +127,7 @@ export default function TermsPage() {
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              9. Limitation of Liability
+              10. Limitation of Liability
             </h2>
             <p className="text-gray-700 mb-6">
               BookYourSpa acts as a platform connecting users with spa services.
@@ -131,7 +141,7 @@ export default function TermsPage() {
             </ul>
 
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              10. Modifications to Terms
+              11. Modifications to Terms
             </h2>
             <p className="text-gray-700 mb-6">
               We reserve the right to modify these terms at any time. Changes
@@ -140,7 +150,7 @@ export default function TermsPage() {
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              11. Termination
+              12. Termination
             </h2>
             <p className="text-gray-700 mb-6">
               We may terminate or suspend your account immediately, without
@@ -149,7 +159,7 @@ export default function TermsPage() {
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              12. Governing Law
+              13. Governing Law
             </h2>
             <p className="text-gray-700 mb-6">
               These Terms shall be governed by and construed in accordance with
@@ -158,7 +168,7 @@ export default function TermsPage() {
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              13. Contact Information
+              14. Contact Information
             </h2>
             <p className="text-gray-700 mb-2">
               If you have any questions about these Terms, please contact us:
