@@ -211,47 +211,26 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       ? [{ value: prefilledSpa._id, label: prefilledSpa.title }, ...spaOptions]
       : spaOptions;
 
-  // Transform services to react-select format with price
-  // Only include services that have pricing information
-  const serviceOptions = services
-    .map((service) => {
-      const serviceName =
-        typeof service === "string"
-          ? service
-          : service.value || service.name || String(service);
+  // Transform pricing array to react-select format
+  // Directly use pricing items which have title and price
+  const serviceOptions =
+    selectedSpaData?.pricing && Array.isArray(selectedSpaData.pricing)
+      ? selectedSpaData.pricing
+          .filter((item) => item.title && item.price !== undefined)
+          .map((item) => {
+            // Format price with currency symbol (₹ for Indian Rupees)
+            const formattedPrice = new Intl.NumberFormat("en-IN", {
+              style: "currency",
+              currency: "INR",
+              maximumFractionDigits: 0,
+            }).format(item.price);
 
-      // Try to find matching pricing item
-      let priceLabel = "";
-      let hasPrice = false;
-      if (selectedSpaData?.pricing && Array.isArray(selectedSpaData.pricing)) {
-        const pricingItem = selectedSpaData.pricing.find(
-          (item) =>
-            item.title &&
-            item.title.toLowerCase().trim() === serviceName.toLowerCase().trim()
-        );
-
-        if (pricingItem && pricingItem.price) {
-          hasPrice = true;
-          // Format price with currency symbol (₹ for Indian Rupees)
-          const formattedPrice = new Intl.NumberFormat("en-IN", {
-            style: "currency",
-            currency: "INR",
-            maximumFractionDigits: 0,
-          }).format(pricingItem.price);
-          priceLabel = ` - ${formattedPrice}`;
-        }
-      }
-
-      // Only return services that have pricing
-      if (hasPrice) {
-        return {
-          value: serviceName,
-          label: `${serviceName}${priceLabel}`,
-        };
-      }
-      return null;
-    })
-    .filter((option) => option !== null); // Remove services without pricing
+            return {
+              value: item.title,
+              label: `${item.title} - ${formattedPrice}`,
+            };
+          })
+      : [];
 
   // Get selected spa option
   const selectedSpaOption = allSpaOptions.find(
