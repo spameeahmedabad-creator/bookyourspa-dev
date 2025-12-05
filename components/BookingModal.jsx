@@ -586,15 +586,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
               htmlFor="acceptTerms"
               className="text-sm text-gray-700 cursor-pointer"
             >
-              I accept the{" "}
-              <Link
-                href="/terms"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-emerald-600 hover:text-emerald-700 underline"
-              >
-                Terms & Conditions
-              </Link>
+              I accept the Terms & Conditions
               <span className="text-red-500">*</span>
             </label>
           </div>

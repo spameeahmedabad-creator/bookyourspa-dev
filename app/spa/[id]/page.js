@@ -127,7 +127,43 @@ export default function SpaDetailPage() {
         className="max-w-6xl mx-auto px-4 py-4 sm:py-8"
         data-testid="spa-detail-page"
       >
-        {/* Main Gallery Slider */}
+        {/* Title, Location, and Redirect Button - First */}
+        <div className="mb-6 sm:mb-8">
+          <h1
+            className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4"
+            data-testid="spa-detail-title"
+          >
+            {spa.title}
+          </h1>
+
+          {spa.location && (
+            <div className="flex items-start text-gray-600 mb-4">
+              <MapPin className="w-5 h-5 mr-2 mt-1 flex-shrink-0" />
+              <div>
+                <p>{spa.location.address}</p>
+                <p className="text-sm">{spa.location.region}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Redirect to Shop/Map Button */}
+          {spa.location && spa.location.googleMapsLink && (
+            <div className="mb-4">
+              <Button
+                onClick={() => {
+                  window.open(spa.location.googleMapsLink, "_blank");
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                data-testid="redirect-to-shop-button"
+              >
+                <Navigation className="w-4 h-4 mr-2" />
+                Redirect to SPA
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Main Gallery Slider - Second */}
         {spa.gallery && spa.gallery.length > 0 && (
           <div className="mb-6 sm:mb-8">
             <GallerySlider
@@ -153,41 +189,6 @@ export default function SpaDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-            <div>
-              <h1
-                className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4"
-                data-testid="spa-detail-title"
-              >
-                {spa.title}
-              </h1>
-
-              {spa.location && (
-                <div className="flex items-start text-gray-600 mb-4">
-                  <MapPin className="w-5 h-5 mr-2 mt-1 flex-shrink-0" />
-                  <div>
-                    <p>{spa.location.address}</p>
-                    <p className="text-sm">{spa.location.region}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Redirect to Shop/Map Button */}
-              {spa.location && spa.location.googleMapsLink && (
-                <div className="mb-4">
-                  <Button
-                    onClick={() => {
-                      window.open(spa.location.googleMapsLink, "_blank");
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                    data-testid="redirect-to-shop-button"
-                  >
-                    <Navigation className="w-4 h-4 mr-2" />
-                    Redirect to SPA
-                  </Button>
-                </div>
-              )}
-            </div>
-
             {/* Description */}
             {spa.description && (
               <div className="bg-white p-6 rounded-lg shadow">

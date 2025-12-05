@@ -652,7 +652,7 @@ function HomeContent() {
             >
               <div className="relative h-full min-h-[280px] sm:min-h-[320px] rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] bg-white">
                 <img
-                  src={cityImages.ahmedabad}
+                  src="/img/spa-ahmedabad.jpg"
                   alt="Ahmedabad Spa"
                   className="w-full h-full object-cover"
                 />
@@ -685,7 +685,7 @@ function HomeContent() {
             >
               <div className="relative h-full min-h-[280px] sm:min-h-[320px] rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] bg-white">
                 <img
-                  src={cityImages.gandhinagar}
+                  src="/img/spa-gandhinahar.jpg"
                   alt="Gandhinagar Spa"
                   className="w-full h-full object-cover"
                 />
