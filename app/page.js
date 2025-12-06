@@ -720,9 +720,33 @@ function HomeContent() {
 
           {/* Scrolling Carousel - Shows 5 images continuously */}
           {serviceImages.length > 0 && (
-            <div className="relative">
-              <div className="flex gap-4 sm:gap-6 justify-center items-center overflow-x-hidden">
-                {/* Show exactly 5 items in a sliding window */}
+            <div className="relative group/carousel">
+              {/* Previous Button */}
+              <button
+                onClick={() => {
+                  setCarouselIndex((prev) =>
+                    prev === 0 ? serviceImages.length - 1 : prev - 1
+                  );
+                }}
+                className="absolute left-0 sm:left-2 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white text-emerald-600 hover:text-emerald-700 p-2 sm:p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 opacity-70 group-hover/carousel:opacity-100 hover:scale-110 backdrop-blur-sm"
+                aria-label="Previous slide"
+              >
+                <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+
+              {/* Next Button */}
+              <button
+                onClick={() => {
+                  setCarouselIndex((prev) => (prev + 1) % serviceImages.length);
+                }}
+                className="absolute right-0 sm:right-2 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white text-emerald-600 hover:text-emerald-700 p-2 sm:p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 opacity-70 group-hover/carousel:opacity-100 hover:scale-110 backdrop-blur-sm"
+                aria-label="Next slide"
+              >
+                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+
+              <div className="flex gap-4 sm:gap-6 justify-center items-center overflow-x-hidden px-8 sm:px-12">
+                {/* Show exactly 5 items in a sliding window with smooth animation */}
                 {Array.from({ length: 5 }).map((_, index) => {
                   const totalItems = serviceImages.length;
                   // Calculate which service to show at this position
@@ -731,19 +755,21 @@ function HomeContent() {
                   const service = serviceImages[displayIndex];
 
                   // Position: 0 (first/blurred), 1-3 (center/clear), 4 (last/blurred)
-                  const isBlurred = index === 0 || index === 4;
-                  const isCenter = index === 1 || index === 2 || index === 3;
+                  const isEdge = index === 0 || index === 4;
+                  const isCenter = index === 2;
+                  const isNearCenter = index === 1 || index === 3;
 
                   return (
                     <div
                       key={`${service.title}-${displayIndex}-${index}`}
-                      className={`flex-shrink-0 w-[240px] sm:w-[280px] md:w-[320px] rounded-xl overflow-hidden shadow-lg transition-all duration-500 cursor-pointer ${
-                        isBlurred
-                          ? "opacity-40 blur-sm scale-90"
-                          : isCenter
-                            ? "opacity-100 scale-100 z-10"
-                            : "opacity-40 blur-sm scale-90"
-                      }`}
+                      className="flex-shrink-0 w-[200px] sm:w-[260px] md:w-[300px] rounded-xl overflow-hidden shadow-lg cursor-pointer"
+                      style={{
+                        opacity: isEdge ? 0.4 : isNearCenter ? 0.85 : 1,
+                        filter: isEdge ? "blur(3px)" : "blur(0px)",
+                        transform: `scale(${isEdge ? 0.85 : isNearCenter ? 0.95 : 1})`,
+                        transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                        zIndex: isCenter ? 10 : isNearCenter ? 5 : 1,
+                      }}
                       onClick={() => {
                         setServiceFilter(service.title);
                         setCityFilter(""); // Clear city filter when selecting service
@@ -756,19 +782,19 @@ function HomeContent() {
                         }
                       }}
                     >
-                      <div className="relative h-[280px] sm:h-[320px] md:h-[360px] group">
+                      <div className="relative h-[260px] sm:h-[300px] md:h-[340px] group">
                         <img
                           src={service.image}
                           alt={service.title}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-                        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white">
+                        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white transform transition-transform duration-300 group-hover:translate-y-[-4px]">
                           <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-1">
                             {service.title}
                           </h3>
                           {service.description && (
-                            <p className="text-xs sm:text-sm text-gray-200 line-clamp-2">
+                            <p className="text-xs sm:text-sm text-gray-200 line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                               {service.description}
                             </p>
                           )}
@@ -777,6 +803,22 @@ function HomeContent() {
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Carousel Indicators */}
+              <div className="flex justify-center gap-2 mt-6">
+                {serviceImages.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCarouselIndex(index)}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      index === carouselIndex
+                        ? "w-8 bg-gradient-to-r from-emerald-500 to-teal-500"
+                        : "w-2 bg-gray-300 hover:bg-gray-400"
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
               </div>
             </div>
           )}

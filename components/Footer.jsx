@@ -8,18 +8,6 @@ export default function Footer({ variant = "full", fourthColumn = "contact" }) {
       <footer className="bg-gray-900 text-white py-12 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400">
           <p>&copy; {currentYear} BookYourSpa. All rights reserved.</p>
-          <p className="mt-2">
-            Created by{" "}
-            <a
-              href="https://www.thitainfo.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-emerald-400 hover:text-emerald-300 transition-colors"
-            >
-              ThitaInfo
-            </a>{" "}
-            with ❤️
-          </p>
         </div>
       </footer>
     );
@@ -112,18 +100,6 @@ export default function Footer({ variant = "full", fourthColumn = "contact" }) {
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
           <p>&copy; {currentYear} BookYourSpa. All rights reserved.</p>
-          <p className="mt-2">
-            Created by{" "}
-            <a
-              href="https://www.thitainfo.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-emerald-400 hover:text-emerald-300 transition-colors"
-            >
-              ThitaInfo
-            </a>{" "}
-            with ❤️
-          </p>
         </div>
       </div>
     </footer>

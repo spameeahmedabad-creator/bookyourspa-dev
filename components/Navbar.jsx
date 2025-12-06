@@ -13,6 +13,8 @@ import {
   Building2,
   MapPin,
   ChevronDown,
+  Home,
+  UserCog,
 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -128,7 +130,7 @@ export default function Navbar() {
               <img
                 src="/img/Your Spa.png"
                 alt="BookYourSpa Logo"
-                className="h-16 sm:h-18 md:h-22 lg:h-24 xl:h-28 w-auto object-contain"
+                className="h-22 sm:h-24 md:h-22 lg:h-24 xl:h-28 w-auto object-contain"
               />
             </Link>
             <Link
@@ -212,6 +214,25 @@ export default function Navbar() {
                     style={{ isolation: "isolate" }}
                     data-testid="user-dropdown"
                   >
+                    <Link
+                      href="/"
+                      className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                      data-testid="home-dropdown-link"
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      <Home className="w-4 h-4 mr-3" />
+                      Home
+                    </Link>
+                    <Link
+                      href="/dashboard/profile"
+                      className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                      data-testid="profile-link"
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      <UserCog className="w-4 h-4 mr-3" />
+                      My Profile
+                    </Link>
+                    <hr className="my-2" />
                     <Link
                       href="/dashboard/bookings"
                       className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
