@@ -235,7 +235,7 @@ export default function ProfilePage() {
                       user?.role === "spa_owner"
                         ? "Spa Owner"
                         : user?.role === "admin"
-                          ? "Administrator"
+                          ? "Admin"
                           : "Customer"
                     }
                     disabled
@@ -360,7 +360,8 @@ export default function ProfilePage() {
           </Card>
 
           {/* Password Change Card - Only for non-Google users */}
-          {!user?.googleId && (
+          {/* !user?.googleId */}
+          {false && (
             <Card className="shadow-lg border-0 overflow-hidden">
               <div className="bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-4">
                 <h2 className="text-xl font-semibold text-white">
@@ -517,4 +518,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
