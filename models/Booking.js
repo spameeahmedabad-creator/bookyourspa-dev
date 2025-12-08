@@ -1,13 +1,13 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const BookingSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "User",
   },
   spaId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Spa',
+    ref: "Spa",
     required: true,
   },
   customerName: {
@@ -32,8 +32,8 @@ const BookingSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'cancelled', 'completed'],
-    default: 'confirmed',
+    enum: ["pending", "confirmed", "cancelled", "completed"],
+    default: "confirmed",
   },
   createdAt: {
     type: Date,
@@ -41,9 +41,6 @@ const BookingSchema = new mongoose.Schema({
   },
 });
 
-// Delete model if it exists to avoid OverwriteModelError
-if (mongoose.models.Booking) {
-  delete mongoose.models.Booking;
-}
-
-export default mongoose.model('Booking', BookingSchema);
+// Use existing model if available, otherwise create new one
+export default mongoose.models.Booking ||
+  mongoose.model("Booking", BookingSchema);

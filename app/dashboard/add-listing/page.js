@@ -385,9 +385,11 @@ function AddListingPageContent() {
   };
 
   const updateGalleryImage = (index, value) => {
-    const newGallery = [...formData.gallery];
-    newGallery[index] = value;
-    setFormData((prev) => ({ ...prev, gallery: newGallery }));
+    setFormData((prev) => {
+      const newGallery = [...prev.gallery];
+      newGallery[index] = value;
+      return { ...prev, gallery: newGallery };
+    });
   };
 
   const removeGalleryImage = (index) => {
@@ -630,7 +632,9 @@ function AddListingPageContent() {
                 </label>
                 <CloudinaryUpload
                   value={formData.logo}
-                  onUpload={(url) => setFormData({ ...formData, logo: url })}
+                  onUpload={(url) =>
+                    setFormData((prev) => ({ ...prev, logo: url }))
+                  }
                   buttonText="Upload Logo"
                   showPreview={!isEditMode}
                 />

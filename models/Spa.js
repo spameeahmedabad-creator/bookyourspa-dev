@@ -77,9 +77,5 @@ SpaSchema.index({
   services: "text",
 });
 
-// Delete model if it exists to avoid OverwriteModelError
-if (mongoose.models.Spa) {
-  delete mongoose.models.Spa;
-}
-
-export default mongoose.model("Spa", SpaSchema);
+// Use existing model if available, otherwise create new one
+export default mongoose.models.Spa || mongoose.model("Spa", SpaSchema);

@@ -22,9 +22,5 @@ const OTPSessionSchema = new mongoose.Schema({
 // Auto-delete expired OTP sessions
 OTPSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-// Delete model if it exists to avoid OverwriteModelError
-if (mongoose.models.OTPSession) {
-  delete mongoose.models.OTPSession;
-}
-
-export default mongoose.model('OTPSession', OTPSessionSchema);
+// Use existing model if available, otherwise create new one
+export default mongoose.models.OTPSession || mongoose.model('OTPSession', OTPSessionSchema);

@@ -32,12 +32,8 @@ EmailVerificationTokenSchema.statics.generateToken = function () {
   return crypto.randomBytes(32).toString("hex");
 };
 
-// Delete model if it exists to avoid OverwriteModelError
-if (mongoose.models.EmailVerificationToken) {
-  delete mongoose.models.EmailVerificationToken;
-}
-
-export default mongoose.model(
+// Use existing model if available, otherwise create new one
+export default mongoose.models.EmailVerificationToken || mongoose.model(
   "EmailVerificationToken",
   EmailVerificationTokenSchema
 );

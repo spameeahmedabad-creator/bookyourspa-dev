@@ -34,9 +34,5 @@ const ContactSchema = new mongoose.Schema({
   },
 });
 
-// Delete model if it exists to avoid OverwriteModelError
-if (mongoose.models.Contact) {
-  delete mongoose.models.Contact;
-}
-
-export default mongoose.model("Contact", ContactSchema);
+// Use existing model if available, otherwise create new one
+export default mongoose.models.Contact || mongoose.model("Contact", ContactSchema);

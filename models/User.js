@@ -63,9 +63,5 @@ const UserSchema = new mongoose.Schema({
 // Note: Indexes are automatically created by unique: true on email, phone, and googleId fields
 // No need for explicit index definitions
 
-// Delete model if it exists to avoid OverwriteModelError
-if (mongoose.models.User) {
-  delete mongoose.models.User;
-}
-
-export default mongoose.model("User", UserSchema);
+// Use existing model if available, otherwise create new one
+export default mongoose.models.User || mongoose.model("User", UserSchema);

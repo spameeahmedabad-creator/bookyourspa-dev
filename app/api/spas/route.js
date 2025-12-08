@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Spa from "@/models/Spa";
+import User from "@/models/User"; // Import User model to ensure it's registered for populate
 import { verifyToken } from "@/lib/jwt";
 
 // GET all spas with pagination
@@ -19,11 +20,22 @@ export async function GET(request) {
       query.ownerId = ownerId;
     }
 
-    const spas = await Spa.find(query)
-      .populate("ownerId", "name email role")
-      .skip(skip)
-      .limit(limit)
-      .sort({ createdAt: -1 });
+    let spas;
+    try {
+      // Try to populate ownerId, but gracefully handle if it fails
+      spas = await Spa.find(query)
+        .populate("ownerId", "name email role")
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 });
+    } catch (populateError) {
+      // If populate fails, fetch spas without populating
+      console.warn("Populate failed, fetching spas without owner data:", populateError.message);
+      spas = await Spa.find(query)
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 });
+    }
 
     const total = await Spa.countDocuments(query);
 
@@ -39,7 +51,7 @@ export async function GET(request) {
   } catch (error) {
     console.error("Get spas error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch spas" },
+      { error: "Failed to fetch spas", details: error.message },
       { status: 500 }
     );
   }

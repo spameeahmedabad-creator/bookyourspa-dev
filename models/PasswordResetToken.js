@@ -36,10 +36,6 @@ PasswordResetTokenSchema.statics.generateToken = function() {
   return crypto.randomBytes(32).toString('hex');
 };
 
-// Delete model if it exists to avoid OverwriteModelError
-if (mongoose.models.PasswordResetToken) {
-  delete mongoose.models.PasswordResetToken;
-}
-
-export default mongoose.model('PasswordResetToken', PasswordResetTokenSchema);
+// Use existing model if available, otherwise create new one
+export default mongoose.models.PasswordResetToken || mongoose.model('PasswordResetToken', PasswordResetTokenSchema);
 
