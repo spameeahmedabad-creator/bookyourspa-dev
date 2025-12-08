@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CldUploadButton } from "next-cloudinary";
 import { CldImage } from "next-cloudinary";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,15 @@ export default function CloudinaryMultiUpload({
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const [uploadStatus, setUploadStatus] = useState(null);
   const [uploadCount, setUploadCount] = useState(0);
+
+  // Use ref to accumulate URLs during batch upload (to handle closure issue)
+  const pendingUrlsRef = useRef([]);
+  const valuesRef = useRef(values);
+
+  // Keep valuesRef in sync with values prop
+  useEffect(() => {
+    valuesRef.current = values;
+  }, [values]);
 
   // Create options object with sources array and allow multiple uploads
   const uploadOptions = {
@@ -80,11 +89,10 @@ export default function CloudinaryMultiUpload({
     if (result?.info?.secure_url) {
       setUploadStatus("success");
       setUploadCount((prev) => prev + 1);
-      
-      // Add the new image URL to the existing values
+
+      // Add the new image URL to pending uploads
       const newUrl = result.info.secure_url;
-      const updatedValues = [...values.filter(v => v && v.trim() !== ""), newUrl];
-      onUpload(updatedValues);
+      pendingUrlsRef.current = [...pendingUrlsRef.current, newUrl];
 
       setTimeout(() => {
         restoreBodyScroll();
@@ -103,6 +111,25 @@ export default function CloudinaryMultiUpload({
 
       setTimeout(() => setUploadStatus(null), 3000);
     }
+  };
+
+  // Called when all uploads in the queue are complete
+  const handleQueuesEnd = () => {
+    if (pendingUrlsRef.current.length > 0) {
+      // Merge pending URLs with existing values
+      const existingUrls = valuesRef.current.filter(
+        (v) => v && v.trim() !== ""
+      );
+      const updatedValues = [...existingUrls, ...pendingUrlsRef.current];
+      onUpload(updatedValues);
+
+      // Clear pending URLs
+      pendingUrlsRef.current = [];
+    }
+
+    setTimeout(() => {
+      restoreBodyScroll();
+    }, 100);
   };
 
   const handleRemove = (indexToRemove) => {
@@ -161,6 +188,7 @@ export default function CloudinaryMultiUpload({
         <CldUploadButton
           uploadPreset="bookyourspa_uploads"
           onSuccess={handleUpload}
+          onQueuesEnd={handleQueuesEnd}
           config={{ cloudName }}
           options={uploadOptions}
           className={cn(
@@ -199,7 +227,9 @@ export default function CloudinaryMultiUpload({
         {uploadStatus === "success" && (
           <p className="text-green-600 text-xs font-medium flex items-center justify-center gap-1">
             <CheckCircle2 className="w-3 h-3" />
-            {uploadCount > 1 ? `${uploadCount} images uploaded!` : "Image uploaded successfully!"}
+            {uploadCount > 1
+              ? `${uploadCount} images uploaded!`
+              : "Image uploaded successfully!"}
           </p>
         )}
         {uploadStatus === "error" && (
@@ -244,7 +274,9 @@ export default function CloudinaryMultiUpload({
                         onError={(e) => {
                           e.target.style.display = "none";
                           const fallback =
-                            e.target.parentElement.querySelector(".fallback-img");
+                            e.target.parentElement.querySelector(
+                              ".fallback-img"
+                            );
                           if (fallback) fallback.style.display = "block";
                         }}
                       />
@@ -260,7 +292,7 @@ export default function CloudinaryMultiUpload({
                       }}
                     />
                   </div>
-                  
+
                   {/* Remove button */}
                   <button
                     type="button"
@@ -316,4 +348,3 @@ export default function CloudinaryMultiUpload({
     </div>
   );
 }
-

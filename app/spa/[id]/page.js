@@ -309,7 +309,8 @@ export default function SpaDetailPage() {
                       </span>
                     ) : (
                       <span className="text-sm">
-                        {spa.storeHours.openingTime} - {spa.storeHours.closingTime}
+                        {spa.storeHours.openingTime} -{" "}
+                        {spa.storeHours.closingTime}
                       </span>
                     )}
                   </div>
@@ -357,15 +358,20 @@ export default function SpaDetailPage() {
                   )}
 
                   {/* Social Media */}
-                  <div className="flex space-x-4 pt-4">
-                    {spa.contact.facebook && (
+                  <div className="flex flex-col gap-2 pt-4">
+                    {spa.contact.instagram && (
                       <a
-                        href={spa.contact.facebook}
+                        href={spa.contact.instagram}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-gray-600 hover:text-emerald-600"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-white text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98] w-full sm:w-auto"
+                        style={{
+                          background:
+                            "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
+                        }}
                       >
-                        <Facebook className="w-5 h-5" />
+                        <Instagram className="w-5 h-5" />
+                        <span>Instagram</span>
                       </a>
                     )}
                     {spa.contact.whatsapp && (
@@ -377,19 +383,21 @@ export default function SpaDetailPage() {
                         }
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-gray-600 hover:text-emerald-600"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#25D366] hover:bg-[#20BD5A] text-white text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98] w-full sm:w-auto"
                       >
                         <MessageCircle className="w-5 h-5" />
+                        <span>WhatsApp</span>
                       </a>
                     )}
-                    {spa.contact.instagram && (
+                    {spa.contact.facebook && (
                       <a
-                        href={spa.contact.instagram}
+                        href={spa.contact.facebook}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-gray-600 hover:text-emerald-600"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#1877F2] hover:bg-[#166FE5] text-white text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98] w-full sm:w-auto"
                       >
-                        <Instagram className="w-5 h-5" />
+                        <Facebook className="w-5 h-5" />
+                        <span>Facebook</span>
                       </a>
                     )}
                   </div>

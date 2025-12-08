@@ -78,6 +78,12 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       return false;
     }
 
+    // Skip time validation if spa is open 24 hours
+    if (selectedSpaData.storeHours?.is24Hours) {
+      setTimeError("");
+      return true;
+    }
+
     // Validate time is within store hours
     if (
       selectedSpaData.storeHours?.openingTime &&
@@ -541,12 +547,14 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
                     }
                   }}
                   min={
-                    selectedSpaData?.storeHours?.openingTime
+                    selectedSpaData?.storeHours?.openingTime &&
+                    !selectedSpaData?.storeHours?.is24Hours
                       ? selectedSpaData.storeHours.openingTime
                       : undefined
                   }
                   max={
-                    selectedSpaData?.storeHours?.closingTime
+                    selectedSpaData?.storeHours?.closingTime &&
+                    !selectedSpaData?.storeHours?.is24Hours
                       ? selectedSpaData.storeHours.closingTime
                       : undefined
                   }
@@ -565,8 +573,17 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
             )}
             {selectedSpaData?.storeHours && (
               <p className="text-gray-500 text-xs mt-1">
-                Store hours: {selectedSpaData.storeHours.openingTime} -{" "}
-                {selectedSpaData.storeHours.closingTime}
+                {selectedSpaData.storeHours.is24Hours ? (
+                  <span className="inline-flex items-center gap-1">
+                    <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                    Open 24 Hours
+                  </span>
+                ) : (
+                  <>
+                    Store hours: {selectedSpaData.storeHours.openingTime} -{" "}
+                    {selectedSpaData.storeHours.closingTime}
+                  </>
+                )}
                 {selectedSpaData.storeHours.sundayClosed &&
                   " (Closed on Sunday)"}
               </p>
