@@ -90,9 +90,9 @@ export default function SpaCard({ spa }) {
         onClick={handleCardClick}
       >
         <div className="relative h-40 sm:h-48 bg-gradient-to-br from-emerald-200 to-teal-200">
-          {spa.logo ? (
+          {spa.images?.length > 0 ? (
             <img
-              src={spa.logo}
+              src={spa.images[0]}
               alt={spa.title}
               className="w-full h-full object-cover"
             />

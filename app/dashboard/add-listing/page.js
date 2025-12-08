@@ -16,6 +16,13 @@ import {
   validateGallery,
 } from "@/lib/form-validation";
 import CloudinaryUpload from "@/components/CloudinaryUpload";
+import CloudinaryMultiUpload from "@/components/CloudinaryMultiUpload";
+import Select from "react-select";
+
+const REGION_OPTIONS = [
+  { value: "Ahmedabad", label: "Ahmedabad" },
+  { value: "Gandhinagar", label: "Gandhinagar" },
+];
 
 const AVAILABLE_SERVICES = [
   "Couple Massage",
@@ -500,19 +507,35 @@ function AddListingPageContent() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Region / City <span className="text-red-500">*</span>
                   </label>
-                  <Input
-                    value={formData.location.region}
-                    onChange={(e) =>
+                  <Select
+                    options={REGION_OPTIONS}
+                    value={
+                      REGION_OPTIONS.find(
+                        (option) => option.value === formData.location.region
+                      ) || null
+                    }
+                    onChange={(selected) =>
                       setFormData({
                         ...formData,
                         location: {
                           ...formData.location,
-                          region: e.target.value,
+                          region: selected ? selected.value : "",
                         },
                       })
                     }
-                    placeholder="e.g., Ahmedabad, Gandhinagar"
-                    required
+                    placeholder="Select Region / City"
+                    isClearable={false}
+                    classNamePrefix="react-select"
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        minHeight: "40px",
+                        borderColor: "#e5e7eb",
+                        "&:hover": {
+                          borderColor: "#d1d5db",
+                        },
+                      }),
+                    }}
                   />
                 </div>
 
@@ -547,73 +570,21 @@ function AddListingPageContent() {
                   Photos / Gallery
                 </h3>
 
-                {formData.gallery.map((url, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1">
-                        <CloudinaryUpload
-                          value={url}
-                          onUpload={(imageUrl) => {
-                            updateGalleryImage(index, imageUrl);
-                            // Clear error when user uploads image
-                            if (errors.gallery) {
-                              setErrors((prev) => ({ ...prev, gallery: "" }));
-                            }
-                          }}
-                          buttonText={`Upload Gallery Image ${index + 1}`}
-                          showPreview={!isEditMode}
-                        />
-                      </div>
-                      {formData.gallery.length > 1 && (
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="destructive"
-                          onClick={() => removeGalleryImage(index)}
-                          className="mt-0"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-
-                {/* Add Image Button - Below upload images */}
-                <Button type="button" size="sm" onClick={addGalleryImage}>
-                  <PlusCircle className="w-4 h-4 mr-2" />
-                  Add Image
-                </Button>
+                <CloudinaryMultiUpload
+                  values={formData.gallery}
+                  onUpload={(urls) => {
+                    setFormData((prev) => ({ ...prev, gallery: urls }));
+                    // Clear error when user uploads images
+                    if (errors.gallery) {
+                      setErrors((prev) => ({ ...prev, gallery: "" }));
+                    }
+                  }}
+                  buttonText="Upload Gallery Images"
+                  showPreview={!isEditMode}
+                />
 
                 {errors.gallery && (
                   <p className="text-red-500 text-sm mt-1">{errors.gallery}</p>
-                )}
-
-                {/* Show all Gallery URLs below */}
-                {formData.gallery.some((url) => url && url.trim() !== "") && (
-                  <div className="mt-4 bg-blue-50 p-3 rounded-md border border-blue-200">
-                    <p className="text-xs font-semibold text-blue-900 mb-2">
-                      Gallery Images Cloudinary URLs:
-                    </p>
-                    <div className="space-y-2">
-                      {formData.gallery.map((url, index) => {
-                        if (!url || url.trim() === "") return null;
-                        return (
-                          <div
-                            key={index}
-                            className="bg-white p-2 rounded border border-blue-100"
-                          >
-                            <p className="text-xs font-medium text-gray-700 mb-1">
-                              Image {index + 1}:
-                            </p>
-                            <p className="text-xs text-blue-700 break-all font-mono">
-                              {url}
-                            </p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
                 )}
               </div>
             </CardContent>
