@@ -39,6 +39,10 @@ const SpaSchema = new mongoose.Schema({
     skype: String,
   },
   storeHours: {
+    is24Hours: {
+      type: Boolean,
+      default: false,
+    },
     openingTime: {
       type: String,
       required: true,

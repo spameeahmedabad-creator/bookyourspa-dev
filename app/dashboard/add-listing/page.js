@@ -31,6 +31,8 @@ const AVAILABLE_SERVICES = [
   "Swedish Massage",
 ];
 
+const STORAGE_KEY = "bookyourspa_add_listing_form";
+
 function AddListingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -38,6 +40,7 @@ function AddListingPageContent() {
   const isEditMode = !!editSpaId;
   const [loading, setLoading] = useState(false);
   const [fetchingSpa, setFetchingSpa] = useState(isEditMode);
+  const [formInitialized, setFormInitialized] = useState(false);
   const [errors, setErrors] = useState({
     phone: "",
     email: "",
@@ -108,6 +111,7 @@ function AddListingPageContent() {
           skype: spa.contact?.skype || "",
         },
         storeHours: {
+          is24Hours: spa.storeHours?.is24Hours || false,
           openingTime: spa.storeHours?.openingTime || "09:00",
           closingTime: spa.storeHours?.closingTime || "21:00",
           sundayClosed: spa.storeHours?.sundayClosed || false,
@@ -141,44 +145,103 @@ function AddListingPageContent() {
     }
   };
 
-  const [formData, setFormData] = useState({
-    title: "",
-    logo: "",
-    services: [],
-    location: {
-      address: "",
-      region: "",
-      longitude: "",
-      latitude: "",
-      googleMapsLink: "",
-    },
-    gallery: [""],
-    description: "",
-    contact: {
-      phone: "",
-      website: "",
-      email: "",
-      facebook: "",
-      whatsapp: "",
-      instagram: "",
-      skype: "",
-    },
-    storeHours: {
-      openingTime: "09:00",
-      closingTime: "21:00",
-      sundayClosed: false,
-    },
-    pricing: [
-      {
-        image: "",
-        title: "",
-        description: "",
-        price: "",
-        multiplier: "per session",
-        quantity: 1,
+  // Initialize form data - try to load from sessionStorage first
+  const getInitialFormData = () => {
+    const defaultData = {
+      title: "",
+      logo: "",
+      services: [],
+      location: {
+        address: "",
+        region: "",
+        longitude: "",
+        latitude: "",
+        googleMapsLink: "",
       },
-    ],
-  });
+      gallery: [""],
+      description: "",
+      contact: {
+        phone: "",
+        website: "",
+        email: "",
+        facebook: "",
+        whatsapp: "",
+        instagram: "",
+        skype: "",
+      },
+      storeHours: {
+        is24Hours: false,
+        openingTime: "09:00",
+        closingTime: "21:00",
+        sundayClosed: false,
+      },
+      pricing: [
+        {
+          image: "",
+          title: "",
+          description: "",
+          price: "",
+          multiplier: "per session",
+          quantity: 1,
+        },
+      ],
+    };
+
+    // Only load from storage on client side and not in edit mode
+    if (typeof window !== "undefined") {
+      try {
+        const saved = sessionStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          // Check if saved data is for the same mode (edit vs create)
+          if (parsed._editSpaId === editSpaId) {
+            // Remove the metadata field before returning
+            const { _editSpaId, ...formData } = parsed;
+            return formData;
+          }
+        }
+      } catch (e) {
+        console.error("Error loading saved form data:", e);
+      }
+    }
+    return defaultData;
+  };
+
+  const [formData, setFormData] = useState(getInitialFormData);
+
+  // Save form data to sessionStorage whenever it changes (debounced)
+  useEffect(() => {
+    if (!formInitialized) return;
+
+    const timeoutId = setTimeout(() => {
+      try {
+        // Save with metadata about which spa we're editing (null for new)
+        const dataToSave = {
+          ...formData,
+          _editSpaId: editSpaId,
+        };
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+      } catch (e) {
+        console.error("Error saving form data:", e);
+      }
+    }, 300); // Debounce by 300ms
+
+    return () => clearTimeout(timeoutId);
+  }, [formData, editSpaId, formInitialized]);
+
+  // Mark form as initialized after first render
+  useEffect(() => {
+    setFormInitialized(true);
+  }, []);
+
+  // Clear saved form data on successful submission
+  const clearSavedFormData = () => {
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      console.error("Error clearing saved form data:", e);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -281,6 +344,7 @@ function AddListingPageContent() {
           pricing: formData.pricing.filter((p) => p.title && p.price),
         });
 
+        clearSavedFormData(); // Clear saved data on success
         toast.success("Spa listing updated successfully!");
         router.push(`/spa/${response.data.spa._id}`);
       } else {
@@ -293,6 +357,7 @@ function AddListingPageContent() {
           pricing: formData.pricing.filter((p) => p.title && p.price),
         });
 
+        clearSavedFormData(); // Clear saved data on success
         toast.success("Spa listing created successfully!");
         router.push(`/spa/${response.data.spa._id}`);
       }
@@ -476,15 +541,9 @@ function AddListingPageContent() {
 
               {/* Photos / Gallery */}
               <div className="border-t pt-4 mt-4 space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Photos / Gallery
-                  </h3>
-                  <Button type="button" size="sm" onClick={addGalleryImage}>
-                    <PlusCircle className="w-4 h-4 mr-2" />
-                    Add Image
-                  </Button>
-                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Photos / Gallery
+                </h3>
 
                 {formData.gallery.map((url, index) => (
                   <div key={index} className="space-y-2">
@@ -517,6 +576,13 @@ function AddListingPageContent() {
                     </div>
                   </div>
                 ))}
+
+                {/* Add Image Button - Below upload images */}
+                <Button type="button" size="sm" onClick={addGalleryImage}>
+                  <PlusCircle className="w-4 h-4 mr-2" />
+                  Add Image
+                </Button>
+
                 {errors.gallery && (
                   <p className="text-red-500 text-sm mt-1">{errors.gallery}</p>
                 )}
@@ -623,10 +689,42 @@ function AddListingPageContent() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Store Hours
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                {/* Open 24 Hours Checkbox */}
+                <div className="mb-4">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.storeHours.is24Hours}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          storeHours: {
+                            ...formData.storeHours,
+                            is24Hours: e.target.checked,
+                          },
+                        })
+                      }
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      Open 24 Hours
+                    </span>
+                  </label>
+                  <p className="text-gray-500 text-xs mt-1 ml-6">
+                    Check this if your spa operates 24 hours a day
+                  </p>
+                </div>
+
+                <div
+                  className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${formData.storeHours.is24Hours ? "opacity-50" : ""}`}
+                >
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Opening Time <span className="text-red-500">*</span>
+                      Opening Time{" "}
+                      {!formData.storeHours.is24Hours && (
+                        <span className="text-red-500">*</span>
+                      )}
                     </label>
                     <Input
                       type="time"
@@ -640,12 +738,16 @@ function AddListingPageContent() {
                           },
                         })
                       }
-                      required
+                      disabled={formData.storeHours.is24Hours}
+                      required={!formData.storeHours.is24Hours}
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Closing Time <span className="text-red-500">*</span>
+                      Closing Time{" "}
+                      {!formData.storeHours.is24Hours && (
+                        <span className="text-red-500">*</span>
+                      )}
                     </label>
                     <Input
                       type="time"
@@ -659,7 +761,8 @@ function AddListingPageContent() {
                           },
                         })
                       }
-                      required
+                      disabled={formData.storeHours.is24Hours}
+                      required={!formData.storeHours.is24Hours}
                     />
                   </div>
                 </div>
@@ -913,13 +1016,7 @@ function AddListingPageContent() {
           {/* Pricing */}
           <Card>
             <CardContent className="p-6 space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-gray-900">Pricing</h2>
-                <Button type="button" size="sm" onClick={addPricingItem}>
-                  <PlusCircle className="w-4 h-4 mr-2" />
-                  Add Item
-                </Button>
-              </div>
+              <h2 className="text-xl font-semibold text-gray-900">Pricing</h2>
 
               {formData.pricing.map((item, index) => (
                 <div key={index} className="border p-4 rounded-lg space-y-3">
@@ -982,6 +1079,12 @@ function AddListingPageContent() {
                   </div>
                 </div>
               ))}
+
+              {/* Add Item Button - Below pricing items */}
+              <Button type="button" size="sm" onClick={addPricingItem}>
+                <PlusCircle className="w-4 h-4 mr-2" />
+                Add Item
+              </Button>
             </CardContent>
           </Card>
 

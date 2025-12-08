@@ -17,6 +17,7 @@ import {
   Navigation,
   Bookmark,
   X,
+  Clock,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -147,8 +148,8 @@ export default function SpaDetailPage() {
           )}
 
           {/* Redirect to Shop/Map Button */}
-          {spa.location && spa.location.googleMapsLink && (
-            <div className="mb-4">
+          <div className="flex flex-wrap gap-3 mb-4">
+            {spa.location && false && spa.location.googleMapsLink && (
               <Button
                 onClick={() => {
                   window.open(spa.location.googleMapsLink, "_blank");
@@ -159,8 +160,15 @@ export default function SpaDetailPage() {
                 <Navigation className="w-4 h-4 mr-2" />
                 Redirect to SPA
               </Button>
-            </div>
-          )}
+            )}
+            <Button
+              onClick={() => setShowBookingModal(true)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              data-testid="book-now-hero-button"
+            >
+              Book Now
+            </Button>
+          </div>
         </div>
 
         {/* Main Gallery Slider - Second */}
@@ -285,6 +293,32 @@ export default function SpaDetailPage() {
                   />
                   {isBookmarked ? "Bookmarked" : "Bookmark"}
                 </Button>
+              )}
+
+              {/* Store Hours */}
+              {spa.storeHours && (
+                <div className="space-y-3 mb-4 sm:mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-4">
+                    Store Hours
+                  </h3>
+                  <div className="flex items-center text-gray-600">
+                    <Clock className="w-4 h-4 mr-3" />
+                    {spa.storeHours.is24Hours ? (
+                      <span className="text-sm font-medium text-emerald-600">
+                        Open 24 Hours
+                      </span>
+                    ) : (
+                      <span className="text-sm">
+                        {spa.storeHours.openingTime} - {spa.storeHours.closingTime}
+                      </span>
+                    )}
+                  </div>
+                  {spa.storeHours.sundayClosed && (
+                    <div className="flex items-center text-gray-500 text-sm ml-7">
+                      <span>Closed on Sundays</span>
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* Contact Info */}
