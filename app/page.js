@@ -613,11 +613,11 @@ function HomeContent() {
                 Book the Best Spa in Ahmedabad & Gandhinagar
               </h1>
               <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
-                Discover top-rated spa therapies in Ahmedabad and Gandhinagar.
+                Discover top-rated spa therapies in ahmedabad and gandhinagar.
               </p>
               <p className="text-sm sm:text-base text-gray-500">
                 Relax, refresh, and book your next spa session instantly with
-                SpaMee.
+                BookYourSpa.
               </p>
               <Button
                 onClick={() => {
@@ -714,7 +714,7 @@ function HomeContent() {
               Popular Categories
             </h2>
             <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
-              Explore our most popular spa services and treatments
+              Book the Best Spas in Ahmedabad and Gandhinagar
             </p>
           </div>
 
