@@ -94,7 +94,7 @@ export default function SpaCard({ spa }) {
             <img
               src={spa.gallery[0]}
               alt={spa.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-top"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-emerald-600 font-semibold text-xl">

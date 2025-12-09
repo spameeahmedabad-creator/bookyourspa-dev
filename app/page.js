@@ -244,171 +244,60 @@ function HomeContent() {
     }
   };
 
-  const fetchServiceImages = async () => {
-    try {
-      const response = await axios.get("/api/spas?limit=1000");
-      const allSpas = response.data.spas || [];
+  const fetchServiceImages = () => {
+    // Static category images with local images
+    const categoryServices = [
+      {
+        title: "Dry Massage",
+        image: "/img/category/1.png",
+      },
+      {
+        title: "Oil Massage",
+        image: "/img/category/2.png",
+      },
+      {
+        title: "Deep Tissue",
+        image: "/img/category/3.png",
+      },
+      {
+        title: "Swedish",
+        image: "/img/category/4.png",
+      },
+      {
+        title: "Couple",
+        image: "/img/category/5.png",
+      },
+      {
+        title: "Four Hand",
+        image: "/img/category/6.png",
+      },
+      {
+        title: "Hammam",
+        image: "/img/category/7.png",
+      },
+      {
+        title: "Jacuzzi",
+        image: "/img/category/8.png",
+      },
+      {
+        title: "Hot Stone",
+        image: "/img/category/9.png",
+      },
+      {
+        title: "Potli Massage",
+        image: "/img/category/10.png",
+      },
+      {
+        title: "Shirodhara",
+        image: "/img/category/11.png",
+      },
+      {
+        title: "Hot Stone Therapy",
+        image: "/img/category/12.png",
+      },
+    ];
 
-      // Collect service images from pricing items
-      const services = [];
-      const serviceMap = new Map();
-
-      allSpas.forEach((spa) => {
-        if (spa.pricing && Array.isArray(spa.pricing)) {
-          spa.pricing.forEach((item) => {
-            if (item.image && item.title) {
-              // Use service title as key to avoid duplicates
-              if (!serviceMap.has(item.title)) {
-                serviceMap.set(item.title, {
-                  title: item.title,
-                  image: item.image,
-                  description: item.description || "",
-                });
-              }
-            }
-          });
-        }
-      });
-
-      // Convert map to array
-      const serviceArray = Array.from(serviceMap.values());
-
-      // If we don't have enough service images, use gallery images with service names
-      if (serviceArray.length < 5) {
-        const availableServices = [
-          "Couple Massage",
-          "Oil Massage",
-          "Deep Tissue Massage",
-          "Hot Stone Massage",
-          "Swedish Massage",
-          "Four Hand Massage",
-          "Potli Massage",
-          "Shirodhara Massage",
-          "Jacuzzi Massage",
-          "Hammam Massage",
-        ];
-
-        // Get gallery images from spas
-        const galleryImages = [];
-        allSpas.forEach((spa) => {
-          if (spa.gallery && Array.isArray(spa.gallery)) {
-            spa.gallery.forEach((img) => {
-              if (img && img.trim() !== "") {
-                galleryImages.push(img);
-              }
-            });
-          }
-        });
-
-        // Fill remaining slots with gallery images and service names
-        availableServices.forEach((serviceName, index) => {
-          if (!serviceMap.has(serviceName) && galleryImages[index]) {
-            serviceArray.push({
-              title: serviceName,
-              image: galleryImages[index],
-              description: "",
-            });
-          }
-        });
-      }
-
-      // If still not enough, use placeholder images
-      const placeholderServices = [
-        {
-          title: "Couple Massage",
-          image:
-            "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&q=80",
-        },
-        {
-          title: "Oil Massage",
-          image:
-            "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&q=80",
-        },
-        {
-          title: "Deep Tissue Massage",
-          image:
-            "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=600&q=80",
-        },
-        {
-          title: "Hot Stone Massage",
-          image:
-            "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&q=80",
-        },
-        {
-          title: "Swedish Massage",
-          image:
-            "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&q=80",
-        },
-        {
-          title: "Four Hand Massage",
-          image:
-            "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=600&q=80",
-        },
-        {
-          title: "Potli Massage",
-          image:
-            "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&q=80",
-        },
-        {
-          title: "Shirodhara Massage",
-          image:
-            "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&q=80",
-        },
-      ];
-
-      // Use service images if available, otherwise use placeholders
-      const finalServices =
-        serviceArray.length >= 5
-          ? serviceArray.slice(0, 8)
-          : placeholderServices;
-
-      setServiceImages(finalServices);
-    } catch (error) {
-      console.error("Failed to fetch service images:", error);
-      // Fallback to placeholder services
-      setServiceImages([
-        {
-          title: "Couple Massage",
-          image:
-            "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&q=80",
-        },
-        {
-          title: "Oil Massage",
-          image:
-            "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&q=80",
-        },
-        {
-          title: "Deep Tissue Massage",
-          image:
-            "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=600&q=80",
-        },
-        {
-          title: "Hot Stone Massage",
-          image:
-            "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&q=80",
-        },
-        {
-          title: "Swedish Massage",
-          image:
-            "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&q=80",
-        },
-        {
-          title: "Four Hand Massage",
-          image:
-            "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=600&q=80",
-        },
-        {
-          title: "Potli Massage",
-          image:
-            "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&q=80",
-        },
-        {
-          title: "Shirodhara Massage",
-          image:
-            "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=600&q=80",
-        },
-      ]);
-    }
+    setServiceImages(categoryServices);
   };
 
   const handleSearch = (spa) => {
