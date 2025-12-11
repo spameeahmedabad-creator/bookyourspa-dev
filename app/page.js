@@ -101,15 +101,11 @@ function HomeContent() {
         // Filter spas
         let filteredSpas = allSpas;
 
-        // Filter by city if provided
+        // Filter by city if provided (based on location.region)
         if (city) {
           filteredSpas = filteredSpas.filter((spa) => {
             const region = spa.location?.region?.toLowerCase() || "";
-            const address = spa.location?.address?.toLowerCase() || "";
-            return (
-              region.includes(city.toLowerCase()) ||
-              address.includes(city.toLowerCase())
-            );
+            return region === city.toLowerCase();
           });
         }
 
@@ -198,7 +194,7 @@ function HomeContent() {
       const response = await axios.get("/api/spas?limit=1000");
       const allSpas = response.data.spas || [];
 
-      // Count spas by city
+      // Count spas by city based on location.region
       let ahmedabad = 0;
       let gandhinagar = 0;
       let ahmedabadImage = null;
@@ -206,9 +202,8 @@ function HomeContent() {
 
       allSpas.forEach((spa) => {
         const region = spa.location?.region?.toLowerCase() || "";
-        const address = spa.location?.address?.toLowerCase() || "";
 
-        if (region.includes("ahmedabad") || address.includes("ahmedabad")) {
+        if (region === "ahmedabad") {
           ahmedabad++;
           // Get first image for Ahmedabad
           if (!ahmedabadImage && spa.gallery && spa.gallery.length > 0) {
@@ -216,9 +211,7 @@ function HomeContent() {
           } else if (!ahmedabadImage && spa.logo) {
             ahmedabadImage = spa.logo;
           }
-        }
-
-        if (region.includes("gandhinagar") || address.includes("gandhinagar")) {
+        } else if (region === "gandhinagar") {
           gandhinagar++;
           // Get first image for Gandhinagar
           if (!gandhinagarImage && spa.gallery && spa.gallery.length > 0) {
