@@ -6,7 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { format } from "date-fns";
-import { Calendar, Clock, MapPin, User, Phone, Search } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  User,
+  Phone,
+  Search,
+  IndianRupee,
+  Tag,
+  Receipt,
+} from "lucide-react";
 
 export default function MyBookingsPage() {
   const [bookings, setBookings] = useState([]);
@@ -174,7 +184,9 @@ export default function MyBookingsPage() {
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Spa</p>
                       <p className="font-semibold text-gray-900">
-                        {booking.spaId?.title || "N/A"}
+                        {booking.snapshot?.spaName ||
+                          booking.spaId?.title ||
+                          "N/A"}
                       </p>
                     </div>
 
@@ -197,8 +209,14 @@ export default function MyBookingsPage() {
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Service</p>
                       <p className="font-medium text-gray-900">
-                        {booking.service}
+                        {booking.snapshot?.serviceDetails?.title ||
+                          booking.service}
                       </p>
+                      {booking.snapshot?.serviceDetails?.duration && (
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {booking.snapshot.serviceDetails.duration}
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -218,11 +236,61 @@ export default function MyBookingsPage() {
                     </div>
                   </div>
 
+                  {/* Pricing Section */}
+                  {(booking.originalAmount > 0 || booking.finalAmount > 0) && (
+                    <div className="mt-4 pt-4 border-t">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="flex items-center space-x-2">
+                          <Receipt className="w-4 h-4 text-gray-400" />
+                          <div>
+                            <p className="text-xs text-gray-500">
+                              Service Price
+                            </p>
+                            <p className="font-medium text-gray-900">
+                              ₹
+                              {(
+                                booking.originalAmount ||
+                                booking.snapshot?.serviceDetails?.price ||
+                                0
+                              ).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+
+                        {booking.couponCode && booking.discountAmount > 0 && (
+                          <div className="flex items-center space-x-2">
+                            <Tag className="w-4 h-4 text-emerald-500" />
+                            <div>
+                              <p className="text-xs text-gray-500">
+                                Discount ({booking.couponCode})
+                              </p>
+                              <p className="font-medium text-emerald-600">
+                                -₹{booking.discountAmount.toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center space-x-2">
+                          <IndianRupee className="w-4 h-4 text-emerald-600" />
+                          <div>
+                            <p className="text-xs text-gray-500">Total Paid</p>
+                            <p className="font-semibold text-emerald-600">
+                              ₹{(booking.finalAmount || 0).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mt-4 pt-4 border-t flex items-center justify-between">
                     <div className="flex items-center text-gray-600">
                       <MapPin className="w-4 h-4 mr-2" />
                       <span className="text-sm">
-                        {booking.spaId?.location?.region ||
+                        {booking.snapshot?.spaLocation?.region ||
+                          booking.snapshot?.spaLocation?.address ||
+                          booking.spaId?.location?.region ||
                           booking.spaId?.location?.address}
                       </span>
                     </div>

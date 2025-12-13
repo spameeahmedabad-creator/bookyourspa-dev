@@ -18,6 +18,10 @@ const BookingSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  customerEmail: {
+    type: String,
+    default: null,
+  },
   service: {
     type: String,
     required: true,
@@ -34,6 +38,55 @@ const BookingSchema = new mongoose.Schema({
     type: String,
     enum: ["pending", "confirmed", "cancelled", "completed"],
     default: "confirmed",
+  },
+  // Pricing snapshot - stored at time of booking
+  couponCode: {
+    type: String,
+    default: null,
+  },
+  discountAmount: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  originalAmount: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  finalAmount: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  // Snapshot data - preserved at time of booking even if spa details change later
+  snapshot: {
+    spaName: {
+      type: String,
+      default: null,
+    },
+    spaLocation: {
+      address: String,
+      region: String,
+    },
+    spaPhone: {
+      type: String,
+      default: null,
+    },
+    serviceDetails: {
+      title: String,
+      description: String,
+      price: Number,
+      duration: String, // e.g., "60 mins"
+    },
+    couponDetails: {
+      code: String,
+      discountType: {
+        type: String,
+        enum: ["percentage", "fixed"],
+      },
+      discountValue: Number,
+    },
   },
   createdAt: {
     type: Date,

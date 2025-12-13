@@ -79,8 +79,7 @@ export default function ContactPage() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-1">
                     Email Us
                   </h3>
-                  <p className="text-gray-600">support@bookyourspa.com</p>
-                  <p className="text-gray-600">info@bookyourspa.com</p>
+                  <p className="text-gray-600">spameeahmedabad@gmail.com</p>
                 </div>
               </div>
             </div>
@@ -96,7 +95,7 @@ export default function ContactPage() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-1">
                     Call Us
                   </h3>
-                  <p className="text-gray-600">+91 79 1234 5678</p>
+                  <p className="text-gray-600">+91 8140621609</p>
                   <p className="text-gray-600">Mon-Sat: 9 AM - 8 PM</p>
                 </div>
               </div>
@@ -113,8 +112,10 @@ export default function ContactPage() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-1">
                     Visit Us
                   </h3>
-                  <p className="text-gray-600">C.G. Road, Ahmedabad</p>
-                  <p className="text-gray-600">Gujarat, India - 380009</p>
+                  <p className="text-gray-600">
+                    B 132, Bg tower, Delhi darvaja, Shahibaug, Ahmedabad,
+                  </p>
+                  <p className="text-gray-600">Gujarat, India - 380004</p>
                 </div>
               </div>
             </div>

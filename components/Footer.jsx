@@ -91,7 +91,7 @@ export default function Footer({ variant = "full", fourthColumn = "contact" }) {
                 <h4 className="font-semibold mb-4">Contact</h4>
                 <ul className="space-y-2 text-gray-400">
                   <li>Ahmedabad, Gujarat</li>
-                  <li>support@bookyourspa.com</li>
+                  <li>spameeahmedabad@gmail.com</li>
                 </ul>
               </>
             )}
