@@ -274,7 +274,7 @@ export default function MyBookingsPage() {
                         <div className="flex items-center space-x-2">
                           <IndianRupee className="w-4 h-4 text-emerald-600" />
                           <div>
-                            <p className="text-xs text-gray-500">Total Paid</p>
+                            <p className="text-xs text-gray-500">Final Price</p>
                             <p className="font-semibold text-emerald-600">
                               ₹{(booking.finalAmount || 0).toLocaleString()}
                             </p>
