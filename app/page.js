@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import PromotionalBanner from "@/components/PromotionalBanner";
 import SearchBar from "@/components/SearchBar";
 import SpaCard from "@/components/SpaCard";
 import BookingModal from "@/components/BookingModal";
@@ -302,6 +303,7 @@ function HomeContent() {
       <Suspense fallback={null}>
         <BookingModalHandler onBookingDetected={handleBookingDetected} />
       </Suspense>
+      <PromotionalBanner />
       <Navbar />
 
       {/* Hero Section with Sliding Background Images */}

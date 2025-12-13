@@ -35,6 +35,10 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const [timeError, setTimeError] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState("");
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -47,6 +51,9 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       setTime("");
       setPhoneError("");
       setAcceptedTerms(false);
+      setCouponCode("");
+      setAppliedCoupon(null);
+      setCouponError("");
     }
   }, [open, prefilledSpa]);
 
@@ -125,6 +132,15 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       setTimeError("");
     }
   }, [date, time, selectedSpaData]);
+
+  // Reset coupon when service changes
+  useEffect(() => {
+    if (formData.service) {
+      setCouponCode("");
+      setAppliedCoupon(null);
+      setCouponError("");
+    }
+  }, [formData.service]);
 
   const fetchUser = async () => {
     try {
@@ -248,6 +264,62 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
     (option) => option.value === formData.service
   );
 
+  // Get selected service price
+  const selectedServicePrice =
+    selectedSpaData?.pricing?.find((p) => p.title === formData.service)
+      ?.price || 0;
+
+  // Calculate pricing with coupon
+  const originalAmount = selectedServicePrice;
+  const discountAmount = appliedCoupon?.discountAmount || 0;
+  const finalAmount = Math.max(0, originalAmount - discountAmount);
+
+  // Apply coupon
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError("Please enter a coupon code");
+      return;
+    }
+
+    if (!formData.spaId || !selectedServicePrice) {
+      setCouponError("Please select a spa and service first");
+      return;
+    }
+
+    setValidatingCoupon(true);
+    setCouponError("");
+
+    try {
+      const response = await axios.post("/api/coupons/validate", {
+        code: couponCode.trim(),
+        spaId: formData.spaId,
+        orderAmount: selectedServicePrice,
+      });
+
+      if (response.data.valid) {
+        setAppliedCoupon(response.data);
+        toast.success("Coupon applied successfully!");
+      } else {
+        setCouponError(response.data.reason || "Invalid coupon");
+        setAppliedCoupon(null);
+      }
+    } catch (error) {
+      setCouponError(
+        error.response?.data?.reason || "Failed to validate coupon"
+      );
+      setAppliedCoupon(null);
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+
+  // Remove coupon
+  const handleRemoveCoupon = () => {
+    setCouponCode("");
+    setAppliedCoupon(null);
+    setCouponError("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -295,6 +367,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
         ...formData,
         date,
         time,
+        couponCode: appliedCoupon?.coupon?.code || null,
       };
       delete bookingData.datetime;
 
@@ -317,6 +390,9 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       setTime("");
       setPhoneError("");
       setAcceptedTerms(false);
+      setCouponCode("");
+      setAppliedCoupon(null);
+      setCouponError("");
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to create booking");
     } finally {
@@ -589,6 +665,84 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
               </p>
             )}
           </div>
+
+          {/* Coupon Code Section */}
+          {formData.spaId && formData.service && (
+            <div className="border-t pt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Have a coupon code?
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value.toUpperCase());
+                    setCouponError("");
+                  }}
+                  placeholder="Enter coupon code"
+                  className="flex-1"
+                  disabled={!!appliedCoupon}
+                />
+                {appliedCoupon ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleRemoveCoupon}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    Remove
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    disabled={validatingCoupon || !couponCode.trim()}
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    {validatingCoupon ? "Applying..." : "Apply"}
+                  </Button>
+                )}
+              </div>
+              {couponError && (
+                <p className="text-red-500 text-xs mt-1">{couponError}</p>
+              )}
+              {appliedCoupon && (
+                <p className="text-emerald-600 text-xs mt-1">
+                  ✓ Coupon "{appliedCoupon.coupon.code}" applied!
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Pricing Summary */}
+          {formData.spaId && formData.service && originalAmount > 0 && (
+            <div className="border-t pt-4 space-y-2">
+              <h3 className="text-sm font-semibold text-gray-900">
+                Pricing Summary
+              </h3>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Service Price:</span>
+                  <span className="text-gray-900">
+                    ₹{originalAmount.toLocaleString()}
+                  </span>
+                </div>
+                {appliedCoupon && discountAmount > 0 && (
+                  <div className="flex justify-between text-emerald-600">
+                    <span>Discount ({appliedCoupon.coupon.code}):</span>
+                    <span>-₹{discountAmount.toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-2 border-t font-semibold">
+                  <span className="text-gray-900">Total Amount:</span>
+                  <span className="text-emerald-600">
+                    ₹{finalAmount.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-start space-x-2 pt-2">
             <input

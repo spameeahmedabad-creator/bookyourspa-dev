@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Home,
   UserCog,
+  Tag,
 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -257,6 +258,16 @@ export default function Navbar() {
                             </span>
                           )}
                         </span>
+                      </Link>
+                    )}
+                    {(user.role === "spa_owner" || user.role === "admin") && (
+                      <Link
+                        href="/dashboard/coupons"
+                        className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <Tag className="w-4 h-4 mr-3" />
+                        Coupons
                       </Link>
                     )}
                     {user.role === "admin" && (

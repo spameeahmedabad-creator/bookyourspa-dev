@@ -3,6 +3,7 @@ import dbConnect from "@/lib/mongodb";
 import Booking from "@/models/Booking";
 import Spa from "@/models/Spa";
 import User from "@/models/User";
+import Coupon from "@/models/Coupon";
 import { verifyToken } from "@/lib/jwt";
 import {
   sendWhatsAppBookingConfirmation,
@@ -83,6 +84,7 @@ export async function POST(request) {
       service,
       date,
       time,
+      couponCode,
     } = data;
 
     if (
@@ -165,16 +167,116 @@ export async function POST(request) {
     // Use customerEmail from form if provided, otherwise use logged-in user's email
     const emailToSend = customerEmail || userEmail;
 
-    // Create booking
+    // Calculate order amount from service price and get service details
+    let originalAmount = 0;
+    const servicePricing = spa.pricing?.find((p) => p.title === service);
+    if (servicePricing && servicePricing.price) {
+      originalAmount = servicePricing.price;
+    }
+
+    // Prepare service snapshot data
+    const serviceSnapshot = servicePricing
+      ? {
+          title: servicePricing.title,
+          description: servicePricing.description || null,
+          price: servicePricing.price,
+          duration: servicePricing.multiplier || null,
+        }
+      : {
+          title: service,
+          description: null,
+          price: originalAmount,
+          duration: null,
+        };
+
+    // Validate and apply coupon if provided
+    let couponCodeToUse = null;
+    let discountAmount = 0;
+    let finalAmount = originalAmount;
+
+    if (couponCode) {
+      const coupon = await Coupon.findOne({
+        code: couponCode.toUpperCase(),
+        isActive: true,
+        $or: [{ scope: "global" }, { scope: "spa", spaId }],
+      });
+
+      if (coupon) {
+        // Validate coupon
+        const now = new Date();
+        if (
+          now >= coupon.startDate &&
+          now <= coupon.endDate &&
+          (coupon.usageLimit === null ||
+            coupon.usedCount < coupon.usageLimit) &&
+          originalAmount >= coupon.minOrderAmount
+        ) {
+          // Check per-user limit if user is logged in
+          let canUse = true;
+          if (userId) {
+            const userUsageCount = await Booking.countDocuments({
+              userId,
+              couponCode: couponCode.toUpperCase(),
+            });
+            if (userUsageCount >= coupon.perUserLimit) {
+              canUse = false;
+            }
+          }
+
+          if (canUse) {
+            couponCodeToUse = coupon.code;
+            discountAmount = coupon.calculateDiscount(originalAmount);
+            finalAmount = Math.max(0, originalAmount - discountAmount);
+
+            // Increment coupon usage
+            coupon.usedCount += 1;
+            await coupon.save();
+          }
+        }
+      }
+    }
+
+    // Prepare coupon snapshot if coupon was applied
+    let couponSnapshot = null;
+    if (couponCodeToUse && couponCode) {
+      const appliedCoupon = await Coupon.findOne({
+        code: couponCodeToUse,
+      });
+      if (appliedCoupon) {
+        couponSnapshot = {
+          code: appliedCoupon.code,
+          discountType: appliedCoupon.discountType,
+          discountValue: appliedCoupon.discountValue,
+        };
+      }
+    }
+
+    // Create booking with all snapshot data
     const booking = await Booking.create({
       userId,
       spaId,
       customerName,
       customerPhone,
+      customerEmail: customerEmail || null,
       service,
       date: new Date(date),
       time,
       status: "confirmed",
+      couponCode: couponCodeToUse,
+      discountAmount,
+      originalAmount,
+      finalAmount,
+      // Snapshot data - preserved even if spa/service details change later
+      snapshot: {
+        spaName: spa.title,
+        spaLocation: {
+          address: spa.location?.address || null,
+          region: spa.location?.region || null,
+        },
+        spaPhone: spa.contact?.phone || spa.ownerId?.phone || null,
+        serviceDetails: serviceSnapshot,
+        couponDetails: couponSnapshot,
+      },
     });
 
     // Format date and time for messages
