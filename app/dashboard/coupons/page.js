@@ -311,18 +311,18 @@ export default function CouponsPage() {
                 <CardContent className="p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex-1">
-<div className="flex items-center gap-3 mb-2">
-                                        <h3 className="text-lg font-semibold text-gray-900">
-                                          {coupon.code}
-                                        </h3>
-                                        {getStatusBadge(coupon)}
-                                        {coupon.showBanner && (
-                                          <span className="px-2 py-1 bg-purple-100 text-purple-600 text-xs rounded flex items-center gap-1">
-                                            <Megaphone className="w-3 h-3" />
-                                            Banner
-                                          </span>
-                                        )}
-                                      </div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {coupon.code}
+                        </h3>
+                        {getStatusBadge(coupon)}
+                        {coupon.showBanner && (
+                          <span className="px-2 py-1 bg-purple-100 text-purple-600 text-xs rounded flex items-center gap-1">
+                            <Megaphone className="w-3 h-3" />
+                            Banner
+                          </span>
+                        )}
+                      </div>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm text-gray-600">
                         <div className="flex items-center gap-1">
                           <DollarSign className="w-4 h-4" />
@@ -634,7 +634,10 @@ export default function CouponsPage() {
                         }
                         className="w-4 h-4 text-emerald-600 border-gray-300 rounded"
                       />
-                      <label htmlFor="showBanner" className="text-sm text-gray-700">
+                      <label
+                        htmlFor="showBanner"
+                        className="text-sm text-gray-700"
+                      >
                         Show promotional banner on website
                       </label>
                     </div>
@@ -666,12 +669,32 @@ export default function CouponsPage() {
                           </label>
                           <div className="flex flex-wrap gap-2">
                             {[
-                              { value: "emerald", label: "Emerald", bg: "bg-emerald-500" },
+                              {
+                                value: "emerald",
+                                label: "Emerald",
+                                bg: "bg-emerald-500",
+                              },
                               { value: "red", label: "Red", bg: "bg-red-500" },
-                              { value: "purple", label: "Purple", bg: "bg-purple-500" },
-                              { value: "orange", label: "Orange", bg: "bg-orange-500" },
-                              { value: "blue", label: "Blue", bg: "bg-blue-500" },
-                              { value: "pink", label: "Pink", bg: "bg-pink-500" },
+                              {
+                                value: "purple",
+                                label: "Purple",
+                                bg: "bg-purple-500",
+                              },
+                              {
+                                value: "orange",
+                                label: "Orange",
+                                bg: "bg-orange-500",
+                              },
+                              {
+                                value: "blue",
+                                label: "Blue",
+                                bg: "bg-blue-500",
+                              },
+                              {
+                                value: "pink",
+                                label: "Pink",
+                                bg: "bg-pink-500",
+                              },
                             ].map((color) => (
                               <button
                                 key={color.value}

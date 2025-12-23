@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -46,8 +46,19 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
 
+  // Track if modal was previously open to only reset on open transition
+  const wasOpenRef = useRef(false);
+
+  // Check if Razorpay is already loaded (e.g., from another component instance)
   useEffect(() => {
-    if (open) {
+    if (typeof window !== "undefined" && window.Razorpay) {
+      setRazorpayLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Only reset form when modal transitions from closed to open
+    if (open && !wasOpenRef.current) {
       fetchUser();
       if (!prefilledSpa) {
         fetchSpas();
@@ -61,19 +72,41 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       setAppliedCoupon(null);
       setCouponError("");
       setPaymentProcessing(false);
+
+      // Also check if Razorpay was loaded while modal was closed
+      if (typeof window !== "undefined" && window.Razorpay) {
+        setRazorpayLoaded(true);
+      }
     }
+    wasOpenRef.current = open;
   }, [open, prefilledSpa]);
 
   useEffect(() => {
-    if (prefilledSpa) {
-      setFormData((prev) => ({
-        ...prev,
-        spaId: prefilledSpa._id,
-        spaName: prefilledSpa.title,
-      }));
-      setServices(prefilledSpa.services || []);
-      setSelectedSpaData(prefilledSpa);
-    }
+    const fetchFullSpaDetails = async () => {
+      if (prefilledSpa) {
+        // Set basic data immediately
+        setFormData((prev) => ({
+          ...prev,
+          spaId: prefilledSpa._id,
+          spaName: prefilledSpa.title,
+        }));
+        setServices(prefilledSpa.services || []);
+
+        // Fetch full spa details including pricing
+        try {
+          const response = await axios.get(`/api/spas/${prefilledSpa._id}`);
+          const fullSpaData = response.data.spa;
+          setSelectedSpaData(fullSpaData);
+          setServices(fullSpaData.services || []);
+        } catch (error) {
+          console.error("Failed to fetch full spa details:", error);
+          // Fallback to prefilledSpa data if API call fails
+          setSelectedSpaData(prefilledSpa);
+        }
+      }
+    };
+
+    fetchFullSpaDetails();
   }, [prefilledSpa]);
 
   // Validate time against store hours
@@ -148,6 +181,42 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       setCouponError("");
     }
   }, [formData.service]);
+
+  // Re-validate coupon when date changes (if coupon is already applied)
+  useEffect(() => {
+    if (appliedCoupon && date) {
+      const coupon = appliedCoupon.coupon;
+      const bookingDate = new Date(date);
+      bookingDate.setHours(0, 0, 0, 0);
+
+      let isValid = true;
+      let errorMessage = "";
+
+      if (coupon.startDate) {
+        const couponStartDate = new Date(coupon.startDate);
+        couponStartDate.setHours(0, 0, 0, 0);
+        if (bookingDate < couponStartDate) {
+          isValid = false;
+          errorMessage = `Coupon "${coupon.code}" is only valid from ${new Date(coupon.startDate).toLocaleDateString()}. Coupon removed.`;
+        }
+      }
+
+      if (isValid && coupon.endDate) {
+        const couponEndDate = new Date(coupon.endDate);
+        couponEndDate.setHours(23, 59, 59, 999);
+        if (bookingDate > couponEndDate) {
+          isValid = false;
+          errorMessage = `Coupon "${coupon.code}" expired on ${new Date(coupon.endDate).toLocaleDateString()}. Coupon removed.`;
+        }
+      }
+
+      if (!isValid) {
+        setAppliedCoupon(null);
+        setCouponError(errorMessage);
+        toast.error(errorMessage);
+      }
+    }
+  }, [date]);
 
   const fetchUser = async () => {
     try {
@@ -281,7 +350,8 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const discountAmount = appliedCoupon?.discountAmount || 0;
   const amountAfterDiscount = Math.max(0, originalAmount - discountAmount);
   // GST is included in the price
-  const baseAmount = Math.round(amountAfterDiscount / (1 + GST_RATE) * 100) / 100;
+  const baseAmount =
+    Math.round((amountAfterDiscount / (1 + GST_RATE)) * 100) / 100;
   const gstAmount = Math.round((amountAfterDiscount - baseAmount) * 100) / 100;
   const finalAmount = amountAfterDiscount;
 
@@ -297,6 +367,14 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       return;
     }
 
+    // Check if booking date is selected
+    if (!date) {
+      setCouponError(
+        "Please select a booking date first to validate the coupon"
+      );
+      return;
+    }
+
     setValidatingCoupon(true);
     setCouponError("");
 
@@ -308,6 +386,38 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       });
 
       if (response.data.valid) {
+        const coupon = response.data.coupon;
+
+        // Validate booking date against coupon's valid date range
+        const bookingDate = new Date(date);
+        bookingDate.setHours(0, 0, 0, 0); // Normalize to start of day
+
+        if (coupon.startDate) {
+          const couponStartDate = new Date(coupon.startDate);
+          couponStartDate.setHours(0, 0, 0, 0);
+          if (bookingDate < couponStartDate) {
+            setCouponError(
+              `This coupon is only valid from ${new Date(coupon.startDate).toLocaleDateString()}`
+            );
+            setAppliedCoupon(null);
+            setValidatingCoupon(false);
+            return;
+          }
+        }
+
+        if (coupon.endDate) {
+          const couponEndDate = new Date(coupon.endDate);
+          couponEndDate.setHours(23, 59, 59, 999); // End of day
+          if (bookingDate > couponEndDate) {
+            setCouponError(
+              `This coupon expired on ${new Date(coupon.endDate).toLocaleDateString()}. Please select a booking date within the coupon validity period.`
+            );
+            setAppliedCoupon(null);
+            setValidatingCoupon(false);
+            return;
+          }
+        }
+
         setAppliedCoupon(response.data);
         toast.success("Coupon applied successfully!");
       } else {
@@ -332,91 +442,96 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   };
 
   // Initialize Razorpay payment
-  const initiatePayment = useCallback(async (orderData) => {
-    if (!razorpayLoaded || !window.Razorpay) {
-      toast.error("Payment system is loading. Please try again.");
-      return;
-    }
+  const initiatePayment = useCallback(
+    async (orderData) => {
+      if (!razorpayLoaded || !window.Razorpay) {
+        toast.error("Payment system is loading. Please try again.");
+        return;
+      }
 
-    const options = {
-      key: orderData.key,
-      amount: orderData.order.amount,
-      currency: orderData.order.currency,
-      name: "BookYourSpa",
-      description: `Booking at ${formData.spaName} - ${formData.service}`,
-      order_id: orderData.order.id,
-      prefill: orderData.prefill,
-      theme: {
-        color: "#10b981", // Emerald color
-      },
-      modal: {
-        ondismiss: function () {
-          setPaymentProcessing(false);
-          setLoading(false);
-          toast.error("Payment cancelled");
+      const options = {
+        key: orderData.key,
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: "BookYourSpa",
+        description: `Booking at ${formData.spaName} - ${formData.service}`,
+        order_id: orderData.order.id,
+        prefill: orderData.prefill,
+        theme: {
+          color: "#10b981", // Emerald color
         },
-      },
-      handler: async function (response) {
-        try {
-          // Verify payment on backend
-          const verifyResponse = await axios.post("/api/payments/verify", {
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-            booking_id: orderData.booking.id,
-          });
-
-          if (verifyResponse.data.success) {
-            toast.success(
-              "🎉 Payment successful! Your booking is confirmed. Check your email and WhatsApp for details."
-            );
-            onClose();
-            // Reset form
-            setFormData({
-              customerName: "",
-              customerPhone: "",
-              customerEmail: "",
-              spaId: "",
-              spaName: "",
-              service: "",
-              datetime: "",
+        modal: {
+          ondismiss: function () {
+            setPaymentProcessing(false);
+            setLoading(false);
+            toast.error("Payment cancelled");
+          },
+        },
+        handler: async function (response) {
+          try {
+            // Verify payment on backend
+            const verifyResponse = await axios.post("/api/payments/verify", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              booking_id: orderData.booking.id,
             });
-            setDate("");
-            setTime("");
-            setPhoneError("");
-            setAcceptedTerms(false);
-            setCouponCode("");
-            setAppliedCoupon(null);
-            setCouponError("");
-          } else {
-            toast.error("Payment verification failed. Please contact support.");
+
+            if (verifyResponse.data.success) {
+              toast.success(
+                "🎉 Payment successful! Your booking is confirmed. Check your email and WhatsApp for details."
+              );
+              onClose();
+              // Reset form
+              setFormData({
+                customerName: "",
+                customerPhone: "",
+                customerEmail: "",
+                spaId: "",
+                spaName: "",
+                service: "",
+                datetime: "",
+              });
+              setDate("");
+              setTime("");
+              setPhoneError("");
+              setAcceptedTerms(false);
+              setCouponCode("");
+              setAppliedCoupon(null);
+              setCouponError("");
+            } else {
+              toast.error(
+                "Payment verification failed. Please contact support."
+              );
+            }
+          } catch (error) {
+            console.error("Payment verification error:", error);
+            toast.error(
+              error.response?.data?.error ||
+                "Payment verification failed. Please contact support."
+            );
+          } finally {
+            setPaymentProcessing(false);
+            setLoading(false);
           }
-        } catch (error) {
-          console.error("Payment verification error:", error);
-          toast.error(
-            error.response?.data?.error ||
-              "Payment verification failed. Please contact support."
-          );
-        } finally {
-          setPaymentProcessing(false);
-          setLoading(false);
-        }
-      },
-    };
+        },
+      };
 
-    const razorpay = new window.Razorpay(options);
-    
-    razorpay.on("payment.failed", function (response) {
-      console.error("Payment failed:", response.error);
-      toast.error(
-        response.error.description || "Payment failed. Please try again."
-      );
-      setPaymentProcessing(false);
-      setLoading(false);
-    });
+      const razorpay = new window.Razorpay(options);
 
-    razorpay.open();
-  }, [razorpayLoaded, formData.spaName, formData.service, onClose]);
+      razorpay.on("payment.failed", function (response) {
+        console.error("Payment failed:", response.error);
+        toast.error(
+          response.error.description || "Payment failed. Please try again."
+        );
+        setPaymentProcessing(false);
+        setLoading(false);
+      });
+
+      razorpay.open();
+    },
+    [razorpayLoaded, formData.spaName, formData.service, onClose]
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -456,7 +571,9 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
 
     // Check if Razorpay is loaded
     if (!razorpayLoaded || !window.Razorpay) {
-      toast.error("Payment system is loading. Please wait a moment and try again.");
+      toast.error(
+        "Payment system is loading. Please wait a moment and try again."
+      );
       return;
     }
 
@@ -481,7 +598,10 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       };
 
       // Create Razorpay order
-      const response = await axios.post("/api/payments/create-order", bookingData);
+      const response = await axios.post(
+        "/api/payments/create-order",
+        bookingData
+      );
 
       if (response.data.success) {
         // Initiate Razorpay payment
@@ -813,7 +933,11 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
                     <Button
                       type="button"
                       onClick={handleApplyCoupon}
-                      disabled={validatingCoupon || !couponCode.trim() || paymentProcessing}
+                      disabled={
+                        validatingCoupon ||
+                        !couponCode.trim() ||
+                        paymentProcessing
+                      }
                       className="bg-emerald-600 hover:bg-emerald-700"
                     >
                       {validatingCoupon ? "Applying..." : "Apply"}

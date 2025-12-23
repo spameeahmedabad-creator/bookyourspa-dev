@@ -30,7 +30,14 @@ export async function POST(request) {
     } = data;
 
     // Validate required fields
-    if (!customerName || !customerPhone || !spaId || !service || !date || !time) {
+    if (
+      !customerName ||
+      !customerPhone ||
+      !spaId ||
+      !service ||
+      !date ||
+      !time
+    ) {
       return NextResponse.json(
         { error: "All fields are required" },
         { status: 400 }
@@ -38,7 +45,10 @@ export async function POST(request) {
     }
 
     // Get spa details
-    const spa = await Spa.findById(spaId).populate("ownerId", "name phone email");
+    const spa = await Spa.findById(spaId).populate(
+      "ownerId",
+      "name phone email"
+    );
     if (!spa) {
       return NextResponse.json({ error: "Spa not found" }, { status: 404 });
     }
@@ -55,7 +65,11 @@ export async function POST(request) {
     }
 
     // Validate booking time is within store hours
-    if (spa.storeHours?.openingTime && spa.storeHours?.closingTime && !spa.storeHours?.is24Hours) {
+    if (
+      spa.storeHours?.openingTime &&
+      spa.storeHours?.closingTime &&
+      !spa.storeHours?.is24Hours
+    ) {
       const timeToMinutes = (timeStr) => {
         const [hours, minutes] = timeStr.split(":").map(Number);
         return hours * 60 + minutes;
@@ -131,7 +145,8 @@ export async function POST(request) {
         if (
           now >= coupon.startDate &&
           now <= coupon.endDate &&
-          (coupon.usageLimit === null || coupon.usedCount < coupon.usageLimit) &&
+          (coupon.usageLimit === null ||
+            coupon.usedCount < coupon.usageLimit) &&
           originalAmount >= coupon.minOrderAmount
         ) {
           let canUse = true;
@@ -162,8 +177,10 @@ export async function POST(request) {
     // Calculate GST and final amount
     const amountAfterDiscount = Math.max(0, originalAmount - discountAmount);
     // GST is included in the price, so we calculate the base amount
-    const baseAmount = Math.round(amountAfterDiscount / (1 + GST_RATE) * 100) / 100;
-    const gstAmount = Math.round((amountAfterDiscount - baseAmount) * 100) / 100;
+    const baseAmount =
+      Math.round((amountAfterDiscount / (1 + GST_RATE)) * 100) / 100;
+    const gstAmount =
+      Math.round((amountAfterDiscount - baseAmount) * 100) / 100;
     const finalAmount = amountAfterDiscount;
 
     // Create pending booking
@@ -273,4 +290,3 @@ export async function POST(request) {
     );
   }
 }
-
