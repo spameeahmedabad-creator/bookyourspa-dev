@@ -88,6 +88,45 @@ const BookingSchema = new mongoose.Schema({
       discountValue: Number,
     },
   },
+  // Payment Information
+  paymentStatus: {
+    type: String,
+    enum: ["pending", "paid", "failed", "refunded"],
+    default: "pending",
+  },
+  paymentMethod: {
+    type: String, // "razorpay", "cash", etc.
+    default: null,
+  },
+  razorpayOrderId: {
+    type: String,
+    default: null,
+    index: true,
+  },
+  razorpayPaymentId: {
+    type: String,
+    default: null,
+    index: true,
+  },
+  razorpaySignature: {
+    type: String,
+    default: null,
+  },
+  paidAt: {
+    type: Date,
+    default: null,
+  },
+  // GST Information (18% on services)
+  gstAmount: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  baseAmount: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

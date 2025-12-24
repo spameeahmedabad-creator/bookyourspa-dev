@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,10 @@ import { toast } from "sonner";
 import axios from "axios";
 import { validatePhone10Digits } from "@/lib/phone-validation";
 import Link from "next/link";
+import Script from "next/script";
+
+// GST rate for display (18%)
+const GST_RATE = 0.18;
 
 export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const [user, setUser] = useState(null);
@@ -39,9 +43,22 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState("");
   const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+
+  // Track if modal was previously open to only reset on open transition
+  const wasOpenRef = useRef(false);
+
+  // Check if Razorpay is already loaded (e.g., from another component instance)
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.Razorpay) {
+      setRazorpayLoaded(true);
+    }
+  }, []);
 
   useEffect(() => {
-    if (open) {
+    // Only reset form when modal transitions from closed to open
+    if (open && !wasOpenRef.current) {
       fetchUser();
       if (!prefilledSpa) {
         fetchSpas();
@@ -54,19 +71,42 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       setCouponCode("");
       setAppliedCoupon(null);
       setCouponError("");
+      setPaymentProcessing(false);
+
+      // Also check if Razorpay was loaded while modal was closed
+      if (typeof window !== "undefined" && window.Razorpay) {
+        setRazorpayLoaded(true);
+      }
     }
+    wasOpenRef.current = open;
   }, [open, prefilledSpa]);
 
   useEffect(() => {
-    if (prefilledSpa) {
-      setFormData((prev) => ({
-        ...prev,
-        spaId: prefilledSpa._id,
-        spaName: prefilledSpa.title,
-      }));
-      setServices(prefilledSpa.services || []);
-      setSelectedSpaData(prefilledSpa);
-    }
+    const fetchFullSpaDetails = async () => {
+      if (prefilledSpa) {
+        // Set basic data immediately
+        setFormData((prev) => ({
+          ...prev,
+          spaId: prefilledSpa._id,
+          spaName: prefilledSpa.title,
+        }));
+        setServices(prefilledSpa.services || []);
+
+        // Fetch full spa details including pricing
+        try {
+          const response = await axios.get(`/api/spas/${prefilledSpa._id}`);
+          const fullSpaData = response.data.spa;
+          setSelectedSpaData(fullSpaData);
+          setServices(fullSpaData.services || []);
+        } catch (error) {
+          console.error("Failed to fetch full spa details:", error);
+          // Fallback to prefilledSpa data if API call fails
+          setSelectedSpaData(prefilledSpa);
+        }
+      }
+    };
+
+    fetchFullSpaDetails();
   }, [prefilledSpa]);
 
   // Validate time against store hours
@@ -141,6 +181,42 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       setCouponError("");
     }
   }, [formData.service]);
+
+  // Re-validate coupon when date changes (if coupon is already applied)
+  useEffect(() => {
+    if (appliedCoupon && date) {
+      const coupon = appliedCoupon.coupon;
+      const bookingDate = new Date(date);
+      bookingDate.setHours(0, 0, 0, 0);
+
+      let isValid = true;
+      let errorMessage = "";
+
+      if (coupon.startDate) {
+        const couponStartDate = new Date(coupon.startDate);
+        couponStartDate.setHours(0, 0, 0, 0);
+        if (bookingDate < couponStartDate) {
+          isValid = false;
+          errorMessage = `Coupon "${coupon.code}" is only valid from ${new Date(coupon.startDate).toLocaleDateString()}. Coupon removed.`;
+        }
+      }
+
+      if (isValid && coupon.endDate) {
+        const couponEndDate = new Date(coupon.endDate);
+        couponEndDate.setHours(23, 59, 59, 999);
+        if (bookingDate > couponEndDate) {
+          isValid = false;
+          errorMessage = `Coupon "${coupon.code}" expired on ${new Date(coupon.endDate).toLocaleDateString()}. Coupon removed.`;
+        }
+      }
+
+      if (!isValid) {
+        setAppliedCoupon(null);
+        setCouponError(errorMessage);
+        toast.error(errorMessage);
+      }
+    }
+  }, [date]);
 
   const fetchUser = async () => {
     try {
@@ -269,10 +345,15 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
     selectedSpaData?.pricing?.find((p) => p.title === formData.service)
       ?.price || 0;
 
-  // Calculate pricing with coupon
+  // Calculate pricing with coupon and GST
   const originalAmount = selectedServicePrice;
   const discountAmount = appliedCoupon?.discountAmount || 0;
-  const finalAmount = Math.max(0, originalAmount - discountAmount);
+  const amountAfterDiscount = Math.max(0, originalAmount - discountAmount);
+  // GST is included in the price
+  const baseAmount =
+    Math.round((amountAfterDiscount / (1 + GST_RATE)) * 100) / 100;
+  const gstAmount = Math.round((amountAfterDiscount - baseAmount) * 100) / 100;
+  const finalAmount = amountAfterDiscount;
 
   // Apply coupon
   const handleApplyCoupon = async () => {
@@ -283,6 +364,14 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
 
     if (!formData.spaId || !selectedServicePrice) {
       setCouponError("Please select a spa and service first");
+      return;
+    }
+
+    // Check if booking date is selected
+    if (!date) {
+      setCouponError(
+        "Please select a booking date first to validate the coupon"
+      );
       return;
     }
 
@@ -297,6 +386,38 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       });
 
       if (response.data.valid) {
+        const coupon = response.data.coupon;
+
+        // Validate booking date against coupon's valid date range
+        const bookingDate = new Date(date);
+        bookingDate.setHours(0, 0, 0, 0); // Normalize to start of day
+
+        if (coupon.startDate) {
+          const couponStartDate = new Date(coupon.startDate);
+          couponStartDate.setHours(0, 0, 0, 0);
+          if (bookingDate < couponStartDate) {
+            setCouponError(
+              `This coupon is only valid from ${new Date(coupon.startDate).toLocaleDateString()}`
+            );
+            setAppliedCoupon(null);
+            setValidatingCoupon(false);
+            return;
+          }
+        }
+
+        if (coupon.endDate) {
+          const couponEndDate = new Date(coupon.endDate);
+          couponEndDate.setHours(23, 59, 59, 999); // End of day
+          if (bookingDate > couponEndDate) {
+            setCouponError(
+              `This coupon expired on ${new Date(coupon.endDate).toLocaleDateString()}. Please select a booking date within the coupon validity period.`
+            );
+            setAppliedCoupon(null);
+            setValidatingCoupon(false);
+            return;
+          }
+        }
+
         setAppliedCoupon(response.data);
         toast.success("Coupon applied successfully!");
       } else {
@@ -319,6 +440,98 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
     setAppliedCoupon(null);
     setCouponError("");
   };
+
+  // Initialize Razorpay payment
+  const initiatePayment = useCallback(
+    async (orderData) => {
+      if (!razorpayLoaded || !window.Razorpay) {
+        toast.error("Payment system is loading. Please try again.");
+        return;
+      }
+
+      const options = {
+        key: orderData.key,
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: "BookYourSpa",
+        description: `Booking at ${formData.spaName} - ${formData.service}`,
+        order_id: orderData.order.id,
+        prefill: orderData.prefill,
+        theme: {
+          color: "#10b981", // Emerald color
+        },
+        modal: {
+          ondismiss: function () {
+            setPaymentProcessing(false);
+            setLoading(false);
+            toast.error("Payment cancelled");
+          },
+        },
+        handler: async function (response) {
+          try {
+            // Verify payment on backend
+            const verifyResponse = await axios.post("/api/payments/verify", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              booking_id: orderData.booking.id,
+            });
+
+            if (verifyResponse.data.success) {
+              toast.success(
+                "🎉 Payment successful! Your booking is confirmed. Check your email and WhatsApp for details."
+              );
+              onClose();
+              // Reset form
+              setFormData({
+                customerName: "",
+                customerPhone: "",
+                customerEmail: "",
+                spaId: "",
+                spaName: "",
+                service: "",
+                datetime: "",
+              });
+              setDate("");
+              setTime("");
+              setPhoneError("");
+              setAcceptedTerms(false);
+              setCouponCode("");
+              setAppliedCoupon(null);
+              setCouponError("");
+            } else {
+              toast.error(
+                "Payment verification failed. Please contact support."
+              );
+            }
+          } catch (error) {
+            console.error("Payment verification error:", error);
+            toast.error(
+              error.response?.data?.error ||
+                "Payment verification failed. Please contact support."
+            );
+          } finally {
+            setPaymentProcessing(false);
+            setLoading(false);
+          }
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+
+      razorpay.on("payment.failed", function (response) {
+        console.error("Payment failed:", response.error);
+        toast.error(
+          response.error.description || "Payment failed. Please try again."
+        );
+        setPaymentProcessing(false);
+        setLoading(false);
+      });
+
+      razorpay.open();
+    },
+    [razorpayLoaded, formData.spaName, formData.service, onClose]
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -356,433 +569,525 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       return;
     }
 
+    // Check if Razorpay is loaded
+    if (!razorpayLoaded || !window.Razorpay) {
+      toast.error(
+        "Payment system is loading. Please wait a moment and try again."
+      );
+      return;
+    }
+
     setLoading(true);
+    setPaymentProcessing(true);
+
     try {
       // Parse datetime to separate date and time for API compatibility
       const datetime = new Date(formData.datetime);
-      const date = datetime.toISOString().split("T")[0];
-      const time = datetime.toTimeString().split(" ")[0].slice(0, 5); // HH:MM format
+      const dateStr = datetime.toISOString().split("T")[0];
+      const timeStr = datetime.toTimeString().split(" ")[0].slice(0, 5); // HH:MM format
 
       const bookingData = {
-        ...formData,
-        date,
-        time,
+        customerName: formData.customerName,
+        customerPhone: formData.customerPhone,
+        customerEmail: formData.customerEmail,
+        spaId: formData.spaId,
+        service: formData.service,
+        date: dateStr,
+        time: timeStr,
         couponCode: appliedCoupon?.coupon?.code || null,
       };
-      delete bookingData.datetime;
 
-      const response = await axios.post("/api/bookings", bookingData);
-      const emailMessage = formData.customerEmail
-        ? " Check your email and WhatsApp for confirmation."
-        : " Check your WhatsApp for confirmation.";
-      toast.success("Booking confirmed!" + emailMessage);
-      onClose();
-      setFormData({
-        customerName: "",
-        customerPhone: "",
-        customerEmail: "",
-        spaId: "",
-        spaName: "",
-        service: "",
-        datetime: "",
-      });
-      setDate("");
-      setTime("");
-      setPhoneError("");
-      setAcceptedTerms(false);
-      setCouponCode("");
-      setAppliedCoupon(null);
-      setCouponError("");
+      // Create Razorpay order
+      const response = await axios.post(
+        "/api/payments/create-order",
+        bookingData
+      );
+
+      if (response.data.success) {
+        // Initiate Razorpay payment
+        initiatePayment(response.data);
+      } else {
+        toast.error(response.data.error || "Failed to create payment order");
+        setPaymentProcessing(false);
+        setLoading(false);
+      }
     } catch (error) {
-      toast.error(error.response?.data?.error || "Failed to create booking");
-    } finally {
+      console.error("Payment initiation error:", error);
+      toast.error(error.response?.data?.error || "Failed to initiate payment");
+      setPaymentProcessing(false);
       setLoading(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent
-        onClose={onClose}
-        className="max-w-2xl max-h-[calc(100vh-5rem)] sm:max-h-[90vh] overflow-y-auto"
-        data-testid="booking-modal"
-      >
-        <DialogHeader className="pt-2 sm:pt-0">
-          <DialogTitle className="text-lg sm:text-xl">
-            Book Your Spa Appointment
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      {/* Load Razorpay SDK */}
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        onLoad={() => setRazorpayLoaded(true)}
+        onError={() => {
+          console.error("Failed to load Razorpay SDK");
+          toast.error("Failed to load payment system");
+        }}
+      />
 
-        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 mt-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Name <span className="text-red-500">*</span>
-            </label>
-            <Input
-              type="text"
-              value={formData.customerName}
-              onChange={(e) =>
-                setFormData({ ...formData, customerName: e.target.value })
-              }
-              placeholder="Enter your name"
-              required
-              data-testid="booking-name-input"
-            />
-          </div>
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent
+          onClose={onClose}
+          className="max-w-2xl max-h-[calc(100vh-5rem)] sm:max-h-[90vh] overflow-y-auto"
+          data-testid="booking-modal"
+        >
+          <DialogHeader className="pt-2 sm:pt-0">
+            <DialogTitle className="text-lg sm:text-xl">
+              Book Your Spa Appointment
+            </DialogTitle>
+          </DialogHeader>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Phone Number <span className="text-red-500">*</span>
-            </label>
-            <Input
-              type="tel"
-              value={formData.customerPhone}
-              onChange={(e) => {
-                const inputValue = e.target.value;
-                // Remove all non-digit characters
-                const digitsOnly = inputValue.replace(/\D/g, "");
-                // Limit to 10 digits
-                const limitedDigits = digitsOnly.substring(0, 10);
-
-                setFormData({ ...formData, customerPhone: limitedDigits });
-
-                // Real-time validation
-                const validation = validatePhone10Digits(limitedDigits);
-                if (validation.isValid) {
-                  setPhoneError("");
-                } else {
-                  setPhoneError(validation.error);
-                }
-              }}
-              placeholder="Enter your phone number"
-              required
-              data-testid="booking-phone-input"
-              className={
-                phoneError ? "border-red-500 focus-visible:ring-red-500" : ""
-              }
-            />
-            {phoneError && (
-              <p className="text-red-500 text-xs mt-1">{phoneError}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address{" "}
-            </label>
-            <Input
-              type="email"
-              value={formData.customerEmail}
-              onChange={(e) =>
-                setFormData({ ...formData, customerEmail: e.target.value })
-              }
-              placeholder="Enter your email"
-              data-testid="booking-email-input"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Spa <span className="text-red-500">*</span>
-            </label>
-            <Select
-              options={allSpaOptions}
-              value={selectedSpaOption}
-              onChange={handleSpaChange}
-              placeholder="Select a spa..."
-              isDisabled={!!prefilledSpa}
-              isSearchable={true}
-              className="react-select-container"
-              classNamePrefix="react-select"
-              data-testid="booking-spa-select"
-              menuPortalTarget={
-                typeof document !== "undefined" ? document.body : null
-              }
-              menuPosition="fixed"
-              styles={{
-                control: (baseStyles, state) => ({
-                  ...baseStyles,
-                  minHeight: "40px",
-                  borderColor: state.isFocused ? "#10b981" : "#d1d5db",
-                  boxShadow: state.isFocused ? "0 0 0 1px #10b981" : "none",
-                  "&:hover": {
-                    borderColor: state.isFocused ? "#10b981" : "#9ca3af",
-                  },
-                }),
-                option: (baseStyles, state) => ({
-                  ...baseStyles,
-                  backgroundColor: state.isSelected
-                    ? "#10b981"
-                    : state.isFocused
-                      ? "#d1fae5"
-                      : "white",
-                  color: state.isSelected ? "white" : "#111827",
-                  "&:hover": {
-                    backgroundColor: state.isSelected ? "#10b981" : "#d1fae5",
-                  },
-                }),
-                menuPortal: (base) => ({
-                  ...base,
-                  zIndex: 9999,
-                }),
-                menu: (base) => ({
-                  ...base,
-                  zIndex: 9999,
-                }),
-              }}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Service <span className="text-red-500">*</span>
-            </label>
-            <Select
-              options={serviceOptions}
-              value={selectedServiceOption}
-              onChange={handleServiceChange}
-              placeholder="Select a service..."
-              isDisabled={!formData.spaId}
-              isSearchable={true}
-              className="react-select-container"
-              classNamePrefix="react-select"
-              data-testid="booking-service-select"
-              menuPortalTarget={
-                typeof document !== "undefined" ? document.body : null
-              }
-              menuPosition="fixed"
-              styles={{
-                control: (baseStyles, state) => ({
-                  ...baseStyles,
-                  minHeight: "40px",
-                  borderColor: state.isFocused ? "#10b981" : "#d1d5db",
-                  boxShadow: state.isFocused ? "0 0 0 1px #10b981" : "none",
-                  "&:hover": {
-                    borderColor: state.isFocused ? "#10b981" : "#9ca3af",
-                  },
-                }),
-                option: (baseStyles, state) => ({
-                  ...baseStyles,
-                  backgroundColor: state.isSelected
-                    ? "#10b981"
-                    : state.isFocused
-                      ? "#d1fae5"
-                      : "white",
-                  color: state.isSelected ? "white" : "#111827",
-                  "&:hover": {
-                    backgroundColor: state.isSelected ? "#10b981" : "#d1fae5",
-                  },
-                }),
-                menuPortal: (base) => ({
-                  ...base,
-                  zIndex: 9999,
-                }),
-                menu: (base) => ({
-                  ...base,
-                  zIndex: 9999,
-                }),
-              }}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Date & Time <span className="text-red-500">*</span>
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Input
-                  type="date"
-                  value={date}
-                  onChange={(e) => {
-                    setDate(e.target.value);
-                    // Re-validate when date changes
-                    if (e.target.value && time) {
-                      validateBookingTime(e.target.value, time);
-                    }
-                  }}
-                  min={new Date().toISOString().split("T")[0]}
-                  required
-                  data-testid="booking-date-input"
-                  className={`w-full ${
-                    timeError && timeError.includes("Sunday")
-                      ? "border-red-500"
-                      : ""
-                  }`}
-                />
-              </div>
-              <div>
-                <Input
-                  type="time"
-                  value={time}
-                  onChange={(e) => {
-                    setTime(e.target.value);
-                    // Re-validate when time changes
-                    if (date && e.target.value) {
-                      validateBookingTime(date, e.target.value);
-                    }
-                  }}
-                  min={
-                    selectedSpaData?.storeHours?.openingTime &&
-                    !selectedSpaData?.storeHours?.is24Hours
-                      ? selectedSpaData.storeHours.openingTime
-                      : undefined
-                  }
-                  max={
-                    selectedSpaData?.storeHours?.closingTime &&
-                    !selectedSpaData?.storeHours?.is24Hours
-                      ? selectedSpaData.storeHours.closingTime
-                      : undefined
-                  }
-                  required
-                  data-testid="booking-time-input"
-                  className={`w-full ${
-                    timeError && !timeError.includes("Sunday")
-                      ? "border-red-500"
-                      : ""
-                  }`}
-                />
-              </div>
-            </div>
-            {timeError && (
-              <p className="text-red-500 text-xs mt-1">{timeError}</p>
-            )}
-            {selectedSpaData?.storeHours && (
-              <p className="text-gray-500 text-xs mt-1">
-                {selectedSpaData.storeHours.is24Hours ? (
-                  <span className="inline-flex items-center gap-1">
-                    <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                    Open 24 Hours
-                  </span>
-                ) : (
-                  <>
-                    Store hours: {selectedSpaData.storeHours.openingTime} -{" "}
-                    {selectedSpaData.storeHours.closingTime}
-                  </>
-                )}
-                {selectedSpaData.storeHours.sundayClosed &&
-                  " (Closed on Sunday)"}
-              </p>
-            )}
-          </div>
-
-          {/* Coupon Code Section */}
-          {formData.spaId && formData.service && (
-            <div className="border-t pt-4">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 mt-4">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Have a coupon code?
+                Name <span className="text-red-500">*</span>
               </label>
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  value={couponCode}
-                  onChange={(e) => {
-                    setCouponCode(e.target.value.toUpperCase());
-                    setCouponError("");
-                  }}
-                  placeholder="Enter coupon code"
-                  className="flex-1"
-                  disabled={!!appliedCoupon}
-                />
-                {appliedCoupon ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleRemoveCoupon}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    Remove
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    onClick={handleApplyCoupon}
-                    disabled={validatingCoupon || !couponCode.trim()}
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                  >
-                    {validatingCoupon ? "Applying..." : "Apply"}
-                  </Button>
-                )}
-              </div>
-              {couponError && (
-                <p className="text-red-500 text-xs mt-1">{couponError}</p>
+              <Input
+                type="text"
+                value={formData.customerName}
+                onChange={(e) =>
+                  setFormData({ ...formData, customerName: e.target.value })
+                }
+                placeholder="Enter your name"
+                required
+                disabled={paymentProcessing}
+                data-testid="booking-name-input"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="tel"
+                value={formData.customerPhone}
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  // Remove all non-digit characters
+                  const digitsOnly = inputValue.replace(/\D/g, "");
+                  // Limit to 10 digits
+                  const limitedDigits = digitsOnly.substring(0, 10);
+
+                  setFormData({ ...formData, customerPhone: limitedDigits });
+
+                  // Real-time validation
+                  const validation = validatePhone10Digits(limitedDigits);
+                  if (validation.isValid) {
+                    setPhoneError("");
+                  } else {
+                    setPhoneError(validation.error);
+                  }
+                }}
+                placeholder="Enter your phone number"
+                required
+                disabled={paymentProcessing}
+                data-testid="booking-phone-input"
+                className={
+                  phoneError ? "border-red-500 focus-visible:ring-red-500" : ""
+                }
+              />
+              {phoneError && (
+                <p className="text-red-500 text-xs mt-1">{phoneError}</p>
               )}
-              {appliedCoupon && (
-                <p className="text-emerald-600 text-xs mt-1">
-                  ✓ Coupon "{appliedCoupon.coupon.code}" applied!
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address{" "}
+              </label>
+              <Input
+                type="email"
+                value={formData.customerEmail}
+                onChange={(e) =>
+                  setFormData({ ...formData, customerEmail: e.target.value })
+                }
+                placeholder="Enter your email"
+                disabled={paymentProcessing}
+                data-testid="booking-email-input"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Spa <span className="text-red-500">*</span>
+              </label>
+              <Select
+                options={allSpaOptions}
+                value={selectedSpaOption}
+                onChange={handleSpaChange}
+                placeholder="Select a spa..."
+                isDisabled={!!prefilledSpa || paymentProcessing}
+                isSearchable={true}
+                className="react-select-container"
+                classNamePrefix="react-select"
+                data-testid="booking-spa-select"
+                menuPortalTarget={
+                  typeof document !== "undefined" ? document.body : null
+                }
+                menuPosition="fixed"
+                styles={{
+                  control: (baseStyles, state) => ({
+                    ...baseStyles,
+                    minHeight: "40px",
+                    borderColor: state.isFocused ? "#10b981" : "#d1d5db",
+                    boxShadow: state.isFocused ? "0 0 0 1px #10b981" : "none",
+                    "&:hover": {
+                      borderColor: state.isFocused ? "#10b981" : "#9ca3af",
+                    },
+                  }),
+                  option: (baseStyles, state) => ({
+                    ...baseStyles,
+                    backgroundColor: state.isSelected
+                      ? "#10b981"
+                      : state.isFocused
+                        ? "#d1fae5"
+                        : "white",
+                    color: state.isSelected ? "white" : "#111827",
+                    "&:hover": {
+                      backgroundColor: state.isSelected ? "#10b981" : "#d1fae5",
+                    },
+                  }),
+                  menuPortal: (base) => ({
+                    ...base,
+                    zIndex: 9999,
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    zIndex: 9999,
+                  }),
+                }}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Service <span className="text-red-500">*</span>
+              </label>
+              <Select
+                options={serviceOptions}
+                value={selectedServiceOption}
+                onChange={handleServiceChange}
+                placeholder="Select a service..."
+                isDisabled={!formData.spaId || paymentProcessing}
+                isSearchable={true}
+                className="react-select-container"
+                classNamePrefix="react-select"
+                data-testid="booking-service-select"
+                menuPortalTarget={
+                  typeof document !== "undefined" ? document.body : null
+                }
+                menuPosition="fixed"
+                styles={{
+                  control: (baseStyles, state) => ({
+                    ...baseStyles,
+                    minHeight: "40px",
+                    borderColor: state.isFocused ? "#10b981" : "#d1d5db",
+                    boxShadow: state.isFocused ? "0 0 0 1px #10b981" : "none",
+                    "&:hover": {
+                      borderColor: state.isFocused ? "#10b981" : "#9ca3af",
+                    },
+                  }),
+                  option: (baseStyles, state) => ({
+                    ...baseStyles,
+                    backgroundColor: state.isSelected
+                      ? "#10b981"
+                      : state.isFocused
+                        ? "#d1fae5"
+                        : "white",
+                    color: state.isSelected ? "white" : "#111827",
+                    "&:hover": {
+                      backgroundColor: state.isSelected ? "#10b981" : "#d1fae5",
+                    },
+                  }),
+                  menuPortal: (base) => ({
+                    ...base,
+                    zIndex: 9999,
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    zIndex: 9999,
+                  }),
+                }}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Date & Time <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Input
+                    type="date"
+                    value={date}
+                    onChange={(e) => {
+                      setDate(e.target.value);
+                      // Re-validate when date changes
+                      if (e.target.value && time) {
+                        validateBookingTime(e.target.value, time);
+                      }
+                    }}
+                    min={new Date().toISOString().split("T")[0]}
+                    required
+                    disabled={paymentProcessing}
+                    data-testid="booking-date-input"
+                    className={`w-full ${
+                      timeError && timeError.includes("Sunday")
+                        ? "border-red-500"
+                        : ""
+                    }`}
+                  />
+                </div>
+                <div>
+                  <Input
+                    type="time"
+                    value={time}
+                    onChange={(e) => {
+                      setTime(e.target.value);
+                      // Re-validate when time changes
+                      if (date && e.target.value) {
+                        validateBookingTime(date, e.target.value);
+                      }
+                    }}
+                    min={
+                      selectedSpaData?.storeHours?.openingTime &&
+                      !selectedSpaData?.storeHours?.is24Hours
+                        ? selectedSpaData.storeHours.openingTime
+                        : undefined
+                    }
+                    max={
+                      selectedSpaData?.storeHours?.closingTime &&
+                      !selectedSpaData?.storeHours?.is24Hours
+                        ? selectedSpaData.storeHours.closingTime
+                        : undefined
+                    }
+                    required
+                    disabled={paymentProcessing}
+                    data-testid="booking-time-input"
+                    className={`w-full ${
+                      timeError && !timeError.includes("Sunday")
+                        ? "border-red-500"
+                        : ""
+                    }`}
+                  />
+                </div>
+              </div>
+              {timeError && (
+                <p className="text-red-500 text-xs mt-1">{timeError}</p>
+              )}
+              {selectedSpaData?.storeHours && (
+                <p className="text-gray-500 text-xs mt-1">
+                  {selectedSpaData.storeHours.is24Hours ? (
+                    <span className="inline-flex items-center gap-1">
+                      <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                      Open 24 Hours
+                    </span>
+                  ) : (
+                    <>
+                      Store hours: {selectedSpaData.storeHours.openingTime} -{" "}
+                      {selectedSpaData.storeHours.closingTime}
+                    </>
+                  )}
+                  {selectedSpaData.storeHours.sundayClosed &&
+                    " (Closed on Sunday)"}
                 </p>
               )}
             </div>
-          )}
 
-          {/* Pricing Summary */}
-          {formData.spaId && formData.service && originalAmount > 0 && (
-            <div className="border-t pt-4 space-y-2">
-              <h3 className="text-sm font-semibold text-gray-900">
-                Pricing Summary
-              </h3>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Service Price:</span>
-                  <span className="text-gray-900">
-                    ₹{originalAmount.toLocaleString()}
-                  </span>
+            {/* Coupon Code Section */}
+            {formData.spaId && formData.service && (
+              <div className="border-t pt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Have a coupon code?
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => {
+                      setCouponCode(e.target.value.toUpperCase());
+                      setCouponError("");
+                    }}
+                    placeholder="Enter coupon code"
+                    className="flex-1"
+                    disabled={!!appliedCoupon || paymentProcessing}
+                  />
+                  {appliedCoupon ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleRemoveCoupon}
+                      disabled={paymentProcessing}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      Remove
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      disabled={
+                        validatingCoupon ||
+                        !couponCode.trim() ||
+                        paymentProcessing
+                      }
+                      className="bg-emerald-600 hover:bg-emerald-700"
+                    >
+                      {validatingCoupon ? "Applying..." : "Apply"}
+                    </Button>
+                  )}
                 </div>
-                {appliedCoupon && discountAmount > 0 && (
-                  <div className="flex justify-between text-emerald-600">
-                    <span>Discount ({appliedCoupon.coupon.code}):</span>
-                    <span>-₹{discountAmount.toLocaleString()}</span>
-                  </div>
+                {couponError && (
+                  <p className="text-red-500 text-xs mt-1">{couponError}</p>
                 )}
-                <div className="flex justify-between pt-2 border-t font-semibold">
-                  <span className="text-gray-900">Total Amount:</span>
-                  <span className="text-emerald-600">
-                    ₹{finalAmount.toLocaleString()}
-                  </span>
+                {appliedCoupon && (
+                  <p className="text-emerald-600 text-xs mt-1">
+                    ✓ Coupon "{appliedCoupon.coupon.code}" applied!
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Pricing Summary with GST */}
+            {formData.spaId && formData.service && originalAmount > 0 && (
+              <div className="border-t pt-4 space-y-2">
+                <h3 className="text-sm font-semibold text-gray-900">
+                  Pricing Summary
+                </h3>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Service Price:</span>
+                    <span className="text-gray-900">
+                      ₹{originalAmount.toLocaleString()}
+                    </span>
+                  </div>
+                  {appliedCoupon && discountAmount > 0 && (
+                    <div className="flex justify-between text-emerald-600">
+                      <span>Discount ({appliedCoupon.coupon.code}):</span>
+                      <span>-₹{discountAmount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-gray-500 text-xs">
+                    <span>Base Amount:</span>
+                    <span>₹{baseAmount.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-500 text-xs">
+                    <span>GST (18% included):</span>
+                    <span>₹{gstAmount.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t font-semibold">
+                    <span className="text-gray-900">Total Amount:</span>
+                    <span className="text-emerald-600">
+                      ₹{finalAmount.toLocaleString()}
+                    </span>
+                  </div>
                 </div>
               </div>
+            )}
+
+            <div className="flex items-start space-x-2 pt-2">
+              <input
+                type="checkbox"
+                id="acceptTerms"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                disabled={paymentProcessing}
+                className="mt-1 h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                data-testid="booking-terms-checkbox"
+              />
+              <label
+                htmlFor="acceptTerms"
+                className="text-sm text-gray-700 cursor-pointer"
+              >
+                I accept the{" "}
+                <Link
+                  href="/terms"
+                  target="_blank"
+                  className="text-emerald-600 hover:underline"
+                >
+                  Terms & Conditions
+                </Link>
+                <span className="text-red-500">*</span>
+              </label>
             </div>
-          )}
 
-          <div className="flex items-start space-x-2 pt-2">
-            <input
-              type="checkbox"
-              id="acceptTerms"
-              checked={acceptedTerms}
-              onChange={(e) => setAcceptedTerms(e.target.checked)}
-              className="mt-1 h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
-              data-testid="booking-terms-checkbox"
-            />
-            <label
-              htmlFor="acceptTerms"
-              className="text-sm text-gray-700 cursor-pointer"
-            >
-              I accept the Terms & Conditions
-              <span className="text-red-500">*</span>
-            </label>
-          </div>
+            {/* Payment Security Note */}
+            <div className="bg-gray-50 rounded-lg p-3 flex items-center gap-2 text-xs text-gray-600">
+              <svg
+                className="w-4 h-4 text-emerald-600 flex-shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
+              <span>
+                Secure payment powered by Razorpay. Your payment information is
+                encrypted and secure.
+              </span>
+            </div>
 
-          <div className="flex space-x-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-              data-testid="booking-cancel-button"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading || !acceptedTerms}
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              data-testid="booking-submit-button"
-            >
-              {loading ? "Booking..." : "Confirm Booking"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+            <div className="flex space-x-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                className="flex-1"
+                disabled={paymentProcessing}
+                data-testid="booking-cancel-button"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading || !acceptedTerms || !razorpayLoaded}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                data-testid="booking-submit-button"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <svg
+                      className="animate-spin h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  `Pay ₹${finalAmount.toLocaleString()}`
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
