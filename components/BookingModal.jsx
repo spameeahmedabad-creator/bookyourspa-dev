@@ -361,8 +361,10 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const BOOKING_FEE = 199;
 
   // Calculate payment amounts based on payment type
-  const paymentAmount = paymentType === "booking_only" ? BOOKING_FEE : finalAmount;
-  const pendingAmount = paymentType === "booking_only" ? finalAmount - BOOKING_FEE : 0;
+  const paymentAmount =
+    paymentType === "booking_only" ? BOOKING_FEE : finalAmount;
+  const pendingAmount =
+    paymentType === "booking_only" ? finalAmount - BOOKING_FEE : 0;
 
   // Apply coupon
   const handleApplyCoupon = async () => {
@@ -972,11 +974,15 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
                   Choose Payment Option
                 </h3>
                 <div className="space-y-3">
-                  <label className="flex items-start space-x-3 p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  <label
+                    className="flex items-start space-x-3 p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
                     style={{
-                      borderColor: paymentType === "full" ? "#10b981" : "#e5e7eb",
-                      backgroundColor: paymentType === "full" ? "#f0fdf4" : "transparent"
-                    }}>
+                      borderColor:
+                        paymentType === "full" ? "#10b981" : "#e5e7eb",
+                      backgroundColor:
+                        paymentType === "full" ? "#f0fdf4" : "transparent",
+                    }}
+                  >
                     <input
                       type="radio"
                       name="paymentType"
@@ -996,11 +1002,17 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
                     </div>
                   </label>
 
-                  <label className="flex items-start space-x-3 p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  <label
+                    className="flex items-start space-x-3 p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
                     style={{
-                      borderColor: paymentType === "booking_only" ? "#10b981" : "#e5e7eb",
-                      backgroundColor: paymentType === "booking_only" ? "#f0fdf4" : "transparent"
-                    }}>
+                      borderColor:
+                        paymentType === "booking_only" ? "#10b981" : "#e5e7eb",
+                      backgroundColor:
+                        paymentType === "booking_only"
+                          ? "#f0fdf4"
+                          : "transparent",
+                    }}
+                  >
                     <input
                       type="radio"
                       name="paymentType"
@@ -1015,7 +1027,8 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
                         Book Now - Pay ₹{BOOKING_FEE.toLocaleString()} Only
                       </div>
                       <div className="text-sm text-gray-600">
-                        Pay remaining ₹{pendingAmount.toLocaleString()} at the spa
+                        Pay remaining ₹{pendingAmount.toLocaleString()} at the
+                        spa
                       </div>
                     </div>
                   </label>
@@ -1164,10 +1177,10 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
                     </svg>
                     Processing...
                   </span>
+                ) : paymentType === "booking_only" ? (
+                  `Pay ₹${BOOKING_FEE.toLocaleString()} to Book`
                 ) : (
-                  paymentType === "booking_only"
-                    ? `Pay ₹${BOOKING_FEE.toLocaleString()} to Book`
-                    : `Pay ₹${finalAmount.toLocaleString()}`
+                  `Pay ₹${finalAmount.toLocaleString()}`
                 )}
               </Button>
             </div>

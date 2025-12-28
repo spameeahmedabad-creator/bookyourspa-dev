@@ -187,12 +187,13 @@ export async function POST(request) {
     const finalAmount = amountAfterDiscount;
 
     // Determine payment amounts based on payment type
-    let paymentAmount = finalAmount; // Amount to charge via Razorpay (in paise)
-    let paidAmount = finalAmount; // Amount paid
-    let pendingAmount = 0; // Amount pending (to be paid at spa)
+    // Note: createOrder expects amount in rupees, it will convert to paise internally
+    let paymentAmount = finalAmount; // Amount to charge via Razorpay (in rupees)
+    let paidAmount = finalAmount; // Amount paid (in rupees)
+    let pendingAmount = 0; // Amount pending (to be paid at spa, in rupees)
 
     if (paymentType === "booking_only") {
-      paymentAmount = BOOKING_FEE; // Rs.199 in paise
+      paymentAmount = BOOKING_FEE / 100; // Rs.199 (convert from paise to rupees)
       paidAmount = BOOKING_FEE / 100; // Rs.199
       pendingAmount = finalAmount - paidAmount; // Remaining amount
     }
@@ -233,9 +234,9 @@ export async function POST(request) {
     // Generate unique receipt ID
     const receipt = `BYS_${booking._id.toString().slice(-8)}_${Date.now()}`;
 
-    // Create Razorpay order with appropriate amount
+    // Create Razorpay order with appropriate amount (in rupees)
     const razorpayOrder = await createOrder({
-      amount: paymentAmount, // Amount in paise
+      amount: paymentAmount, // Amount in rupees (createOrder will convert to paise)
       currency: "INR",
       receipt,
       notes: {
@@ -258,8 +259,9 @@ export async function POST(request) {
       bookingId: booking._id,
       userId,
       razorpayOrderId: razorpayOrder.id,
-      amount: paymentAmount / 100, // Convert paise to rupees for storage
-      baseAmount: paymentType === "booking_only" ? bookingFeeAmount : baseAmount,
+      amount: paymentAmount, // Already in rupees
+      baseAmount:
+        paymentType === "booking_only" ? bookingFeeAmount : baseAmount,
       gstAmount: paymentType === "booking_only" ? 0 : gstAmount, // Booking fee is flat, no GST breakdown
       currency: "INR",
       paymentType: paymentType,
