@@ -50,6 +50,12 @@ const PaymentSchema = new mongoose.Schema({
     default: 0,
     min: 0,
   },
+  // Payment type
+  paymentType: {
+    type: String,
+    enum: ["full", "booking_only"],
+    default: "full",
+  },
   // Payment status
   status: {
     type: String,

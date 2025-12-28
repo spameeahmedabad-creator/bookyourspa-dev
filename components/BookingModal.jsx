@@ -45,6 +45,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [paymentType, setPaymentType] = useState("full"); // "full" or "booking_only"
 
   // Track if modal was previously open to only reset on open transition
   const wasOpenRef = useRef(false);
@@ -72,6 +73,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       setAppliedCoupon(null);
       setCouponError("");
       setPaymentProcessing(false);
+      setPaymentType("full");
 
       // Also check if Razorpay was loaded while modal was closed
       if (typeof window !== "undefined" && window.Razorpay) {
@@ -355,6 +357,13 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const gstAmount = Math.round((amountAfterDiscount - baseAmount) * 100) / 100;
   const finalAmount = amountAfterDiscount;
 
+  // Fixed booking fee
+  const BOOKING_FEE = 199;
+
+  // Calculate payment amounts based on payment type
+  const paymentAmount = paymentType === "booking_only" ? BOOKING_FEE : finalAmount;
+  const pendingAmount = paymentType === "booking_only" ? finalAmount - BOOKING_FEE : 0;
+
   // Apply coupon
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -595,6 +604,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
         date: dateStr,
         time: timeStr,
         couponCode: appliedCoupon?.coupon?.code || null,
+        paymentType: paymentType,
       };
 
       // Create Razorpay order
@@ -955,6 +965,64 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
               </div>
             )}
 
+            {/* Payment Type Selection */}
+            {formData.spaId && formData.service && originalAmount > 0 && (
+              <div className="border-t pt-4 space-y-3">
+                <h3 className="text-sm font-semibold text-gray-900">
+                  Choose Payment Option
+                </h3>
+                <div className="space-y-3">
+                  <label className="flex items-start space-x-3 p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                    style={{
+                      borderColor: paymentType === "full" ? "#10b981" : "#e5e7eb",
+                      backgroundColor: paymentType === "full" ? "#f0fdf4" : "transparent"
+                    }}>
+                    <input
+                      type="radio"
+                      name="paymentType"
+                      value="full"
+                      checked={paymentType === "full"}
+                      onChange={(e) => setPaymentType(e.target.value)}
+                      disabled={paymentProcessing}
+                      className="mt-1 h-4 w-4 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        Pay Full Amount
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        ₹{finalAmount.toLocaleString()} (One-time payment)
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start space-x-3 p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                    style={{
+                      borderColor: paymentType === "booking_only" ? "#10b981" : "#e5e7eb",
+                      backgroundColor: paymentType === "booking_only" ? "#f0fdf4" : "transparent"
+                    }}>
+                    <input
+                      type="radio"
+                      name="paymentType"
+                      value="booking_only"
+                      checked={paymentType === "booking_only"}
+                      onChange={(e) => setPaymentType(e.target.value)}
+                      disabled={paymentProcessing}
+                      className="mt-1 h-4 w-4 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        Book Now - Pay ₹{BOOKING_FEE.toLocaleString()} Only
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Pay remaining ₹{pendingAmount.toLocaleString()} at the spa
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            )}
+
             {/* Pricing Summary with GST */}
             {formData.spaId && formData.service && originalAmount > 0 && (
               <div className="border-t pt-4 space-y-2">
@@ -988,6 +1056,22 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
                       ₹{finalAmount.toLocaleString()}
                     </span>
                   </div>
+                  {paymentType === "booking_only" && (
+                    <>
+                      <div className="flex justify-between pt-2 border-t">
+                        <span className="text-gray-600">Pay Now:</span>
+                        <span className="font-medium text-emerald-600">
+                          ₹{BOOKING_FEE.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Pay at Spa:</span>
+                        <span className="font-medium text-gray-900">
+                          ₹{pendingAmount.toLocaleString()}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -1081,7 +1165,9 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
                     Processing...
                   </span>
                 ) : (
-                  `Pay ₹${finalAmount.toLocaleString()}`
+                  paymentType === "booking_only"
+                    ? `Pay ₹${BOOKING_FEE.toLocaleString()} to Book`
+                    : `Pay ₹${finalAmount.toLocaleString()}`
                 )}
               </Button>
             </div>

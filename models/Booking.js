@@ -89,10 +89,25 @@ const BookingSchema = new mongoose.Schema({
     },
   },
   // Payment Information
+  paymentType: {
+    type: String,
+    enum: ["full", "booking_only"],
+    default: "full",
+  },
   paymentStatus: {
     type: String,
-    enum: ["pending", "paid", "failed", "refunded"],
+    enum: ["pending", "paid", "partial", "failed", "refunded"],
     default: "pending",
+  },
+  paidAmount: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  pendingAmount: {
+    type: Number,
+    default: 0,
+    min: 0,
   },
   paymentMethod: {
     type: String, // "razorpay", "cash", etc.

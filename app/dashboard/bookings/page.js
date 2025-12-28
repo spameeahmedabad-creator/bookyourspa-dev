@@ -274,17 +274,43 @@ export default function MyBookingsPage() {
                         <div className="flex items-center space-x-2">
                           <IndianRupee className="w-4 h-4 text-emerald-600" />
                           <div>
-                            <p className="text-xs text-gray-500">Final Price</p>
+                            <p className="text-xs text-gray-500">Total Price</p>
                             <p className="font-semibold text-emerald-600">
                               ₹{(booking.finalAmount || 0).toLocaleString()}
                             </p>
                           </div>
                         </div>
                       </div>
+
+                      {/* Payment Status for Partial Payments */}
+                      {booking.paymentStatus === "partial" && booking.pendingAmount > 0 && (
+                        <div className="mt-3 pt-3 border-t">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                              <div>
+                                <p className="text-xs text-gray-500">Paid</p>
+                                <p className="font-medium text-emerald-600">
+                                  ₹{(booking.paidAmount || 0).toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                              <div>
+                                <p className="text-xs text-gray-500">Pay at Spa</p>
+                                <p className="font-medium text-gray-900">
+                                  ₹{(booking.pendingAmount || 0).toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                  <div className="mt-4 pt-4 border-t flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="flex items-center text-gray-600">
                       <MapPin className="w-4 h-4 mr-2" />
                       <span className="text-sm">
@@ -294,19 +320,48 @@ export default function MyBookingsPage() {
                           booking.spaId?.location?.address}
                       </span>
                     </div>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        booking.status === "confirmed"
-                          ? "bg-green-100 text-green-700"
-                          : booking.status === "pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : booking.status === "cancelled"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      {booking.status}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Payment Status Badge */}
+                      {booking.paymentStatus && (
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            booking.paymentStatus === "paid"
+                              ? "bg-green-100 text-green-700"
+                              : booking.paymentStatus === "partial"
+                                ? "bg-amber-100 text-amber-700"
+                                : booking.paymentStatus === "pending"
+                                  ? "bg-yellow-100 text-yellow-700"
+                                  : booking.paymentStatus === "failed"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-gray-100 text-gray-700"
+                          }`}
+                        >
+                          {booking.paymentStatus === "paid"
+                            ? "Fully Paid"
+                            : booking.paymentStatus === "partial"
+                              ? "Booking Fee Paid"
+                              : booking.paymentStatus === "pending"
+                                ? "Payment Pending"
+                                : booking.paymentStatus === "failed"
+                                  ? "Payment Failed"
+                                  : booking.paymentStatus}
+                        </span>
+                      )}
+                      {/* Booking Status Badge */}
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          booking.status === "confirmed"
+                            ? "bg-green-100 text-green-700"
+                            : booking.status === "pending"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : booking.status === "cancelled"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {booking.status}
+                      </span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

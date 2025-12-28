@@ -9,6 +9,8 @@ import { verifyToken } from "@/lib/jwt";
 
 // GST rate for spa services (18%)
 const GST_RATE = 0.18;
+// Fixed booking fee amount (in paise for Razorpay)
+const BOOKING_FEE = 199 * 100; // Rs.199
 
 /**
  * Create a Razorpay order for booking payment
@@ -27,6 +29,7 @@ export async function POST(request) {
       date,
       time,
       couponCode,
+      paymentType = "full", // "full" or "booking_only"
     } = data;
 
     // Validate required fields
@@ -183,6 +186,17 @@ export async function POST(request) {
       Math.round((amountAfterDiscount - baseAmount) * 100) / 100;
     const finalAmount = amountAfterDiscount;
 
+    // Determine payment amounts based on payment type
+    let paymentAmount = finalAmount; // Amount to charge via Razorpay (in paise)
+    let paidAmount = finalAmount; // Amount paid
+    let pendingAmount = 0; // Amount pending (to be paid at spa)
+
+    if (paymentType === "booking_only") {
+      paymentAmount = BOOKING_FEE; // Rs.199 in paise
+      paidAmount = BOOKING_FEE / 100; // Rs.199
+      pendingAmount = finalAmount - paidAmount; // Remaining amount
+    }
+
     // Create pending booking
     const booking = await Booking.create({
       userId,
@@ -195,6 +209,9 @@ export async function POST(request) {
       time,
       status: "pending", // Will be confirmed after payment
       paymentStatus: "pending",
+      paymentType: paymentType,
+      paidAmount: paidAmount,
+      pendingAmount: pendingAmount,
       couponCode: couponCodeToUse,
       discountAmount,
       originalAmount,
@@ -216,9 +233,9 @@ export async function POST(request) {
     // Generate unique receipt ID
     const receipt = `BYS_${booking._id.toString().slice(-8)}_${Date.now()}`;
 
-    // Create Razorpay order
+    // Create Razorpay order with appropriate amount
     const razorpayOrder = await createOrder({
-      amount: finalAmount,
+      amount: paymentAmount, // Amount in paise
       currency: "INR",
       receipt,
       notes: {
@@ -227,6 +244,7 @@ export async function POST(request) {
         service,
         customerName,
         customerPhone,
+        paymentType: paymentType,
       },
     });
 
@@ -235,14 +253,16 @@ export async function POST(request) {
     await booking.save();
 
     // Create payment record
+    const bookingFeeAmount = BOOKING_FEE / 100; // Convert paise to rupees
     await Payment.create({
       bookingId: booking._id,
       userId,
       razorpayOrderId: razorpayOrder.id,
-      amount: finalAmount,
-      baseAmount,
-      gstAmount,
+      amount: paymentAmount / 100, // Convert paise to rupees for storage
+      baseAmount: paymentType === "booking_only" ? bookingFeeAmount : baseAmount,
+      gstAmount: paymentType === "booking_only" ? 0 : gstAmount, // Booking fee is flat, no GST breakdown
       currency: "INR",
+      paymentType: paymentType,
       status: "created",
       customerDetails: {
         name: customerName,
@@ -257,6 +277,8 @@ export async function POST(request) {
         time,
         couponCode: couponCodeToUse,
         discountAmount,
+        finalAmount,
+        pendingAmount: paymentType === "booking_only" ? pendingAmount : 0,
       },
     });
 
@@ -274,6 +296,9 @@ export async function POST(request) {
         baseAmount,
         gstAmount,
         finalAmount,
+        paymentType: paymentType,
+        paidAmount: paidAmount,
+        pendingAmount: pendingAmount,
       },
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
       prefill: {

@@ -87,8 +87,8 @@ export async function POST(request) {
       );
     }
 
-    // Check if booking is already paid
-    if (booking.paymentStatus === "paid") {
+    // Check if booking is already paid or partially paid
+    if (booking.paymentStatus === "paid" || booking.paymentStatus === "partial") {
       return NextResponse.json({
         success: true,
         message: "Payment already verified",
@@ -104,10 +104,13 @@ export async function POST(request) {
       console.error("Failed to fetch payment details:", err);
     }
 
+    // Determine payment status based on payment type
+    const paymentStatus = booking.paymentType === "booking_only" ? "partial" : "paid";
+
     // Update booking with payment details
     booking.razorpayPaymentId = razorpay_payment_id;
     booking.razorpaySignature = razorpay_signature;
-    booking.paymentStatus = "paid";
+    booking.paymentStatus = paymentStatus;
     booking.paymentMethod = "razorpay";
     booking.status = "confirmed";
     booking.paidAt = new Date();
@@ -230,6 +233,9 @@ export async function POST(request) {
         id: booking._id,
         status: booking.status,
         paymentStatus: booking.paymentStatus,
+        paymentType: booking.paymentType,
+        paidAmount: booking.paidAmount,
+        pendingAmount: booking.pendingAmount,
         service: booking.service,
         date: booking.date,
         time: booking.time,
