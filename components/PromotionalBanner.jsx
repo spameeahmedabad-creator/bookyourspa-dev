@@ -4,6 +4,14 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { X, Tag, Clock, Sparkles } from "lucide-react";
 
+// Static banner configuration
+const STATIC_BANNER_CONFIG = {
+  enabled: true, // Set to false to use dynamic banner instead
+  image: "/etc/rainbow-banner-coupan.png",
+  alt: "Special Coupon Offer",
+  link: null, // Optional: Add a link URL if the banner should be clickable
+};
+
 const colorSchemes = {
   emerald: {
     bg: "bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600",
@@ -50,7 +58,12 @@ export default function PromotionalBanner() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchPromotions();
+    // Only fetch dynamic promotions if static banner is disabled
+    if (!STATIC_BANNER_CONFIG.enabled) {
+      fetchPromotions();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   // Auto-rotate promotions every 4 seconds
@@ -76,6 +89,66 @@ export default function PromotionalBanner() {
     }
   };
 
+  // Static banner rendering
+  if (STATIC_BANNER_CONFIG.enabled) {
+    if (dismissed) return null;
+
+    const BannerImage = ({ className }) => (
+      <img
+        src={STATIC_BANNER_CONFIG.image}
+        alt={STATIC_BANNER_CONFIG.alt}
+        className={className}
+      />
+    );
+
+    const renderBannerContent = (imageClassName) => {
+      if (STATIC_BANNER_CONFIG.link) {
+        return (
+          <a
+            href={STATIC_BANNER_CONFIG.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full"
+          >
+            <BannerImage className={imageClassName} />
+          </a>
+        );
+      }
+      return <BannerImage className={imageClassName} />;
+    };
+
+    return (
+      <div className="relative bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 overflow-hidden">
+        {/* Mobile: Full width, fixed height, cover to fill */}
+        <div className="block sm:hidden w-full">
+          {renderBannerContent("w-full h-[45px] object-cover object-center")}
+        </div>
+
+        {/* Tablet: Slightly taller */}
+        <div className="hidden sm:block md:hidden w-full">
+          {renderBannerContent("w-full h-[50px] object-cover object-center")}
+        </div>
+
+        {/* Desktop: Centered with max-width, contain to show full image */}
+        <div className="hidden md:block w-full">
+          <div className="max-w-7xl mx-auto px-4">
+            {renderBannerContent("w-full h-[55px] lg:h-[60px] object-contain object-center")}
+          </div>
+        </div>
+
+        {/* Close button - responsive sizing and positioning */}
+        <button
+          onClick={() => setDismissed(true)}
+          className="absolute right-1 sm:right-2 md:right-4 top-1/2 -translate-y-1/2 p-1 sm:p-1.5 bg-black/30 hover:bg-black/50 rounded-full transition-colors z-10"
+          aria-label="Dismiss banner"
+        >
+          <X className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+        </button>
+      </div>
+    );
+  }
+
+  // Dynamic banner - original logic
   if (loading || dismissed || promotions.length === 0) {
     return null;
   }
@@ -169,9 +242,15 @@ export default function PromotionalBanner() {
 
       <style jsx>{`
         @keyframes gradient {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
         }
         .animate-gradient {
           animation: gradient 3s ease infinite;
@@ -180,4 +259,3 @@ export default function PromotionalBanner() {
     </div>
   );
 }
-
