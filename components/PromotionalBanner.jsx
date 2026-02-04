@@ -8,6 +8,7 @@ import { X, Tag, Clock, Sparkles } from "lucide-react";
 const STATIC_BANNER_CONFIG = {
   enabled: true, // Set to false to use dynamic banner instead
   image: "/etc/rainbow-banner-coupan.png",
+  mobileImage: "/etc/rainbow-banner-coupan-mobile.jpeg",
   alt: "Special Coupon Offer",
   link: null, // Optional: Add a link URL if the banner should be clickable
 };
@@ -118,12 +119,34 @@ export default function PromotionalBanner() {
     };
 
     return (
-      <div className="relative bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 overflow-hidden">
-        {/* All screen sizes: Full width, auto height to show complete image */}
-        <div className="w-full">
-          <div className="max-w-7xl mx-auto">
-            {renderBannerContent("w-full h-auto object-contain")}
-          </div>
+      <div className="relative bg-[#c41230] overflow-hidden">
+        {/* Mobile: Use mobile-specific banner */}
+        <div className="block sm:hidden w-full">
+          {STATIC_BANNER_CONFIG.link ? (
+            <a
+              href={STATIC_BANNER_CONFIG.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full"
+            >
+              <img
+                src={STATIC_BANNER_CONFIG.mobileImage}
+                alt={STATIC_BANNER_CONFIG.alt}
+                className="w-full h-auto block"
+              />
+            </a>
+          ) : (
+            <img
+              src={STATIC_BANNER_CONFIG.mobileImage}
+              alt={STATIC_BANNER_CONFIG.alt}
+              className="w-full h-auto block"
+            />
+          )}
+        </div>
+
+        {/* Tablet and Desktop: Use regular banner */}
+        <div className="hidden sm:block w-full">
+          {renderBannerContent("w-full h-auto block")}
         </div>
 
         {/* Close button - responsive sizing and positioning */}
