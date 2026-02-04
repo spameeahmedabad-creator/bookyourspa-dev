@@ -119,20 +119,10 @@ export default function PromotionalBanner() {
 
     return (
       <div className="relative bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 overflow-hidden">
-        {/* Mobile: Full width, fixed height, cover to fill */}
-        <div className="block sm:hidden w-full">
-          {renderBannerContent("w-full h-[45px] object-cover object-center")}
-        </div>
-
-        {/* Tablet: Slightly taller */}
-        <div className="hidden sm:block md:hidden w-full">
-          {renderBannerContent("w-full h-[50px] object-cover object-center")}
-        </div>
-
-        {/* Desktop: Centered with max-width, contain to show full image */}
-        <div className="hidden md:block w-full">
-          <div className="max-w-7xl mx-auto px-4">
-            {renderBannerContent("w-full h-[55px] lg:h-[60px] object-contain object-center")}
+        {/* All screen sizes: Full width, auto height to show complete image */}
+        <div className="w-full">
+          <div className="max-w-7xl mx-auto">
+            {renderBannerContent("w-full h-auto object-contain")}
           </div>
         </div>
 
