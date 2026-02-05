@@ -125,15 +125,19 @@ function HomeContent() {
           });
         }
 
+        // Sort filtered spas to put default spa first
+        const sortedFiltered = sortSpasWithDefault(filteredSpas);
+
         // Paginate the filtered results
         const limit = 6;
         const skip = (page - 1) * limit;
-        const paginatedSpas = filteredSpas.slice(skip, skip + limit);
+        const paginatedSpas = sortedFiltered.slice(skip, skip + limit);
         setSpas(paginatedSpas);
         setTotalPages(Math.ceil(filteredSpas.length / limit) || 1);
       } else {
         const response = await axios.get(`/api/spas?page=${page}&limit=6`);
-        setSpas(response.data.spas || []);
+        const sortedSpas = sortSpasWithDefault(response.data.spas || []);
+        setSpas(sortedSpas);
         setTotalPages(response.data.pagination?.pages || 1);
       }
     } catch (error) {
@@ -296,6 +300,16 @@ function HomeContent() {
 
   const handleSearch = (spa) => {
     router.push(`/spa/${spa._id}`);
+  };
+
+  // Helper function to sort spas with "Rainbow International Spa ~ Gota" first
+  const sortSpasWithDefault = (spaList) => {
+    const defaultSpaName = "Rainbow International Spa ~ Gota";
+    return [...spaList].sort((a, b) => {
+      if (a.title === defaultSpaName) return -1;
+      if (b.title === defaultSpaName) return 1;
+      return 0;
+    });
   };
 
   return (

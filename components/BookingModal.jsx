@@ -1055,11 +1055,11 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
                       <span>-₹{discountAmount.toLocaleString()}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-gray-500 text-xs">
+                  <div className="flex justify-between text-gray-500 text-xs hidden">
                     <span>Base Amount:</span>
                     <span>₹{baseAmount.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between text-gray-500 text-xs">
+                  <div className="flex justify-between text-gray-500 text-xs hidden">
                     <span>GST (18% included):</span>
                     <span>₹{gstAmount.toLocaleString()}</span>
                   </div>
