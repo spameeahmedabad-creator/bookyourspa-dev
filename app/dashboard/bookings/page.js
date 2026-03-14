@@ -24,6 +24,16 @@ export default function MyBookingsPage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
+
+  const FILTERS = [
+    { key: "all", label: "All" },
+    { key: "payment_pending", label: "Payment Pending" },
+    { key: "confirmed", label: "Confirmed" },
+    { key: "booking_fee_paid", label: "Booking Fee Paid" },
+    { key: "fully_paid", label: "Fully Paid" },
+    { key: "cancelled", label: "Cancelled" },
+  ];
 
   useEffect(() => {
     fetchUserAndBookings();
@@ -47,41 +57,56 @@ export default function MyBookingsPage() {
     }
   };
 
-  // Filter bookings based on search query
+  // Filter bookings based on search query and active filter
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredBookings(bookings);
-      return;
+    let filtered = bookings;
+
+    // Apply status/payment filter
+    if (activeFilter !== "all") {
+      filtered = filtered.filter((booking) => {
+        if (activeFilter === "payment_pending")
+          return booking.paymentStatus === "pending";
+        if (activeFilter === "confirmed") return booking.status === "confirmed";
+        if (activeFilter === "booking_fee_paid")
+          return booking.paymentStatus === "partial";
+        if (activeFilter === "fully_paid")
+          return booking.paymentStatus === "paid";
+        if (activeFilter === "cancelled") return booking.status === "cancelled";
+        return true;
+      });
     }
 
-    const query = searchQuery.toLowerCase().trim();
-    const filtered = bookings.filter((booking) => {
-      const spaName = booking.spaId?.title?.toLowerCase() || "";
-      const customerName = booking.customerName?.toLowerCase() || "";
-      const customerPhone = booking.customerPhone?.toLowerCase() || "";
-      const service = booking.service?.toLowerCase() || "";
-      const location =
-        booking.spaId?.location?.region?.toLowerCase() ||
-        booking.spaId?.location?.address?.toLowerCase() ||
-        "";
-      const date = booking.date
-        ? format(new Date(booking.date), "MMM dd, yyyy").toLowerCase()
-        : "";
-      const status = booking.status?.toLowerCase() || "";
+    // Apply search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((booking) => {
+        const spaName = booking.spaId?.title?.toLowerCase() || "";
+        const customerName = booking.customerName?.toLowerCase() || "";
+        const customerPhone = booking.customerPhone?.toLowerCase() || "";
+        const service = booking.service?.toLowerCase() || "";
+        const location =
+          booking.spaId?.location?.region?.toLowerCase() ||
+          booking.spaId?.location?.address?.toLowerCase() ||
+          "";
+        const date = booking.date
+          ? format(new Date(booking.date), "MMM dd, yyyy").toLowerCase()
+          : "";
+        const status = booking.status?.toLowerCase() || "";
 
-      return (
-        spaName.includes(query) ||
-        customerName.includes(query) ||
-        customerPhone.includes(query) ||
-        service.includes(query) ||
-        location.includes(query) ||
-        date.includes(query) ||
-        status.includes(query)
-      );
-    });
+        return (
+          spaName.includes(query) ||
+          customerName.includes(query) ||
+          customerPhone.includes(query) ||
+          service.includes(query) ||
+          location.includes(query) ||
+          date.includes(query) ||
+          status.includes(query)
+        );
+      });
+    }
 
     setFilteredBookings(filtered);
-  }, [searchQuery, bookings]);
+  }, [searchQuery, activeFilter, bookings]);
 
   if (loading) {
     return (
@@ -140,6 +165,25 @@ export default function MyBookingsPage() {
             )}
           </div>
 
+          {/* Filter Chips */}
+          {bookings.length > 0 && (
+            <div className="flex overflow-x-auto gap-2 pb-2 mb-4 scrollbar-hide">
+              {FILTERS.map((filter) => (
+                <button
+                  key={filter.key}
+                  onClick={() => setActiveFilter(filter.key)}
+                  className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    activeFilter === filter.key
+                      ? "bg-emerald-600 text-white"
+                      : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Search Bar */}
           {bookings.length > 0 && (
             <div className="relative">
@@ -168,7 +212,10 @@ export default function MyBookingsPage() {
                 No bookings found matching "{searchQuery}"
               </p>
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => {
+                  setSearchQuery("");
+                  setActiveFilter("all");
+                }}
                 className="mt-4 text-emerald-600 hover:text-emerald-700 text-sm font-medium"
               >
                 Clear search
@@ -283,30 +330,37 @@ export default function MyBookingsPage() {
                       </div>
 
                       {/* Payment Status for Partial Payments */}
-                      {booking.paymentStatus === "partial" && booking.pendingAmount > 0 && (
-                        <div className="mt-3 pt-3 border-t">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                              <div>
-                                <p className="text-xs text-gray-500">Paid</p>
-                                <p className="font-medium text-emerald-600">
-                                  ₹{(booking.paidAmount || 0).toLocaleString()}
-                                </p>
+                      {booking.paymentStatus === "partial" &&
+                        booking.pendingAmount > 0 && (
+                          <div className="mt-3 pt-3 border-t">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                                <div>
+                                  <p className="text-xs text-gray-500">Paid</p>
+                                  <p className="font-medium text-emerald-600">
+                                    ₹
+                                    {(booking.paidAmount || 0).toLocaleString()}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                              <div>
-                                <p className="text-xs text-gray-500">Pay at Spa</p>
-                                <p className="font-medium text-gray-900">
-                                  ₹{(booking.pendingAmount || 0).toLocaleString()}
-                                </p>
+                              <div className="flex items-center space-x-2">
+                                <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                                <div>
+                                  <p className="text-xs text-gray-500">
+                                    Pay at Spa
+                                  </p>
+                                  <p className="font-medium text-gray-900">
+                                    ₹
+                                    {(
+                                      booking.pendingAmount || 0
+                                    ).toLocaleString()}
+                                  </p>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      )}
+                        )}
                     </div>
                   )}
 

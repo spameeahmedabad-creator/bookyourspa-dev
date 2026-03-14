@@ -6,7 +6,7 @@ import { X, Tag, Clock, Sparkles } from "lucide-react";
 
 // Static banner configuration
 const STATIC_BANNER_CONFIG = {
-  enabled: true, // Set to false to use dynamic banner instead
+  enabled: false, // Set to false to use dynamic banner instead
   image: "/etc/rainbow-banner-coupan.png",
   mobileImage: "/etc/rainbow-banner-coupan-mobile.jpeg",
   alt: "Special Coupon Offer",
