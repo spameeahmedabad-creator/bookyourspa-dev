@@ -10,18 +10,22 @@ import BookingModal from "@/components/BookingModal";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  Sparkles,
+  Clock,
+  Star,
+  ArrowRight,
+  CheckCircle2,
+} from "lucide-react";
 
-// Component that handles search params (needs to be wrapped in Suspense)
 function BookingModalHandler({ onBookingDetected }) {
   const searchParams = useSearchParams();
-
   useEffect(() => {
-    if (searchParams.get("booking") === "true") {
-      onBookingDetected();
-    }
+    if (searchParams.get("booking") === "true") onBookingDetected();
   }, [searchParams, onBookingDetected]);
-
   return null;
 }
 
@@ -36,36 +40,28 @@ function HomeContent() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [ahmedabadCount, setAhmedabadCount] = useState(0);
   const [gandhinagarCount, setGandhinagarCount] = useState(0);
-  const [cityImages, setCityImages] = useState({
-    ahmedabad: null,
-    gandhinagar: null,
-  });
   const [cityFilter, setCityFilter] = useState("");
   const [serviceFilter, setServiceFilter] = useState("");
   const [serviceImages, setServiceImages] = useState([]);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const router = useRouter();
 
-  // Memoize the callback to prevent unnecessary re-renders
-  const handleBookingDetected = useCallback(() => {
-    setShowBookingModal(true);
-  }, []);
+  const handleBookingDetected = useCallback(
+    () => setShowBookingModal(true),
+    [],
+  );
 
-  // Read city from URL params on mount and when params change
   useEffect(() => {
     const cityParam = searchParams.get("city");
     if (cityParam) {
       setCityFilter(cityParam);
-      setCurrentPage(1); // Reset to first page when filter changes
+      setCurrentPage(1);
     }
   }, [searchParams]);
 
-  // Fetch spas when pagination or filters change
   useEffect(() => {
     fetchSpas(currentPage, cityFilter, serviceFilter);
   }, [currentPage, cityFilter, serviceFilter]);
-
-  // Fetch static data once
   useEffect(() => {
     fetchHeroImages();
     fetchCityCounts();
@@ -74,74 +70,61 @@ function HomeContent() {
 
   useEffect(() => {
     if (heroImages.length > 0) {
-      const interval = setInterval(() => {
-        setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
-      }, 5000); // Change image every 5 seconds
+      const interval = setInterval(
+        () => setCurrentImageIndex((p) => (p + 1) % heroImages.length),
+        5000,
+      );
       return () => clearInterval(interval);
     }
   }, [heroImages.length]);
 
-  // Auto-scroll carousel for Popular Categories
   useEffect(() => {
     if (serviceImages.length > 0) {
-      const interval = setInterval(() => {
-        setCarouselIndex((prev) => (prev + 1) % serviceImages.length);
-      }, 3000); // Scroll every 3 seconds
+      const interval = setInterval(
+        () => setCarouselIndex((p) => (p + 1) % serviceImages.length),
+        3000,
+      );
       return () => clearInterval(interval);
     }
   }, [serviceImages.length]);
+
+  const sortSpasWithDefault = (list) => {
+    const def = "Rainbow International Spa ~ Gota";
+    return [...list].sort((a, b) =>
+      a.title === def ? -1 : b.title === def ? 1 : 0,
+    );
+  };
 
   const fetchSpas = async (page, city = "", service = "") => {
     try {
       setLoading(true);
       if (city || service) {
-        // Fetch all spas and filter by city and/or service
-        const response = await axios.get(`/api/spas?limit=1000`);
-        const allSpas = response.data.spas || [];
-
-        // Filter spas
-        let filteredSpas = allSpas;
-
-        // Filter by city if provided (based on location.region)
-        if (city) {
-          filteredSpas = filteredSpas.filter((spa) => {
-            const region = spa.location?.region?.toLowerCase() || "";
-            return region === city.toLowerCase();
-          });
-        }
-
-        // Filter by service if provided
-        if (service) {
-          filteredSpas = filteredSpas.filter((spa) => {
-            // Check if spa has this service in services array
-            const hasService = spa.services?.some(
-              (s) => s.toLowerCase() === service.toLowerCase()
-            );
-            // Also check in pricing items
-            const hasInPricing = spa.pricing?.some(
-              (p) => p.title?.toLowerCase() === service.toLowerCase()
-            );
-            return hasService || hasInPricing;
-          });
-        }
-
-        // Sort filtered spas to put default spa first
-        const sortedFiltered = sortSpasWithDefault(filteredSpas);
-
-        // Paginate the filtered results
+        const response = await axios.get("/api/spas?limit=1000");
+        let filtered = response.data.spas || [];
+        if (city)
+          filtered = filtered.filter(
+            (s) => s.location?.region?.toLowerCase() === city.toLowerCase(),
+          );
+        if (service)
+          filtered = filtered.filter(
+            (s) =>
+              s.services?.some(
+                (sv) => sv.toLowerCase() === service.toLowerCase(),
+              ) ||
+              s.pricing?.some(
+                (p) => p.title?.toLowerCase() === service.toLowerCase(),
+              ),
+          );
+        const sorted = sortSpasWithDefault(filtered);
         const limit = 6;
-        const skip = (page - 1) * limit;
-        const paginatedSpas = sortedFiltered.slice(skip, skip + limit);
-        setSpas(paginatedSpas);
-        setTotalPages(Math.ceil(filteredSpas.length / limit) || 1);
+        setSpas(sorted.slice((page - 1) * limit, page * limit));
+        setTotalPages(Math.ceil(filtered.length / limit) || 1);
       } else {
         const response = await axios.get(`/api/spas?page=${page}&limit=6`);
-        const sortedSpas = sortSpasWithDefault(response.data.spas || []);
-        setSpas(sortedSpas);
+        setSpas(sortSpasWithDefault(response.data.spas || []));
         setTotalPages(response.data.pagination?.pages || 1);
       }
-    } catch (error) {
-      console.error("Failed to fetch spas:", error);
+    } catch {
       setSpas([]);
       setTotalPages(1);
     } finally {
@@ -152,44 +135,26 @@ function HomeContent() {
   const fetchHeroImages = async () => {
     try {
       const response = await axios.get("/api/spas?limit=10");
-      const allSpas = response.data.spas || [];
-
-      // Collect images from spa galleries
       const images = [];
-      allSpas.forEach((spa) => {
-        if (spa.gallery && Array.isArray(spa.gallery)) {
-          spa.gallery.forEach((img) => {
-            if (img && img.trim() !== "") {
-              images.push(img);
-            }
-          });
-        }
-        // Also use logo if available
-        if (spa.logo && spa.logo.trim() !== "") {
-          images.push(spa.logo);
-        }
+      (response.data.spas || []).forEach((spa) => {
+        (spa.gallery || []).forEach((img) => {
+          if (img?.trim()) images.push(img);
+        });
+        if (spa.logo?.trim()) images.push(spa.logo);
       });
-
-      // If we have images, use them; otherwise use placeholder spa images
-      if (images.length > 0) {
-        setHeroImages(images.slice(0, 5)); // Use first 5 images
-      } else {
-        // Placeholder spa images from Unsplash
-        setHeroImages([
-          "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1920&q=80",
-          "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1920&q=80",
-          "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=1920&q=80",
-          "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=1920&q=80",
-          "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1920&q=80",
-        ]);
-      }
-    } catch (error) {
-      console.error("Failed to fetch hero images:", error);
-      // Fallback to placeholder images
+      setHeroImages(
+        images.length > 0
+          ? images.slice(0, 5)
+          : [
+              "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1920&q=80",
+              "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1920&q=80",
+              "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=1920&q=80",
+            ],
+      );
+    } catch {
       setHeroImages([
         "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1920&q=80",
         "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1920&q=80",
-        "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=1920&q=80",
       ]);
     }
   };
@@ -197,209 +162,157 @@ function HomeContent() {
   const fetchCityCounts = async () => {
     try {
       const response = await axios.get("/api/spas?limit=1000");
-      const allSpas = response.data.spas || [];
-
-      // Count spas by city based on location.region
-      let ahmedabad = 0;
-      let gandhinagar = 0;
-      let ahmedabadImage = null;
-      let gandhinagarImage = null;
-
-      allSpas.forEach((spa) => {
+      let a = 0,
+        g = 0;
+      (response.data.spas || []).forEach((spa) => {
         const region = spa.location?.region?.toLowerCase() || "";
-
-        if (region === "ahmedabad") {
-          ahmedabad++;
-          // Get first image for Ahmedabad
-          if (!ahmedabadImage && spa.gallery && spa.gallery.length > 0) {
-            ahmedabadImage = spa.gallery[0];
-          } else if (!ahmedabadImage && spa.logo) {
-            ahmedabadImage = spa.logo;
-          }
-        } else if (region === "gandhinagar") {
-          gandhinagar++;
-          // Get first image for Gandhinagar
-          if (!gandhinagarImage && spa.gallery && spa.gallery.length > 0) {
-            gandhinagarImage = spa.gallery[0];
-          } else if (!gandhinagarImage && spa.logo) {
-            gandhinagarImage = spa.logo;
-          }
-        }
+        if (region === "ahmedabad") a++;
+        else if (region === "gandhinagar") g++;
       });
-
-      setAhmedabadCount(ahmedabad);
-      setGandhinagarCount(gandhinagar);
-      setCityImages({
-        ahmedabad:
-          ahmedabadImage ||
-          "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&q=80",
-        gandhinagar:
-          gandhinagarImage ||
-          "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=800&q=80",
-      });
-    } catch (error) {
-      console.error("Failed to fetch city counts:", error);
-    }
+      setAhmedabadCount(a);
+      setGandhinagarCount(g);
+    } catch {}
   };
 
   const fetchServiceImages = () => {
-    // Static category images with local images
-    const categoryServices = [
-      {
-        title: "Dry Massage",
-        image: "/img/category/1.png",
-      },
-      {
-        title: "Oil Massage",
-        image: "/img/category/2.png",
-      },
-      {
-        title: "Deep Tissue",
-        image: "/img/category/3.png",
-      },
-      {
-        title: "Swedish",
-        image: "/img/category/4.png",
-      },
-      {
-        title: "Couple",
-        image: "/img/category/5.png",
-      },
-      {
-        title: "Four Hand",
-        image: "/img/category/6.png",
-      },
-      {
-        title: "Hammam",
-        image: "/img/category/7.png",
-      },
-      {
-        title: "Jacuzzi",
-        image: "/img/category/8.png",
-      },
-      {
-        title: "Hot Stone",
-        image: "/img/category/9.png",
-      },
-      {
-        title: "Potli Massage",
-        image: "/img/category/10.png",
-      },
-      {
-        title: "Shirodhara",
-        image: "/img/category/11.png",
-      },
-      {
-        title: "Hot Stone Therapy",
-        image: "/img/category/12.png",
-      },
-    ];
-
-    setServiceImages(categoryServices);
+    setServiceImages([
+      { title: "Dry Massage", image: "/img/category/1.png" },
+      { title: "Oil Massage", image: "/img/category/2.png" },
+      { title: "Deep Tissue", image: "/img/category/3.png" },
+      { title: "Swedish", image: "/img/category/4.png" },
+      { title: "Couple", image: "/img/category/5.png" },
+      { title: "Four Hand", image: "/img/category/6.png" },
+      { title: "Hammam", image: "/img/category/7.png" },
+      { title: "Jacuzzi", image: "/img/category/8.png" },
+      { title: "Hot Stone", image: "/img/category/9.png" },
+      { title: "Potli Massage", image: "/img/category/10.png" },
+      { title: "Shirodhara", image: "/img/category/11.png" },
+      { title: "Hot Stone Therapy", image: "/img/category/12.png" },
+    ]);
   };
 
-  const handleSearch = (spa) => {
-    router.push(`/spa/${spa._id}`);
-  };
+  const handleSearch = (spa) => router.push(`/spa/${spa._id}`);
 
-  // Helper function to sort spas with "Rainbow International Spa ~ Gota" first
-  const sortSpasWithDefault = (spaList) => {
-    const defaultSpaName = "Rainbow International Spa ~ Gota";
-    return [...spaList].sort((a, b) => {
-      if (a.title === defaultSpaName) return -1;
-      if (b.title === defaultSpaName) return 1;
-      return 0;
-    });
+  const scrollToListings = () => {
+    setTimeout(
+      () =>
+        document
+          .getElementById("spa-listings")
+          ?.scrollIntoView({ behavior: "smooth" }),
+      100,
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
+    <div className="min-h-screen bg-sand-50">
       <Suspense fallback={null}>
         <BookingModalHandler onBookingDetected={handleBookingDetected} />
       </Suspense>
       <PromotionalBanner />
       <Navbar />
 
-      {/* Hero Section with Sliding Background Images */}
-      <div
-        className="relative py-8 sm:py-12 lg:py-16 min-h-[400px] sm:min-h-[500px] flex items-center"
+      {/* ── HERO ── */}
+      <section
+        className="relative min-h-[520px] sm:min-h-[600px] flex items-center overflow-hidden"
         data-testid="hero-section"
       >
-        {/* Sliding Background Images */}
-        <div className="absolute inset-0 z-0 overflow-hidden">
-          {heroImages.length > 0 ? (
-            <>
-              {heroImages.map((img, index) => (
-                <div
-                  key={index}
-                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                    index === currentImageIndex ? "opacity-100" : "opacity-0"
-                  }`}
-                >
-                  <img
-                    src={img}
-                    alt={`Spa background ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  {/* Gradient overlay for better text readability */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/80 via-teal-800/75 to-cyan-900/80"></div>
-                </div>
-              ))}
-            </>
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600"></div>
-          )}
+        {/* Background images */}
+        <div className="absolute inset-0 z-0">
+          {heroImages.map((img, i) => (
+            <div
+              key={i}
+              className={`absolute inset-0 transition-opacity duration-1500 ease-in-out ${i === currentImageIndex ? "opacity-100" : "opacity-0"}`}
+            >
+              <img src={img} alt="" className="w-full h-full object-cover" />
+            </div>
+          ))}
+          {/* Multi-layer overlay for rich depth */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/55 to-black/35" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
         </div>
+
+        {/* Floating decorative orbs */}
+        <div className="absolute top-20 right-16 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 left-10 w-48 h-48 bg-teal-400/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Content */}
-        <div className="relative z-50 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="text-center mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4 px-2 drop-shadow-lg">
-              Book The Best Spa & Massage in Ahmedabad and Gandhinagar
-            </h1>
-            <p className="text-sm sm:text-lg lg:text-xl text-emerald-50 max-w-2xl mx-auto px-4 drop-shadow-md">
-              Find and book the best spa and wellness centers across Ahmedabad,
-              Gandhinagar, and beyond
-            </p>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-16 sm:py-20">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 text-white px-4 py-1.5 rounded-full text-xs font-semibold mb-6 sm:mb-8">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
+            Ahmedabad & Gandhinagar's Best Spas
           </div>
 
-          <SearchBar onSelectSpa={handleSearch} />
+          <h1 className="font-playfair text-3xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight max-w-2xl">
+            Find Your
+            <span className="block text-emerald-gradient">Perfect Escape</span>
+          </h1>
+
+          <p className="text-base sm:text-lg text-white/80 max-w-xl mb-8 sm:mb-10 leading-relaxed">
+            Discover and book premium spa experiences. Relax, refresh, and
+            rejuvenate — in seconds.
+          </p>
+
+          {/* Search */}
+          <div className="max-w-xl">
+            <SearchBar onSelectSpa={handleSearch} />
+          </div>
+
+          {/* Stats row */}
+          <div className="flex flex-wrap items-center gap-6 mt-8 sm:mt-10">
+            {[
+              {
+                value: `${ahmedabadCount + gandhinagarCount}+`,
+                label: "Verified Spas",
+              },
+              { value: "500+", label: "Happy Customers" },
+              { value: "4.8★", label: "Average Rating" },
+            ].map(({ value, label }) => (
+              <div key={label} className="text-center">
+                <p className="text-2xl font-bold text-white font-playfair">
+                  {value}
+                </p>
+                <p className="text-xs text-white/60 font-medium">{label}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Image indicators */}
+        {/* Slide indicators */}
         {heroImages.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex space-x-2">
-            {/* {heroImages.map((_, index) => (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+            {heroImages.map((_, i) => (
               <button
-                key={index}
-                onClick={() => setCurrentImageIndex(index)}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  index === currentImageIndex
-                    ? "w-8 bg-white"
-                    : "w-2 bg-white/50 hover:bg-white/75"
-                }`}
-                aria-label={`Go to slide ${index + 1}`}
+                key={i}
+                onClick={() => setCurrentImageIndex(i)}
+                className={`rounded-full transition-all duration-300 ${i === currentImageIndex ? "w-6 h-1.5 bg-white" : "w-1.5 h-1.5 bg-white/40 hover:bg-white/70"}`}
               />
-            ))} */}
+            ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Spa Listings */}
-      <div
+      {/* ── SPA LISTINGS ── */}
+      <section
         id="spa-listings"
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-4">
-          <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-            {cityFilter && serviceFilter
-              ? `Spas in ${cityFilter} - ${serviceFilter}`
-              : cityFilter
-                ? `Spas in ${cityFilter}`
-                : serviceFilter
-                  ? `Spas with ${serviceFilter}`
-                  : "Featured Spas"}
-          </h2>
+        {/* Section header */}
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-8 gap-4">
+          <div>
+            <p className="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-2">
+              {cityFilter || serviceFilter ? "Filtered Results" : "Featured"}
+            </p>
+            <h2 className="font-playfair text-2xl sm:text-3xl font-bold text-gray-900">
+              {cityFilter && serviceFilter
+                ? `${serviceFilter} in ${cityFilter}`
+                : cityFilter
+                  ? `Spas in ${cityFilter}`
+                  : serviceFilter
+                    ? `${serviceFilter} Spas`
+                    : "Top Spas Near You"}
+            </h2>
+          </div>
           {(cityFilter || serviceFilter) && (
             <Button
               type="button"
@@ -409,7 +322,7 @@ function HomeContent() {
                 setServiceFilter("");
                 setCurrentPage(1);
               }}
-              className="w-fit"
+              className="w-fit rounded-xl border-sand-300 hover:bg-sand-100 text-sm"
             >
               Clear Filter
             </Button>
@@ -419,16 +332,16 @@ function HomeContent() {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="h-80 bg-gray-200 rounded-lg animate-pulse"
-              />
+              <div key={i} className="h-80 rounded-3xl skeleton" />
             ))}
           </div>
         ) : spas.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-gray-500 text-lg">
-              No spas found. Be the first to add one!
+          <div className="text-center py-20">
+            <div className="w-16 h-16 bg-sand-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MapPin className="w-7 h-7 text-sand-400" />
+            </div>
+            <p className="text-gray-500">
+              No spas found. Try a different filter.
             </p>
           </div>
         ) : (
@@ -442,260 +355,188 @@ function HomeContent() {
               ))}
             </div>
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div
-                className="flex justify-center items-center space-x-2 sm:space-x-4 mt-8 sm:mt-12"
+                className="flex justify-center items-center gap-3 mt-12"
                 data-testid="pagination"
               >
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setCurrentPage((prev) => Math.max(1, prev - 1));
-                  }}
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                   data-testid="prev-page-button"
-                  className="text-xs sm:text-sm"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-medium border border-sand-200 bg-white hover:bg-sand-50 disabled:opacity-40 transition-all"
                 >
-                  <ChevronLeft className="w-4 h-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Previous</span>
-                </Button>
-
-                <span className="text-gray-700 font-medium text-xs sm:text-base">
-                  {currentPage}/{totalPages}
+                  <ChevronLeft className="w-4 h-4" /> Previous
+                </button>
+                <span className="text-sm font-semibold text-gray-600 px-2">
+                  {currentPage} / {totalPages}
                 </span>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
-                  }}
+                <button
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
                   disabled={currentPage === totalPages}
                   data-testid="next-page-button"
-                  className="text-xs sm:text-sm"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-medium border border-sand-200 bg-white hover:bg-sand-50 disabled:opacity-40 transition-all"
                 >
-                  <span className="hidden sm:inline">Next</span>
-                  <ChevronRight className="w-4 h-4 sm:ml-2" />
-                </Button>
+                  Next <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
             )}
           </>
         )}
-      </div>
+      </section>
 
-      {/* City Booking Section */}
-      <div className="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 py-12 sm:py-16">
+      {/* ── CITY SECTION ── */}
+      <section className="py-14 sm:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-4">
-              Explore Spas by City
+          <div className="text-center mb-10 sm:mb-14">
+            <p className="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-3">
+              Explore by City
+            </p>
+            <h2 className="font-playfair text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
+              Find Spas Near You
             </h2>
-            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
-              Discover the best spa experiences in Ahmedabad and Gandhinagar
+            <p className="text-gray-500 text-base max-w-lg mx-auto">
+              Premium spa experiences in Ahmedabad and Gandhinagar
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 sm:gap-6">
-            {/* 40% - Text Content */}
-            <div className="lg:col-span-4 flex flex-col justify-center space-y-4 sm:space-y-6 bg-white/80 backdrop-blur-sm rounded-2xl p-6 sm:p-8 shadow-lg">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent leading-tight">
-                Book the Best Spa in Ahmedabad & Gandhinagar
-              </h1>
-              <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
-                Discover top-rated spa therapies in ahmedabad and gandhinagar.
-              </p>
-              <p className="text-sm sm:text-base text-gray-500">
-                Relax, refresh, and book your next spa session instantly with
-                BookYourSpa.
-              </p>
-              <Button
+          <div className="grid grid-cols-1 lg:grid-cols-10 gap-5">
+            {/* Left text card */}
+            <div className="lg:col-span-4 flex flex-col justify-center space-y-5 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-3xl p-7 sm:p-10 text-white shadow-luxury-lg">
+              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                <MapPin className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="font-playfair text-2xl sm:text-3xl font-bold mb-3 leading-tight">
+                  Book the Best Spa in Ahmedabad & Gandhinagar
+                </h3>
+                <p className="text-emerald-100 text-sm leading-relaxed">
+                  Discover top-rated spa therapies. Relax, refresh, and book
+                  your session instantly.
+                </p>
+              </div>
+              <button
                 onClick={() => {
                   setCityFilter("");
                   setCurrentPage(1);
-                  const element = document.getElementById("spa-listings");
-                  if (element) {
-                    setTimeout(() => {
-                      element.scrollIntoView({ behavior: "smooth" });
-                    }, 100);
-                  }
+                  scrollToListings();
                 }}
-                className="w-fit bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                className="self-start flex items-center gap-2 bg-white text-emerald-700 px-6 py-3 rounded-2xl text-sm font-bold hover:bg-emerald-50 transition-all duration-200 shadow-md hover:shadow-lg"
               >
-                Explore Spas Near You
-              </Button>
+                Explore All Spas <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
 
-            {/* 30% - Ahmedabad Card */}
-            <div
-              className="lg:col-span-3 relative group cursor-pointer"
+            {/* Ahmedabad */}
+            <CityCard
+              image="/img/spa-ahmedabad.jpg"
+              city="Ahmedabad"
+              count={ahmedabadCount}
               onClick={() => {
                 setCityFilter("Ahmedabad");
                 setCurrentPage(1);
-                const element = document.getElementById("spa-listings");
-                if (element) {
-                  setTimeout(() => {
-                    element.scrollIntoView({ behavior: "smooth" });
-                  }, 100);
-                }
+                scrollToListings();
               }}
-            >
-              <div className="relative h-full min-h-[280px] sm:min-h-[320px] rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] bg-white">
-                <img
-                  src="/img/spa-ahmedabad.jpg"
-                  alt="Ahmedabad Spa"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/60 to-black/40"></div>
-                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-2">
-                    Book massage in Ahmedabad
-                  </h3>
-                  <p className="text-lg sm:text-xl font-semibold text-emerald-300">
-                    {ahmedabadCount} {ahmedabadCount === 1 ? "Spa" : "Spas"}{" "}
-                    Available
-                  </p>
-                </div>
-              </div>
-            </div>
+            />
 
-            {/* 30% - Gandhinagar Card */}
-            <div
-              className="lg:col-span-3 relative group cursor-pointer"
+            {/* Gandhinagar */}
+            <CityCard
+              image="/img/spa-gandhinahar.jpg"
+              city="Gandhinagar"
+              count={gandhinagarCount}
               onClick={() => {
                 setCityFilter("Gandhinagar");
                 setCurrentPage(1);
-                const element = document.getElementById("spa-listings");
-                if (element) {
-                  setTimeout(() => {
-                    element.scrollIntoView({ behavior: "smooth" });
-                  }, 100);
-                }
+                scrollToListings();
               }}
-            >
-              <div className="relative h-full min-h-[280px] sm:min-h-[320px] rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] bg-white">
-                <img
-                  src="/img/spa-gandhinahar.jpg"
-                  alt="Gandhinagar Spa"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/60 to-black/40"></div>
-                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-2">
-                    BOOK MASSAGE IN Gandhinagar
-                  </h3>
-                  <p className="text-lg sm:text-xl font-semibold text-emerald-300">
-                    {gandhinagarCount} {gandhinagarCount === 1 ? "Spa" : "Spas"}{" "}
-                    Available
-                  </p>
-                </div>
-              </div>
-            </div>
+            />
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Popular Categories Section */}
-      <div className="bg-white py-12 sm:py-16 overflow-hidden">
+      {/* ── POPULAR CATEGORIES ── */}
+      <section className="py-14 sm:py-20 bg-sand-50 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-4">
+          <div className="text-center mb-10 sm:mb-14">
+            <p className="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-3">
+              Services
+            </p>
+            <h2 className="font-playfair text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
               Popular Categories
             </h2>
-            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
-              Book the Best Spas in Ahmedabad and Gandhinagar
+            <p className="text-gray-500 text-base max-w-lg mx-auto">
+              From relaxing massages to rejuvenating therapies
             </p>
           </div>
 
-          {/* Scrolling Carousel - Shows 5 images continuously */}
           {serviceImages.length > 0 && (
             <div className="relative group/carousel">
-              {/* Previous Button */}
               <button
-                onClick={() => {
-                  setCarouselIndex((prev) =>
-                    prev === 0 ? serviceImages.length - 1 : prev - 1
-                  );
-                }}
-                className="absolute left-0 sm:left-2 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white text-emerald-600 hover:text-emerald-700 p-2 sm:p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 opacity-70 group-hover/carousel:opacity-100 hover:scale-110 backdrop-blur-sm"
-                aria-label="Previous slide"
+                onClick={() =>
+                  setCarouselIndex((p) =>
+                    p === 0 ? serviceImages.length - 1 : p - 1,
+                  )
+                }
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white shadow-luxury rounded-2xl flex items-center justify-center text-emerald-600 hover:bg-emerald-50 transition-all opacity-0 group-hover/carousel:opacity-100 hover:scale-110"
               >
-                <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() =>
+                  setCarouselIndex((p) => (p + 1) % serviceImages.length)
+                }
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white shadow-luxury rounded-2xl flex items-center justify-center text-emerald-600 hover:bg-emerald-50 transition-all opacity-0 group-hover/carousel:opacity-100 hover:scale-110"
+              >
+                <ChevronRight className="w-5 h-5" />
               </button>
 
-              {/* Next Button */}
-              <button
-                onClick={() => {
-                  setCarouselIndex((prev) => (prev + 1) % serviceImages.length);
-                }}
-                className="absolute right-0 sm:right-2 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white text-emerald-600 hover:text-emerald-700 p-2 sm:p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 opacity-70 group-hover/carousel:opacity-100 hover:scale-110 backdrop-blur-sm"
-                aria-label="Next slide"
-              >
-                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-              </button>
-
-              <div className="flex gap-4 sm:gap-6 justify-center items-center overflow-x-hidden px-8 sm:px-12">
-                {/* Show exactly 5 items in a sliding window with smooth animation */}
-                {Array.from({ length: 5 }).map((_, index) => {
-                  const totalItems = serviceImages.length;
-                  // Calculate which service to show at this position
-                  // Use modulo to wrap around
-                  const displayIndex = (carouselIndex + index) % totalItems;
+              <div className="flex gap-4 sm:gap-5 justify-center items-center overflow-x-hidden px-6">
+                {Array.from({ length: 5 }).map((_, idx) => {
+                  const total = serviceImages.length;
+                  const displayIndex = (carouselIndex + idx) % total;
                   const service = serviceImages[displayIndex];
-
-                  // Position: 0 (first/blurred), 1-3 (center/clear), 4 (last/blurred)
-                  const isEdge = index === 0 || index === 4;
-                  const isCenter = index === 2;
-                  const isNearCenter = index === 1 || index === 3;
-
+                  const isEdge = idx === 0 || idx === 4;
+                  const isCenter = idx === 2;
+                  const isNear = idx === 1 || idx === 3;
                   return (
                     <div
-                      key={`${service.title}-${displayIndex}-${index}`}
-                      className="flex-shrink-0 w-[200px] sm:w-[260px] md:w-[300px] rounded-xl overflow-hidden shadow-lg cursor-pointer"
+                      key={`${service.title}-${displayIndex}`}
+                      className="flex-shrink-0 w-[180px] sm:w-[220px] md:w-[260px] rounded-3xl overflow-hidden cursor-pointer shadow-card"
                       style={{
-                        opacity: isEdge ? 0.4 : isNearCenter ? 0.85 : 1,
-                        filter: isEdge ? "blur(3px)" : "blur(0px)",
-                        transform: `scale(${isEdge ? 0.85 : isNearCenter ? 0.95 : 1})`,
-                        transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
-                        zIndex: isCenter ? 10 : isNearCenter ? 5 : 1,
+                        opacity: isEdge ? 0.35 : isNear ? 0.8 : 1,
+                        filter: isEdge ? "blur(2px)" : "none",
+                        transform: `scale(${isEdge ? 0.84 : isNear ? 0.94 : 1})`,
+                        transition:
+                          "all 0.45s cubic-bezier(0.34, 1.1, 0.64, 1)",
+                        zIndex: isCenter ? 10 : isNear ? 5 : 1,
+                        boxShadow: isCenter
+                          ? "0 12px 40px -8px rgba(5,150,105,0.2)"
+                          : undefined,
                       }}
                       onClick={() => {
-                        setServiceFilter(service.title);
-                        setCityFilter(""); // Clear city filter when selecting service
-                        setCurrentPage(1);
-                        const element = document.getElementById("spa-listings");
-                        if (element) {
-                          setTimeout(() => {
-                            element.scrollIntoView({ behavior: "smooth" });
-                          }, 100);
+                        if (!isCenter) {
+                          setCarouselIndex(displayIndex);
+                          return;
                         }
+                        setServiceFilter(service.title);
+                        setCityFilter("");
+                        setCurrentPage(1);
+                        scrollToListings();
                       }}
                     >
-                      <div className="relative h-[260px] sm:h-[300px] md:h-[340px] group">
+                      <div className="relative h-[240px] sm:h-[280px] md:h-[320px] group">
                         <img
                           src={service.image}
                           alt={service.title}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-                        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white transform transition-transform duration-300 group-hover:translate-y-[-4px]">
-                          <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-1">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 text-white">
+                          <h3 className="font-playfair text-lg sm:text-xl font-bold">
                             {service.title}
                           </h3>
-                          {service.description && (
-                            <p className="text-xs sm:text-sm text-gray-200 line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                              {service.description}
-                            </p>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -703,118 +544,109 @@ function HomeContent() {
                 })}
               </div>
 
-              {/* Carousel Indicators */}
-              <div className="flex justify-center gap-2 mt-6">
-                {serviceImages.map((_, index) => (
+              <div className="flex justify-center gap-1.5 mt-6">
+                {serviceImages.map((_, i) => (
                   <button
-                    key={index}
-                    onClick={() => setCarouselIndex(index)}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      index === carouselIndex
-                        ? "w-8 bg-gradient-to-r from-emerald-500 to-teal-500"
-                        : "w-2 bg-gray-300 hover:bg-gray-400"
-                    }`}
-                    aria-label={`Go to slide ${index + 1}`}
+                    key={i}
+                    onClick={() => setCarouselIndex(i)}
+                    className={`rounded-full transition-all duration-300 ${i === carouselIndex ? "w-6 h-1.5 bg-emerald-500" : "w-1.5 h-1.5 bg-sand-300 hover:bg-sand-400"}`}
                   />
                 ))}
               </div>
             </div>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* Features Section */}
-      <div className="bg-gradient-to-b from-white via-emerald-50/30 to-white py-12 sm:py-16">
+      {/* ── WHY US ── */}
+      <section className="py-14 sm:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-4">
+          <div className="text-center mb-10 sm:mb-14">
+            <p className="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-3">
+              Why Us
+            </p>
+            <h2 className="font-playfair text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
               Why Choose BookYourSpa?
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-gray-500 text-base max-w-lg mx-auto">
               Experience hassle-free spa booking with our trusted platform
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-6 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-emerald-100">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <svg
-                  className="w-8 h-8 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+            {[
+              {
+                icon: CheckCircle2,
+                title: "Verified Spas",
+                description:
+                  "Every spa is vetted and verified for quality, hygiene, and service excellence.",
+                color: "emerald",
+              },
+              {
+                icon: Clock,
+                title: "Instant Booking",
+                description:
+                  "Book your spa appointment in seconds with real-time confirmation and WhatsApp updates.",
+                color: "teal",
+              },
+              {
+                icon: Star,
+                title: "Best Prices",
+                description:
+                  "Transparent pricing with no hidden charges. Pay just ₹199 to secure your slot.",
+                color: "gold",
+              },
+            ].map(({ icon: Icon, title, description, color }) => (
+              <div
+                key={title}
+                className="group p-7 bg-white rounded-3xl border border-sand-100 hover:border-emerald-200 shadow-card hover:shadow-luxury transition-all duration-300 hover:-translate-y-1"
+              >
+                <div
+                  className={`w-13 h-13 w-12 h-12 rounded-2xl flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110 ${
+                    color === "gold"
+                      ? "bg-gold-100"
+                      : color === "teal"
+                        ? "bg-teal-50"
+                        : "bg-emerald-50"
+                  }`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  <Icon
+                    className={`w-6 h-6 ${color === "gold" ? "text-gold-600" : color === "teal" ? "text-teal-600" : "text-emerald-600"}`}
                   />
-                </svg>
+                </div>
+                <h3 className="font-playfair text-lg font-bold text-gray-900 mb-2">
+                  {title}
+                </h3>
+                <p className="text-gray-500 text-sm leading-relaxed">
+                  {description}
+                </p>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-gray-900">
-                Verified Spas
-              </h3>
-              <p className="text-gray-600">
-                All spa centers are verified and trusted for quality services
-              </p>
-            </div>
-
-            <div className="text-center p-6 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-teal-100">
-              <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <svg
-                  className="w-8 h-8 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-gray-900">
-                Instant Booking
-              </h3>
-              <p className="text-gray-600">
-                Book your spa appointment in seconds with real-time confirmation
-              </p>
-            </div>
-
-            <div className="text-center p-6 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-cyan-100">
-              <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <svg
-                  className="w-8 h-8 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-gray-900">
-                Best Prices
-              </h3>
-              <p className="text-gray-600">
-                Transparent pricing with no hidden charges
-              </p>
-            </div>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Footer */}
+      {/* ── CTA BANNER ── */}
+      <section className="py-12 sm:py-16 bg-gradient-to-r from-emerald-600 to-teal-600">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <h2 className="font-playfair text-2xl sm:text-4xl font-bold text-white mb-4">
+            Ready for Your Wellness Journey?
+          </h2>
+          <p className="text-emerald-100 text-base mb-8">
+            Book your spa appointment now and pay just ₹199 to secure your slot.
+          </p>
+          <button
+            onClick={() => setShowBookingModal(true)}
+            className="inline-flex items-center gap-2 bg-white text-emerald-700 px-8 py-4 rounded-2xl text-base font-bold hover:bg-emerald-50 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105"
+          >
+            <Sparkles className="w-5 h-5" />
+            Book Your Spa Now
+          </button>
+        </div>
+      </section>
+
       <Footer variant="full" fourthColumn="cities" />
 
-      {/* Booking Modal */}
       <BookingModal
         open={showBookingModal}
         onClose={() => {
@@ -822,6 +654,35 @@ function HomeContent() {
           router.push("/");
         }}
       />
+    </div>
+  );
+}
+
+function CityCard({ image, city, count, onClick }) {
+  return (
+    <div
+      className="lg:col-span-3 relative group cursor-pointer rounded-3xl overflow-hidden shadow-card hover:shadow-luxury-lg transition-all duration-400"
+      onClick={onClick}
+      style={{ minHeight: "300px" }}
+    >
+      <img
+        src={image}
+        alt={`${city} Spa`}
+        className="w-full h-full object-cover absolute inset-0 transition-transform duration-700 group-hover:scale-110"
+        style={{ minHeight: "300px" }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
+      <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-7">
+        <p className="text-emerald-400 text-xs font-semibold uppercase tracking-widest mb-1">
+          {count} {count === 1 ? "Spa" : "Spas"} Available
+        </p>
+        <h3 className="font-playfair text-xl sm:text-2xl font-bold text-white mb-3">
+          Book Massage in {city}
+        </h3>
+        <span className="inline-flex items-center gap-1.5 text-white/80 text-xs font-medium bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/20 w-fit group-hover:bg-emerald-500 group-hover:border-emerald-500 transition-all duration-300">
+          Explore <ArrowRight className="w-3 h-3" />
+        </span>
+      </div>
     </div>
   );
 }
