@@ -11,6 +11,9 @@ export const metadata = {
   title: "BookYourSpa - Find & Book Best Spa Services",
   description:
     "Discover and book the best spa and wellness centers across Ahmedabad, Gandhinagar, and other cities.",
+  icons: {
+    icon: "/favicon/favicon.png",
+  },
 };
 
 export default function RootLayout({ children }) {

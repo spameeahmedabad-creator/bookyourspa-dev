@@ -57,7 +57,7 @@ export default function SpaDetailPage() {
 
       const bookmarksRes = await axios.get("/api/bookmarks");
       const bookmarkedIds = bookmarksRes.data.bookmarks.map((b) =>
-        String(b._id || b)
+        String(b._id || b),
       );
       setIsBookmarked(bookmarkedIds.includes(String(params.id)));
     } catch (error) {
@@ -202,6 +202,61 @@ export default function SpaDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+            {/* Social Media */}
+            {spa.contact &&
+              (spa.contact.instagram ||
+                spa.contact.whatsapp ||
+                spa.contact.facebook) && (
+                <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
+                  <h3 className="font-semibold text-gray-900 mb-4">
+                    Social Media
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {spa.contact.instagram && (
+                      <a
+                        href={spa.contact.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-3 py-4 rounded-xl text-white text-base font-semibold shadow-md hover:shadow-xl transition-all duration-200 active:scale-[0.98]"
+                        style={{
+                          background:
+                            "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
+                        }}
+                      >
+                        <Instagram className="w-6 h-6" />
+                        <span>Instagram</span>
+                      </a>
+                    )}
+                    {spa.contact.whatsapp && (
+                      <a
+                        href={
+                          spa.contact.whatsapp.startsWith("http")
+                            ? spa.contact.whatsapp
+                            : `https://wa.me/${spa.contact.whatsapp.replace(/[^0-9]/g, "")}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-3 py-4 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white text-base font-semibold shadow-md hover:shadow-xl transition-all duration-200 active:scale-[0.98]"
+                      >
+                        <MessageCircle className="w-6 h-6" />
+                        <span>WhatsApp</span>
+                      </a>
+                    )}
+                    {spa.contact.facebook && (
+                      <a
+                        href={spa.contact.facebook}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-3 py-4 rounded-xl bg-[#1877F2] hover:bg-[#166FE5] text-white text-base font-semibold shadow-md hover:shadow-xl transition-all duration-200 active:scale-[0.98]"
+                      >
+                        <Facebook className="w-6 h-6" />
+                        <span>Facebook</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
             {/* Description */}
             {spa.description && (
               <div className="bg-white p-6 rounded-lg shadow">
@@ -327,60 +382,6 @@ export default function SpaDetailPage() {
                 </div>
               )}
 
-              {/* Social Media */}
-              {spa.contact &&
-                (spa.contact.instagram ||
-                  spa.contact.whatsapp ||
-                  spa.contact.facebook) && (
-                  <div className="space-y-3 mb-4 sm:mb-6">
-                    <h3 className="font-semibold text-gray-900 mb-4">
-                      Social Media
-                    </h3>
-                    <div className="flex flex-col gap-2">
-                      {spa.contact.instagram && (
-                        <a
-                          href={spa.contact.instagram}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-white text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98] w-full sm:w-auto"
-                          style={{
-                            background:
-                              "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
-                          }}
-                        >
-                          <Instagram className="w-5 h-5" />
-                          <span>Instagram</span>
-                        </a>
-                      )}
-                      {spa.contact.whatsapp && (
-                        <a
-                          href={
-                            spa.contact.whatsapp.startsWith("http")
-                              ? spa.contact.whatsapp
-                              : `https://wa.me/${spa.contact.whatsapp.replace(/[^0-9]/g, "")}`
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#25D366] hover:bg-[#20BD5A] text-white text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98] w-full sm:w-auto"
-                        >
-                          <MessageCircle className="w-5 h-5" />
-                          <span>WhatsApp</span>
-                        </a>
-                      )}
-                      {spa.contact.facebook && (
-                        <a
-                          href={spa.contact.facebook}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#1877F2] hover:bg-[#166FE5] text-white text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98] w-full sm:w-auto"
-                        >
-                          <Facebook className="w-5 h-5" />
-                          <span>Facebook</span>
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                )}
 
               {/* Contact Info */}
               {spa.contact &&

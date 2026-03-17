@@ -45,7 +45,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
-  const [paymentType, setPaymentType] = useState("full"); // "full" or "booking_only"
+  const [paymentType] = useState("booking_only");
 
   // Track if modal was previously open to only reset on open transition
   const wasOpenRef = useRef(false);
@@ -73,7 +73,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       setAppliedCoupon(null);
       setCouponError("");
       setPaymentProcessing(false);
-      setPaymentType("full");
+      // paymentType is fixed to "booking_only"
 
       // Also check if Razorpay was loaded while modal was closed
       if (typeof window !== "undefined" && window.Razorpay) {
@@ -152,7 +152,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
 
       if (bookingMinutes < openingMinutes || bookingMinutes >= closingMinutes) {
         setTimeError(
-          `Booking time must be between ${openingTime} and ${closingTime}. This spa is open from ${openingTime} to ${closingTime}.`
+          `Booking time must be between ${openingTime} and ${closingTime}. This spa is open from ${openingTime} to ${closingTime}.`,
         );
         return false;
       }
@@ -334,12 +334,12 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
 
   // Get selected spa option
   const selectedSpaOption = allSpaOptions.find(
-    (option) => option.value === formData.spaId
+    (option) => option.value === formData.spaId,
   );
 
   // Get selected service option
   const selectedServiceOption = serviceOptions.find(
-    (option) => option.value === formData.service
+    (option) => option.value === formData.service,
   );
 
   // Get selected service price
@@ -381,7 +381,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
     // Check if booking date is selected
     if (!date) {
       setCouponError(
-        "Please select a booking date first to validate the coupon"
+        "Please select a booking date first to validate the coupon",
       );
       return;
     }
@@ -408,7 +408,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
           couponStartDate.setHours(0, 0, 0, 0);
           if (bookingDate < couponStartDate) {
             setCouponError(
-              `This coupon is only valid from ${new Date(coupon.startDate).toLocaleDateString()}`
+              `This coupon is only valid from ${new Date(coupon.startDate).toLocaleDateString()}`,
             );
             setAppliedCoupon(null);
             setValidatingCoupon(false);
@@ -421,7 +421,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
           couponEndDate.setHours(23, 59, 59, 999); // End of day
           if (bookingDate > couponEndDate) {
             setCouponError(
-              `This coupon expired on ${new Date(coupon.endDate).toLocaleDateString()}. Please select a booking date within the coupon validity period.`
+              `This coupon expired on ${new Date(coupon.endDate).toLocaleDateString()}. Please select a booking date within the coupon validity period.`,
             );
             setAppliedCoupon(null);
             setValidatingCoupon(false);
@@ -437,7 +437,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       }
     } catch (error) {
       setCouponError(
-        error.response?.data?.reason || "Failed to validate coupon"
+        error.response?.data?.reason || "Failed to validate coupon",
       );
       setAppliedCoupon(null);
     } finally {
@@ -490,7 +490,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
 
             if (verifyResponse.data.success) {
               toast.success(
-                "🎉 Payment successful! Your booking is confirmed. Check your email and WhatsApp for details."
+                "🎉 Payment successful! Your booking is confirmed. Check your email and WhatsApp for details.",
               );
               onClose();
               // Reset form
@@ -512,14 +512,14 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
               setCouponError("");
             } else {
               toast.error(
-                "Payment verification failed. Please contact support."
+                "Payment verification failed. Please contact support.",
               );
             }
           } catch (error) {
             console.error("Payment verification error:", error);
             toast.error(
               error.response?.data?.error ||
-                "Payment verification failed. Please contact support."
+                "Payment verification failed. Please contact support.",
             );
           } finally {
             setPaymentProcessing(false);
@@ -533,7 +533,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       razorpay.on("payment.failed", function (response) {
         console.error("Payment failed:", response.error);
         toast.error(
-          response.error.description || "Payment failed. Please try again."
+          response.error.description || "Payment failed. Please try again.",
         );
         setPaymentProcessing(false);
         setLoading(false);
@@ -541,7 +541,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
 
       razorpay.open();
     },
-    [razorpayLoaded, formData.spaName, formData.service, onClose]
+    [razorpayLoaded, formData.spaName, formData.service, onClose],
   );
 
   const handleSubmit = async (e) => {
@@ -575,7 +575,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
     // Validate terms and conditions acceptance
     if (!acceptedTerms) {
       toast.error(
-        "Please accept the Terms & Conditions to proceed with booking"
+        "Please accept the Terms & Conditions to proceed with booking",
       );
       return;
     }
@@ -583,7 +583,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
     // Check if Razorpay is loaded
     if (!razorpayLoaded || !window.Razorpay) {
       toast.error(
-        "Payment system is loading. Please wait a moment and try again."
+        "Payment system is loading. Please wait a moment and try again.",
       );
       return;
     }
@@ -612,7 +612,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       // Create Razorpay order
       const response = await axios.post(
         "/api/payments/create-order",
-        bookingData
+        bookingData,
       );
 
       if (response.data.success) {
@@ -967,71 +967,18 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
               </div>
             )}
 
-            {/* Payment Type Selection */}
+            {/* Booking fee info */}
             {formData.spaId && formData.service && originalAmount > 0 && (
-              <div className="border-t pt-4 space-y-3">
-                <h3 className="text-sm font-semibold text-gray-900">
-                  Choose Payment Option
-                </h3>
-                <div className="space-y-3">
-                  <label
-                    className="flex items-start space-x-3 p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                    style={{
-                      borderColor:
-                        paymentType === "full" ? "#10b981" : "#e5e7eb",
-                      backgroundColor:
-                        paymentType === "full" ? "#f0fdf4" : "transparent",
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentType"
-                      value="full"
-                      checked={paymentType === "full"}
-                      onChange={(e) => setPaymentType(e.target.value)}
-                      disabled={paymentProcessing}
-                      className="mt-1 h-4 w-4 text-emerald-600 focus:ring-emerald-500"
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900">
-                        Pay Full Amount
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        ₹{finalAmount.toLocaleString()} (One-time payment)
-                      </div>
+              <div className="border-t pt-4">
+                <div className="flex items-start space-x-3 p-3 border-2 border-emerald-500 rounded-lg bg-emerald-50">
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">
+                      Book Now - Pay ₹{BOOKING_FEE.toLocaleString()} Only
                     </div>
-                  </label>
-
-                  <label
-                    className="flex items-start space-x-3 p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                    style={{
-                      borderColor:
-                        paymentType === "booking_only" ? "#10b981" : "#e5e7eb",
-                      backgroundColor:
-                        paymentType === "booking_only"
-                          ? "#f0fdf4"
-                          : "transparent",
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentType"
-                      value="booking_only"
-                      checked={paymentType === "booking_only"}
-                      onChange={(e) => setPaymentType(e.target.value)}
-                      disabled={paymentProcessing}
-                      className="mt-1 h-4 w-4 text-emerald-600 focus:ring-emerald-500"
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900">
-                        Book Now - Pay ₹{BOOKING_FEE.toLocaleString()} Only
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        Pay remaining ₹{pendingAmount.toLocaleString()} at the
-                        spa
-                      </div>
+                    <div className="text-sm text-gray-600">
+                      Pay remaining ₹{pendingAmount.toLocaleString()} at the spa
                     </div>
-                  </label>
+                  </div>
                 </div>
               </div>
             )}
