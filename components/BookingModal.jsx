@@ -312,25 +312,39 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       : spaOptions;
 
   // Transform pricing array to react-select format
-  // Directly use pricing items which have title and price
-  const serviceOptions =
-    selectedSpaData?.pricing && Array.isArray(selectedSpaData.pricing)
-      ? selectedSpaData.pricing
-          .filter((item) => item.title && item.price !== undefined)
-          .map((item) => {
-            // Format price with currency symbol (₹ for Indian Rupees)
-            const formattedPrice = new Intl.NumberFormat("en-IN", {
-              style: "currency",
-              currency: "INR",
-              maximumFractionDigits: 0,
-            }).format(item.price);
-
-            return {
-              value: item.title,
-              label: `${item.title} - ${formattedPrice}`,
-            };
-          })
-      : [];
+  // If pricing has items use them, otherwise fall back to services strings
+  const serviceOptions = (() => {
+    if (
+      selectedSpaData?.pricing &&
+      Array.isArray(selectedSpaData.pricing) &&
+      selectedSpaData.pricing.length > 0
+    ) {
+      return selectedSpaData.pricing
+        .filter((item) => item.title && item.price !== undefined)
+        .map((item) => {
+          const formattedPrice = new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 0,
+          }).format(item.price);
+          return {
+            value: item.title,
+            label: `${item.title} - ${formattedPrice}`,
+          };
+        });
+    }
+    // Fallback to services array (strings) when no pricing data
+    if (
+      selectedSpaData?.services &&
+      Array.isArray(selectedSpaData.services) &&
+      selectedSpaData.services.length > 0
+    ) {
+      return selectedSpaData.services
+        .filter((s) => typeof s === "string" && s.trim())
+        .map((s) => ({ value: s, label: s }));
+    }
+    return [];
+  })();
 
   // Get selected spa option
   const selectedSpaOption = allSpaOptions.find(
