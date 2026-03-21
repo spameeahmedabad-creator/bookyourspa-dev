@@ -15,8 +15,8 @@ import {
   validateWebsite,
   validateGallery,
 } from "@/lib/form-validation";
-import CloudinaryUpload from "@/components/CloudinaryUpload";
-import CloudinaryMultiUpload from "@/components/CloudinaryMultiUpload";
+import GitHubImageUpload from "@/components/GitHubImageUpload";
+import GitHubGalleryUpload from "@/components/GitHubGalleryUpload";
 import Select from "react-select";
 
 const REGION_OPTIONS = [
@@ -54,32 +54,6 @@ function AddListingPageContent() {
     website: "",
     gallery: "",
   });
-
-  // Restore scroll on page load (in case it was locked from Cloudinary widget)
-  useEffect(() => {
-    const restoreScroll = () => {
-      if (document.body) {
-        document.body.style.overflow = "";
-        document.body.style.position = "";
-        document.body.style.height = "";
-        document.body.style.width = "";
-      }
-      if (document.documentElement) {
-        document.documentElement.style.overflow = "";
-        document.documentElement.style.position = "";
-      }
-      // Scroll to top to ensure page is accessible
-      window.scrollTo(0, 0);
-    };
-
-    // Restore scroll immediately on mount
-    restoreScroll();
-
-    // Also restore after a short delay to catch any delayed widget cleanup
-    const timeout = setTimeout(restoreScroll, 500);
-
-    return () => clearTimeout(timeout);
-  }, []);
 
   // Fetch spa data if in edit mode
   useEffect(() => {
@@ -216,6 +190,14 @@ function AddListingPageContent() {
 
   const [formData, setFormData] = useState(getInitialFormData);
 
+  // Derive a folder name from the spa title for GitHub uploads
+  const spaFolder = formData.title
+    ? formData.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "spa"
+    : "spa";
+
   // Save form data to sessionStorage whenever it changes (debounced)
   useEffect(() => {
     if (!formInitialized) return;
@@ -268,7 +250,7 @@ function AddListingPageContent() {
       formData.services.length === 0
     ) {
       toast.error(
-        "Please fill in required fields: Title, Region, and at least one Service"
+        "Please fill in required fields: Title, Region, and at least one Service",
       );
       return;
     }
@@ -511,7 +493,7 @@ function AddListingPageContent() {
                     options={REGION_OPTIONS}
                     value={
                       REGION_OPTIONS.find(
-                        (option) => option.value === formData.location.region
+                        (option) => option.value === formData.location.region,
                       ) || null
                     }
                     onChange={(selected) =>
@@ -570,17 +552,15 @@ function AddListingPageContent() {
                   Photos / Gallery
                 </h3>
 
-                <CloudinaryMultiUpload
+                <GitHubGalleryUpload
                   values={formData.gallery}
+                  folder={spaFolder}
                   onUpload={(urls) => {
                     setFormData((prev) => ({ ...prev, gallery: urls }));
-                    // Clear error when user uploads images
                     if (errors.gallery) {
                       setErrors((prev) => ({ ...prev, gallery: "" }));
                     }
                   }}
-                  buttonText="Upload Gallery Images"
-                  showPreview={!isEditMode}
                 />
 
                 {errors.gallery && (
@@ -601,25 +581,14 @@ function AddListingPageContent() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Logo
                 </label>
-                <CloudinaryUpload
+                <GitHubImageUpload
                   value={formData.logo}
+                  folder={spaFolder}
                   onUpload={(url) =>
                     setFormData((prev) => ({ ...prev, logo: url }))
                   }
-                  buttonText="Upload Logo"
-                  showPreview={!isEditMode}
+                  label="Upload Logo"
                 />
-                {/* Show Logo URL below */}
-                {formData.logo && (
-                  <div className="mt-3 bg-blue-50 p-3 rounded-md border border-blue-200">
-                    <p className="text-xs font-semibold text-blue-900 mb-1">
-                      Logo Cloudinary URL:
-                    </p>
-                    <p className="text-xs text-blue-700 break-all font-mono bg-white p-2 rounded border">
-                      {formData.logo}
-                    </p>
-                  </div>
-                )}
               </div>
 
               <div>
@@ -803,7 +772,7 @@ function AddListingPageContent() {
                       ) {
                         const phoneValidation = validatePhone(
                           formData.contact.phone,
-                          "IN"
+                          "IN",
                         );
                         if (!phoneValidation.isValid) {
                           setErrors((prev) => ({
@@ -852,7 +821,7 @@ function AddListingPageContent() {
                         formData.contact.email.trim() !== ""
                       ) {
                         const emailValidation = validateEmail(
-                          formData.contact.email
+                          formData.contact.email,
                         );
                         if (!emailValidation.isValid) {
                           setErrors((prev) => ({
@@ -901,7 +870,7 @@ function AddListingPageContent() {
                         formData.contact.website.trim() !== ""
                       ) {
                         const websiteValidation = validateWebsite(
-                          formData.contact.website
+                          formData.contact.website,
                         );
                         if (!websiteValidation.isValid) {
                           setErrors((prev) => ({
@@ -1045,7 +1014,7 @@ function AddListingPageContent() {
                           updatePricingItem(
                             index,
                             "description",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         placeholder="Service description"
