@@ -2,38 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin, Bookmark, Clock } from "lucide-react";
+import { MapPin, Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import BookingModal from "@/components/BookingModal";
 import axios from "axios";
 import { toast } from "sonner";
 
-function isSpaOpen(storeHours) {
-  if (!storeHours) return null;
-  if (storeHours.is24Hours) return true;
-
-  const now = new Date();
-  const day = now.getDay(); // 0 = Sunday
-
-  if (day === 0 && storeHours.sundayClosed) return false;
-
-  const [openH, openM] = (storeHours.openingTime || "09:00")
-    .split(":")
-    .map(Number);
-  const [closeH, closeM] = (storeHours.closingTime || "21:00")
-    .split(":")
-    .map(Number);
-
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const openMinutes = openH * 60 + openM;
-  const closeMinutes = closeH * 60 + closeM;
-
-  return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
-}
-
 export default function SpaCard({ spa }) {
-  const openStatus = isSpaOpen(spa.storeHours);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -125,30 +101,6 @@ export default function SpaCard({ spa }) {
               {spa.title?.charAt(0)}
             </div>
           )}
-          {/* Open/Closed corner ribbon */}
-          {openStatus !== null && (
-            <div className="absolute top-0 left-0 w-28 h-28 overflow-hidden z-10 pointer-events-none">
-              <div
-                className={`absolute -top-6 -left-9 w-36 text-center text-white text-[12px] font-extrabold tracking-widest uppercase py-2.5 flex items-center justify-center gap-1.5 ${
-                  openStatus
-                    ? "bg-gradient-to-r from-emerald-500 to-emerald-700"
-                    : "bg-gradient-to-r from-red-400 to-red-600"
-                }`}
-                style={{
-                  transform:
-                    "rotate(-45deg) translateY(28px) translateX(-28px)",
-                  boxShadow: openStatus
-                    ? "0 4px 15px rgba(5, 150, 105, 0.6)"
-                    : "0 4px 15px rgba(239, 68, 68, 0.6)",
-                  textShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                }}
-              >
-                <Clock className="w-3.5 h-3.5 flex-shrink-0 drop-shadow" />
-                {openStatus ? "OPEN" : "CLOSED"}
-              </div>
-            </div>
-          )}
-
           {user && !loading && (
             <button
               onClick={handleBookmarkToggle}
@@ -206,11 +158,7 @@ export default function SpaCard({ spa }) {
 
           <Button
             onClick={handleBookNow}
-            className={`w-full text-sm sm:text-base h-9 sm:h-10 ${
-              openStatus === false
-                ? "bg-red-500 hover:bg-red-600"
-                : "bg-emerald-600 hover:bg-emerald-700"
-            }`}
+            className="w-full text-sm sm:text-base h-9 sm:h-10 bg-emerald-600 hover:bg-emerald-700"
             data-testid={`book-now-${spa._id}`}
           >
             Book Now
