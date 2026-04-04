@@ -2,36 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin, Bookmark, Clock, ArrowRight, Star } from "lucide-react";
+import { MapPin, Bookmark, ArrowRight, Star } from "lucide-react";
 import BookingModal from "@/components/BookingModal";
 import axios from "axios";
 import { toast } from "sonner";
 
-function isSpaOpen(storeHours) {
-  if (!storeHours) return null;
-  if (storeHours.is24Hours) return true;
-
-  const now = new Date();
-  const day = now.getDay();
-
-  if (day === 0 && storeHours.sundayClosed) return false;
-
-  const [openH, openM] = (storeHours.openingTime || "09:00")
-    .split(":")
-    .map(Number);
-  const [closeH, closeM] = (storeHours.closingTime || "21:00")
-    .split(":")
-    .map(Number);
-
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const openMinutes = openH * 60 + openM;
-  const closeMinutes = closeH * 60 + closeM;
-
-  return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
-}
-
 export default function SpaCard({ spa }) {
-  const openStatus = isSpaOpen(spa.storeHours);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -122,24 +98,6 @@ export default function SpaCard({ spa }) {
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-          {/* Open/Closed badge */}
-          {openStatus !== null && (
-            <div className="absolute top-3 left-3 z-10">
-              <span
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold backdrop-blur-sm ${
-                  openStatus
-                    ? "bg-emerald-500/90 text-white"
-                    : "bg-red-500/90 text-white"
-                }`}
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${openStatus ? "bg-white animate-pulse" : "bg-white"}`}
-                />
-                {openStatus ? "Open Now" : "Closed"}
-              </span>
-            </div>
-          )}
-
           {/* Bookmark button */}
           {user && !loading && (
             <button
@@ -158,17 +116,6 @@ export default function SpaCard({ spa }) {
             </button>
           )}
 
-          {/* Store hours hint on hover */}
-          {spa.storeHours &&
-            !spa.storeHours.is24Hours &&
-            spa.storeHours.openingTime && (
-              <div className="absolute bottom-3 left-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm text-white text-[11px] font-medium">
-                  <Clock className="w-3 h-3" />
-                  {spa.storeHours.openingTime} – {spa.storeHours.closingTime}
-                </span>
-              </div>
-            )}
         </div>
 
         {/* Content */}
@@ -211,14 +158,10 @@ export default function SpaCard({ spa }) {
           {/* Book Now button */}
           <button
             onClick={handleBookNow}
-            className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl text-sm font-semibold transition-all duration-300 group/btn ${
-              openStatus === false
-                ? "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-[0_4px_12px_-2px_rgba(239,68,68,0.4)]"
-                : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-luxury hover:shadow-luxury-lg"
-            }`}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl text-sm font-semibold transition-all duration-300 group/btn bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-luxury hover:shadow-luxury-lg"
             data-testid={`book-now-${spa._id}`}
           >
-            {openStatus === false ? "Closed – Book Ahead" : "Book Now"}
+            Book Now
             <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover/btn:translate-x-1" />
           </button>
         </div>

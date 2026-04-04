@@ -17,9 +17,13 @@ export default function GallerySlider({
     const handleKeyDown = (e) => {
       if (isFullscreen) {
         if (e.key === "ArrowLeft") {
-          setFullscreenIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+          setFullscreenIndex((prev) =>
+            prev === 0 ? images.length - 1 : prev - 1,
+          );
         } else if (e.key === "ArrowRight") {
-          setFullscreenIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+          setFullscreenIndex((prev) =>
+            prev === images.length - 1 ? 0 : prev + 1,
+          );
         } else if (e.key === "Escape") {
           setIsFullscreen(false);
         }
@@ -113,7 +117,10 @@ export default function GallerySlider({
             ))}
           </div>
           {/* Show All Photos Button */}
-          <ShowAllPhotosButton count={images.length} onClick={() => openFullscreen(0)} />
+          <ShowAllPhotosButton
+            count={images.length}
+            onClick={() => openFullscreen(0)}
+          />
         </div>
 
         {isFullscreen && (
@@ -149,7 +156,7 @@ export default function GallerySlider({
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
             </div>
-            
+
             {/* Right Side Images */}
             <div className="grid grid-cols-2 gap-2 h-64 sm:h-80 lg:h-[400px]">
               {images.slice(1, 4).map((image, index) => (
@@ -171,7 +178,10 @@ export default function GallerySlider({
             </div>
           </div>
           {/* Show All Photos Button */}
-          <ShowAllPhotosButton count={images.length} onClick={() => openFullscreen(0)} />
+          <ShowAllPhotosButton
+            count={images.length}
+            onClick={() => openFullscreen(0)}
+          />
         </div>
 
         {isFullscreen && (
@@ -259,7 +269,7 @@ export default function GallerySlider({
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
-              
+
               {/* Show remaining count if more than 5 images */}
               {images.length > 5 && (
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-100 group-hover:bg-black/50 transition-all duration-300">
@@ -287,7 +297,9 @@ export default function GallerySlider({
                 {/* Show remaining count on last visible image */}
                 {index === 3 && images.length > 5 && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">+{images.length - 5}</span>
+                    <span className="text-white text-sm font-bold">
+                      +{images.length - 5}
+                    </span>
                   </div>
                 )}
               </div>
@@ -296,7 +308,10 @@ export default function GallerySlider({
         </div>
 
         {/* Show All Photos Button */}
-        <ShowAllPhotosButton count={images.length} onClick={() => openFullscreen(0)} />
+        <ShowAllPhotosButton
+          count={images.length}
+          onClick={() => openFullscreen(0)}
+        />
       </div>
 
       {/* Fullscreen Modal */}

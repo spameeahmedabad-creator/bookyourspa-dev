@@ -44,6 +44,8 @@ function HomeContent() {
   const [serviceFilter, setServiceFilter] = useState("");
   const [serviceImages, setServiceImages] = useState([]);
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [rotateOffset, setRotateOffset] = useState(0);
+  const [listAnimClass, setListAnimClass] = useState("");
   const router = useRouter();
 
   const handleBookingDetected = useCallback(
@@ -191,6 +193,25 @@ function HomeContent() {
     ]);
   };
 
+  useEffect(() => {
+    setRotateOffset(0);
+    setListAnimClass("");
+  }, [spas]);
+
+  const handleMobileNext = () => {
+    if (listAnimClass || spas.length === 0) return;
+    setRotateOffset((o) => (o + 1) % spas.length);
+    setListAnimClass("mc-list-next");
+    setTimeout(() => setListAnimClass(""), 400);
+  };
+
+  const handleMobilePrev = () => {
+    if (listAnimClass || spas.length === 0) return;
+    setRotateOffset((o) => (o - 1 + spas.length) % spas.length);
+    setListAnimClass("mc-list-prev");
+    setTimeout(() => setListAnimClass(""), 400);
+  };
+
   const handleSearch = (spa) => router.push(`/spa/${spa._id}`);
 
   const scrollToListings = () => {
@@ -203,8 +224,25 @@ function HomeContent() {
     );
   };
 
+  const rotatedSpas =
+    spas.length > 0
+      ? [...spas.slice(rotateOffset), ...spas.slice(0, rotateOffset)]
+      : spas;
+
   return (
     <div className="min-h-screen bg-sand-50">
+      <style>{`
+        @keyframes mcListNext {
+          from { transform: translateY(12px); opacity: 0.4; }
+          to   { transform: translateY(0);    opacity: 1;   }
+        }
+        @keyframes mcListPrev {
+          from { transform: translateY(-12px); opacity: 0.4; }
+          to   { transform: translateY(0);     opacity: 1;   }
+        }
+        .mc-list-next { animation: mcListNext 0.35s ease forwards; }
+        .mc-list-prev { animation: mcListPrev 0.35s ease forwards; }
+      `}</style>
       <Suspense fallback={null}>
         <BookingModalHandler onBookingDetected={handleBookingDetected} />
       </Suspense>
@@ -299,19 +337,43 @@ function HomeContent() {
       >
         {/* Section header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-8 gap-4">
-          <div>
-            <p className="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-2">
-              {cityFilter || serviceFilter ? "Filtered Results" : "Featured"}
-            </p>
-            <h2 className="font-playfair text-2xl sm:text-3xl font-bold text-gray-900">
-              {cityFilter && serviceFilter
-                ? `${serviceFilter} in ${cityFilter}`
-                : cityFilter
-                  ? `Spas in ${cityFilter}`
-                  : serviceFilter
-                    ? `${serviceFilter} Spas`
-                    : "Top Spas Near You"}
-            </h2>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-2">
+                {cityFilter || serviceFilter ? "Filtered Results" : "Featured"}
+              </p>
+              <h2 className="font-playfair text-2xl sm:text-3xl font-bold text-gray-900">
+                {cityFilter && serviceFilter
+                  ? `${serviceFilter} in ${cityFilter}`
+                  : cityFilter
+                    ? `Spas in ${cityFilter}`
+                    : serviceFilter
+                      ? `${serviceFilter} Spas`
+                      : "Top Spas Near You"}
+              </h2>
+            </div>
+
+            {/* Mobile rotate nav — visible only on mobile */}
+            {!loading && spas.length > 1 && (
+              <div className="flex items-center gap-2 md:hidden flex-shrink-0 mt-1">
+                <button
+                  onClick={handleMobilePrev}
+                  disabled={!!listAnimClass}
+                  className="w-8 h-8 flex items-center justify-center rounded-xl border border-sand-200 bg-white text-gray-600 disabled:opacity-40 active:scale-95 transition-all"
+                  aria-label="Rotate up"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={handleMobileNext}
+                  disabled={!!listAnimClass}
+                  className="w-8 h-8 flex items-center justify-center rounded-xl border border-sand-200 bg-white text-gray-600 disabled:opacity-40 active:scale-95 transition-all"
+                  aria-label="Rotate down"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
           {(cityFilter || serviceFilter) && (
             <Button
@@ -346,11 +408,19 @@ function HomeContent() {
           </div>
         ) : (
           <>
+            {/* Desktop grid */}
             <div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6"
               data-testid="spa-grid"
             >
               {spas.map((spa) => (
+                <SpaCard key={spa._id} spa={spa} />
+              ))}
+            </div>
+
+            {/* Mobile — all cards in rotated order */}
+            <div className={`md:hidden flex flex-col gap-6 ${listAnimClass}`}>
+              {rotatedSpas.map((spa) => (
                 <SpaCard key={spa._id} spa={spa} />
               ))}
             </div>
@@ -361,7 +431,10 @@ function HomeContent() {
                 data-testid="pagination"
               >
                 <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  onClick={() => {
+                    setCurrentPage((p) => Math.max(1, p - 1));
+                    scrollToListings();
+                  }}
                   disabled={currentPage === 1}
                   data-testid="prev-page-button"
                   className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-medium border border-sand-200 bg-white hover:bg-sand-50 disabled:opacity-40 transition-all"
@@ -372,9 +445,10 @@ function HomeContent() {
                   {currentPage} / {totalPages}
                 </span>
                 <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
+                  onClick={() => {
+                    setCurrentPage((p) => Math.min(totalPages, p + 1));
+                    scrollToListings();
+                  }}
                   disabled={currentPage === totalPages}
                   data-testid="next-page-button"
                   className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-medium border border-sand-200 bg-white hover:bg-sand-50 disabled:opacity-40 transition-all"
