@@ -1,11 +1,21 @@
-import { Inter } from "next/font/google";
+import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import Script from "next/script";
 
-const inter = Inter({ subsets: ["latin"] });
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
 
 export const metadata = {
   title: "BookYourSpa - Find & Book Best Spa Services",
@@ -18,9 +28,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${playfair.variable} ${dmSans.variable}`}>
       <head>
-        {/* Meta Pixel Code */}
         <noscript>
           <img
             height="1"
@@ -30,10 +39,8 @@ export default function RootLayout({ children }) {
             alt=""
           />
         </noscript>
-        {/* End Meta Pixel Code */}
       </head>
-      <body className={inter.className}>
-        {/* Meta Pixel Code */}
+      <body className={dmSans.className}>
         <Script
           id="meta-pixel"
           strategy="afterInteractive"
@@ -52,11 +59,19 @@ export default function RootLayout({ children }) {
             `,
           }}
         />
-        {/* End Meta Pixel Code */}
         {children}
         <SpeedInsights />
         <Analytics />
-        <Toaster position="top-right" richColors />
+        <Toaster
+          position="top-right"
+          richColors
+          toastOptions={{
+            style: {
+              fontFamily: "var(--font-dm-sans, Inter, sans-serif)",
+              borderRadius: "12px",
+            },
+          }}
+        />
       </body>
     </html>
   );

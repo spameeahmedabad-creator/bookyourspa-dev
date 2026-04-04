@@ -15,12 +15,32 @@ import axios from "axios";
 import { validatePhone10Digits } from "@/lib/phone-validation";
 import Link from "next/link";
 import Script from "next/script";
+import {
+  ChevronRight,
+  ChevronLeft,
+  Check,
+  Sparkles,
+  Calendar,
+  Clock,
+  User,
+  Phone,
+  Mail,
+  Tag,
+  Shield,
+  Loader2,
+} from "lucide-react";
 
-// GST rate for display (18%)
 const GST_RATE = 0.18;
+const BOOKING_FEE = 199;
+
+const STEPS = [
+  { id: 1, label: "Service", icon: Sparkles },
+  { id: 2, label: "Schedule", icon: Calendar },
+  { id: 3, label: "Confirm", icon: Shield },
+];
 
 export default function BookingModal({ open, onClose, prefilledSpa = null }) {
-  const [user, setUser] = useState(null);
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     customerName: "",
     customerPhone: "",
@@ -33,7 +53,6 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [spas, setSpas] = useState([]);
-  const [services, setServices] = useState([]);
   const [selectedSpaData, setSelectedSpaData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [timeError, setTimeError] = useState("");
@@ -47,10 +66,8 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [paymentType] = useState("booking_only");
 
-  // Track if modal was previously open to only reset on open transition
   const wasOpenRef = useRef(false);
 
-  // Check if Razorpay is already loaded (e.g., from another component instance)
   useEffect(() => {
     if (typeof window !== "undefined" && window.Razorpay) {
       setRazorpayLoaded(true);
@@ -58,13 +75,11 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   }, []);
 
   useEffect(() => {
-    // Only reset form when modal transitions from closed to open
     if (open && !wasOpenRef.current) {
       fetchUser();
-      if (!prefilledSpa) {
-        fetchSpas();
-      }
-      // Reset form when modal opens
+      if (!prefilledSpa) fetchSpas();
+      // Reset state
+      setCurrentStep(1);
       setDate("");
       setTime("");
       setPhoneError("");
@@ -73,9 +88,6 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       setAppliedCoupon(null);
       setCouponError("");
       setPaymentProcessing(false);
-      // paymentType is fixed to "booking_only"
-
-      // Also check if Razorpay was loaded while modal was closed
       if (typeof window !== "undefined" && window.Razorpay) {
         setRazorpayLoaded(true);
       }
@@ -86,88 +98,64 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
   useEffect(() => {
     const fetchFullSpaDetails = async () => {
       if (prefilledSpa) {
-        // Set basic data immediately
         setFormData((prev) => ({
           ...prev,
           spaId: prefilledSpa._id,
           spaName: prefilledSpa.title,
         }));
-        setServices(prefilledSpa.services || []);
-
-        // Fetch full spa details including pricing
         try {
           const response = await axios.get(`/api/spas/${prefilledSpa._id}`);
           const fullSpaData = response.data.spa;
           setSelectedSpaData(fullSpaData);
-          setServices(fullSpaData.services || []);
-        } catch (error) {
-          console.error("Failed to fetch full spa details:", error);
-          // Fallback to prefilledSpa data if API call fails
+        } catch {
           setSelectedSpaData(prefilledSpa);
         }
       }
     };
-
     fetchFullSpaDetails();
   }, [prefilledSpa]);
 
-  // Validate time against store hours
   const validateBookingTime = (selectedDate, selectedTime) => {
     if (!selectedSpaData || !selectedDate || !selectedTime) {
       setTimeError("");
       return true;
     }
-
     const bookingDate = new Date(selectedDate);
-    const dayOfWeek = bookingDate.getDay(); // 0 = Sunday
+    const dayOfWeek = bookingDate.getDay();
 
-    // Check if booking is on Sunday and spa is closed on Sunday
     if (dayOfWeek === 0 && selectedSpaData.storeHours?.sundayClosed) {
       setTimeError("This spa is closed on Sundays. Please select another day.");
       return false;
     }
-
-    // Skip time validation if spa is open 24 hours
     if (selectedSpaData.storeHours?.is24Hours) {
       setTimeError("");
       return true;
     }
-
-    // Validate time is within store hours
     if (
       selectedSpaData.storeHours?.openingTime &&
       selectedSpaData.storeHours?.closingTime
     ) {
-      const openingTime = selectedSpaData.storeHours.openingTime;
-      const closingTime = selectedSpaData.storeHours.closingTime;
-
-      const timeToMinutes = (timeStr) => {
-        const [hours, minutes] = timeStr.split(":").map(Number);
-        return hours * 60 + minutes;
+      const toMins = (t) => {
+        const [h, m] = t.split(":").map(Number);
+        return h * 60 + m;
       };
-
-      const openingMinutes = timeToMinutes(openingTime);
-      const closingMinutes = timeToMinutes(closingTime);
-      const bookingMinutes = timeToMinutes(selectedTime);
-
-      if (bookingMinutes < openingMinutes || bookingMinutes >= closingMinutes) {
+      const open = toMins(selectedSpaData.storeHours.openingTime);
+      const close = toMins(selectedSpaData.storeHours.closingTime);
+      const booking = toMins(selectedTime);
+      if (booking < open || booking >= close) {
         setTimeError(
-          `Booking time must be between ${openingTime} and ${closingTime}. This spa is open from ${openingTime} to ${closingTime}.`,
+          `Booking time must be between ${selectedSpaData.storeHours.openingTime} and ${selectedSpaData.storeHours.closingTime}.`,
         );
         return false;
       }
     }
-
     setTimeError("");
     return true;
   };
 
-  // Update datetime when date or time changes
   useEffect(() => {
     if (date && time) {
-      const datetimeString = `${date}T${time}`;
-      setFormData((prev) => ({ ...prev, datetime: datetimeString }));
-      // Validate time
+      setFormData((prev) => ({ ...prev, datetime: `${date}T${time}` }));
       validateBookingTime(date, time);
     } else {
       setFormData((prev) => ({ ...prev, datetime: "" }));
@@ -175,7 +163,6 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
     }
   }, [date, time, selectedSpaData]);
 
-  // Reset coupon when service changes
   useEffect(() => {
     if (formData.service) {
       setCouponCode("");
@@ -184,34 +171,29 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
     }
   }, [formData.service]);
 
-  // Re-validate coupon when date changes (if coupon is already applied)
   useEffect(() => {
     if (appliedCoupon && date) {
       const coupon = appliedCoupon.coupon;
       const bookingDate = new Date(date);
       bookingDate.setHours(0, 0, 0, 0);
-
       let isValid = true;
       let errorMessage = "";
-
       if (coupon.startDate) {
-        const couponStartDate = new Date(coupon.startDate);
-        couponStartDate.setHours(0, 0, 0, 0);
-        if (bookingDate < couponStartDate) {
+        const start = new Date(coupon.startDate);
+        start.setHours(0, 0, 0, 0);
+        if (bookingDate < start) {
           isValid = false;
           errorMessage = `Coupon "${coupon.code}" is only valid from ${new Date(coupon.startDate).toLocaleDateString()}. Coupon removed.`;
         }
       }
-
       if (isValid && coupon.endDate) {
-        const couponEndDate = new Date(coupon.endDate);
-        couponEndDate.setHours(23, 59, 59, 999);
-        if (bookingDate > couponEndDate) {
+        const end = new Date(coupon.endDate);
+        end.setHours(23, 59, 59, 999);
+        if (bookingDate > end) {
           isValid = false;
           errorMessage = `Coupon "${coupon.code}" expired on ${new Date(coupon.endDate).toLocaleDateString()}. Coupon removed.`;
         }
       }
-
       if (!isValid) {
         setAppliedCoupon(null);
         setCouponError(errorMessage);
@@ -224,8 +206,6 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
     try {
       const response = await axios.get("/api/auth/me");
       const userData = response.data.user;
-      setUser(userData);
-      // Strip non-digits from phone number if it exists
       const phoneDigits = userData.phone
         ? userData.phone.replace(/\D/g, "").substring(0, 10)
         : "";
@@ -235,8 +215,8 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
         customerPhone: phoneDigits,
         customerEmail: userData.email || "",
       }));
-    } catch (error) {
-      setUser(null);
+    } catch {
+      // not logged in, form stays empty
     }
   };
 
@@ -253,7 +233,6 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
     if (selectedOption) {
       const selectedSpa = spas.find((s) => s._id === selectedOption.value);
       if (selectedSpa) {
-        // Fetch full spa details including store hours
         try {
           const response = await axios.get(`/api/spas/${selectedSpa._id}`);
           const fullSpaData = response.data.spa;
@@ -264,10 +243,7 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
             spaName: fullSpaData.title,
             service: "",
           }));
-          setServices(fullSpaData.services || []);
-        } catch (error) {
-          console.error("Failed to fetch spa details:", error);
-          // Fallback to basic data
+        } catch {
           setSelectedSpaData(selectedSpa);
           setFormData((prev) => ({
             ...prev,
@@ -275,152 +251,88 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
             spaName: selectedSpa.title,
             service: "",
           }));
-          setServices(selectedSpa.services || []);
         }
       }
     } else {
-      setFormData((prev) => ({
-        ...prev,
-        spaId: "",
-        spaName: "",
-        service: "",
-      }));
-      setServices([]);
+      setFormData((prev) => ({ ...prev, spaId: "", spaName: "", service: "" }));
       setSelectedSpaData(null);
       setTimeError("");
     }
   };
 
-  const handleServiceChange = (selectedOption) => {
-    if (selectedOption) {
-      setFormData((prev) => ({ ...prev, service: selectedOption.value }));
-    } else {
-      setFormData((prev) => ({ ...prev, service: "" }));
+  // Build service options from pricing or fallback to services array
+  const serviceOptions = (() => {
+    if (selectedSpaData?.pricing?.length > 0) {
+      return selectedSpaData.pricing
+        .filter((item) => item.title && item.price !== undefined)
+        .map((item) => ({
+          value: item.title,
+          price: item.price,
+          label: item.title,
+          formattedPrice: new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 0,
+          }).format(item.price),
+        }));
     }
-  };
+    if (selectedSpaData?.services?.length > 0) {
+      return selectedSpaData.services
+        .filter((s) => typeof s === "string" && s.trim())
+        .map((s) => ({ value: s, label: s, price: 0, formattedPrice: "" }));
+    }
+    return [];
+  })();
 
-  // Transform spas to react-select format
-  const spaOptions = spas.map((spa) => ({
-    value: spa._id,
-    label: spa.title,
-  }));
-
-  // If prefilledSpa is provided, add it to options if not already present
+  const spaOptions = spas.map((spa) => ({ value: spa._id, label: spa.title }));
   const allSpaOptions =
     prefilledSpa && !spaOptions.find((opt) => opt.value === prefilledSpa._id)
       ? [{ value: prefilledSpa._id, label: prefilledSpa.title }, ...spaOptions]
       : spaOptions;
 
-  // Transform pricing array to react-select format
-  // If pricing has items use them, otherwise fall back to services strings
-  const serviceOptions = (() => {
-    if (
-      selectedSpaData?.pricing &&
-      Array.isArray(selectedSpaData.pricing) &&
-      selectedSpaData.pricing.length > 0
-    ) {
-      return selectedSpaData.pricing
-        .filter((item) => item.title && item.price !== undefined)
-        .map((item) => {
-          const formattedPrice = new Intl.NumberFormat("en-IN", {
-            style: "currency",
-            currency: "INR",
-            maximumFractionDigits: 0,
-          }).format(item.price);
-          return {
-            value: item.title,
-            label: `${item.title} - ${formattedPrice}`,
-          };
-        });
-    }
-    // Fallback to services array (strings) when no pricing data
-    if (
-      selectedSpaData?.services &&
-      Array.isArray(selectedSpaData.services) &&
-      selectedSpaData.services.length > 0
-    ) {
-      return selectedSpaData.services
-        .filter((s) => typeof s === "string" && s.trim())
-        .map((s) => ({ value: s, label: s }));
-    }
-    return [];
-  })();
-
-  // Get selected spa option
   const selectedSpaOption = allSpaOptions.find(
-    (option) => option.value === formData.spaId,
+    (o) => o.value === formData.spaId,
   );
 
-  // Get selected service option
-  const selectedServiceOption = serviceOptions.find(
-    (option) => option.value === formData.service,
-  );
-
-  // Get selected service price
   const selectedServicePrice =
     selectedSpaData?.pricing?.find((p) => p.title === formData.service)
       ?.price || 0;
-
-  // Calculate pricing with coupon and GST
   const originalAmount = selectedServicePrice;
   const discountAmount = appliedCoupon?.discountAmount || 0;
   const amountAfterDiscount = Math.max(0, originalAmount - discountAmount);
-  // GST is included in the price
-  const baseAmount =
-    Math.round((amountAfterDiscount / (1 + GST_RATE)) * 100) / 100;
-  const gstAmount = Math.round((amountAfterDiscount - baseAmount) * 100) / 100;
   const finalAmount = amountAfterDiscount;
-
-  // Fixed booking fee
-  const BOOKING_FEE = 199;
-
-  // Calculate payment amounts based on payment type
-  const paymentAmount =
-    paymentType === "booking_only" ? BOOKING_FEE : finalAmount;
   const pendingAmount =
     paymentType === "booking_only" ? finalAmount - BOOKING_FEE : 0;
 
-  // Apply coupon
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
       setCouponError("Please enter a coupon code");
       return;
     }
-
     if (!formData.spaId || !selectedServicePrice) {
       setCouponError("Please select a spa and service first");
       return;
     }
-
-    // Check if booking date is selected
     if (!date) {
-      setCouponError(
-        "Please select a booking date first to validate the coupon",
-      );
+      setCouponError("Please select a booking date first");
       return;
     }
-
     setValidatingCoupon(true);
     setCouponError("");
-
     try {
       const response = await axios.post("/api/coupons/validate", {
         code: couponCode.trim(),
         spaId: formData.spaId,
         orderAmount: selectedServicePrice,
       });
-
       if (response.data.valid) {
         const coupon = response.data.coupon;
-
-        // Validate booking date against coupon's valid date range
         const bookingDate = new Date(date);
-        bookingDate.setHours(0, 0, 0, 0); // Normalize to start of day
-
+        bookingDate.setHours(0, 0, 0, 0);
         if (coupon.startDate) {
-          const couponStartDate = new Date(coupon.startDate);
-          couponStartDate.setHours(0, 0, 0, 0);
-          if (bookingDate < couponStartDate) {
+          const start = new Date(coupon.startDate);
+          start.setHours(0, 0, 0, 0);
+          if (bookingDate < start) {
             setCouponError(
               `This coupon is only valid from ${new Date(coupon.startDate).toLocaleDateString()}`,
             );
@@ -429,20 +341,18 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
             return;
           }
         }
-
         if (coupon.endDate) {
-          const couponEndDate = new Date(coupon.endDate);
-          couponEndDate.setHours(23, 59, 59, 999); // End of day
-          if (bookingDate > couponEndDate) {
+          const end = new Date(coupon.endDate);
+          end.setHours(23, 59, 59, 999);
+          if (bookingDate > end) {
             setCouponError(
-              `This coupon expired on ${new Date(coupon.endDate).toLocaleDateString()}. Please select a booking date within the coupon validity period.`,
+              `This coupon expired on ${new Date(coupon.endDate).toLocaleDateString()}.`,
             );
             setAppliedCoupon(null);
             setValidatingCoupon(false);
             return;
           }
         }
-
         setAppliedCoupon(response.data);
         toast.success("Coupon applied successfully!");
       } else {
@@ -459,21 +369,18 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
     }
   };
 
-  // Remove coupon
   const handleRemoveCoupon = () => {
     setCouponCode("");
     setAppliedCoupon(null);
     setCouponError("");
   };
 
-  // Initialize Razorpay payment
   const initiatePayment = useCallback(
     async (orderData) => {
       if (!razorpayLoaded || !window.Razorpay) {
         toast.error("Payment system is loading. Please try again.");
         return;
       }
-
       const options = {
         key: orderData.key,
         amount: orderData.order.amount,
@@ -482,32 +389,27 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
         description: `Booking at ${formData.spaName} - ${formData.service}`,
         order_id: orderData.order.id,
         prefill: orderData.prefill,
-        theme: {
-          color: "#10b981", // Emerald color
-        },
+        theme: { color: "#10b981" },
         modal: {
-          ondismiss: function () {
+          ondismiss: () => {
             setPaymentProcessing(false);
             setLoading(false);
             toast.error("Payment cancelled");
           },
         },
-        handler: async function (response) {
+        handler: async (response) => {
           try {
-            // Verify payment on backend
             const verifyResponse = await axios.post("/api/payments/verify", {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               booking_id: orderData.booking.id,
             });
-
             if (verifyResponse.data.success) {
               toast.success(
                 "🎉 Payment successful! Your booking is confirmed. Check your email and WhatsApp for details.",
               );
               onClose();
-              // Reset form
               setFormData({
                 customerName: "",
                 customerPhone: "",
@@ -530,7 +432,6 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
               );
             }
           } catch (error) {
-            console.error("Payment verification error:", error);
             toast.error(
               error.response?.data?.error ||
                 "Payment verification failed. Please contact support.",
@@ -541,26 +442,20 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
           }
         },
       };
-
       const razorpay = new window.Razorpay(options);
-
-      razorpay.on("payment.failed", function (response) {
-        console.error("Payment failed:", response.error);
+      razorpay.on("payment.failed", (response) => {
         toast.error(
           response.error.description || "Payment failed. Please try again.",
         );
         setPaymentProcessing(false);
         setLoading(false);
       });
-
       razorpay.open();
     },
     [razorpayLoaded, formData.spaName, formData.service, onClose],
   );
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (
       !formData.customerName ||
       !formData.customerPhone ||
@@ -571,46 +466,30 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
       toast.error("Please fill in all required fields");
       return;
     }
-
-    // Validate phone number before submitting
     const phoneValidation = validatePhone10Digits(formData.customerPhone);
     if (!phoneValidation.isValid) {
       setPhoneError(phoneValidation.error);
       toast.error(phoneValidation.error);
       return;
     }
-
-    // Validate booking time before submitting
     if (!validateBookingTime(date, time)) {
       toast.error(timeError);
       return;
     }
-
-    // Validate terms and conditions acceptance
     if (!acceptedTerms) {
-      toast.error(
-        "Please accept the Terms & Conditions to proceed with booking",
-      );
+      toast.error("Please accept the Terms & Conditions to proceed");
       return;
     }
-
-    // Check if Razorpay is loaded
     if (!razorpayLoaded || !window.Razorpay) {
-      toast.error(
-        "Payment system is loading. Please wait a moment and try again.",
-      );
+      toast.error("Payment system is loading. Please wait and try again.");
       return;
     }
-
     setLoading(true);
     setPaymentProcessing(true);
-
     try {
-      // Parse datetime to separate date and time for API compatibility
       const datetime = new Date(formData.datetime);
       const dateStr = datetime.toISOString().split("T")[0];
-      const timeStr = datetime.toTimeString().split(" ")[0].slice(0, 5); // HH:MM format
-
+      const timeStr = datetime.toTimeString().split(" ")[0].slice(0, 5);
       const bookingData = {
         customerName: formData.customerName,
         customerPhone: formData.customerPhone,
@@ -620,17 +499,13 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
         date: dateStr,
         time: timeStr,
         couponCode: appliedCoupon?.coupon?.code || null,
-        paymentType: paymentType,
+        paymentType,
       };
-
-      // Create Razorpay order
       const response = await axios.post(
         "/api/payments/create-order",
         bookingData,
       );
-
       if (response.data.success) {
-        // Initiate Razorpay payment
         initiatePayment(response.data);
       } else {
         toast.error(response.data.error || "Failed to create payment order");
@@ -638,514 +513,693 @@ export default function BookingModal({ open, onClose, prefilledSpa = null }) {
         setLoading(false);
       }
     } catch (error) {
-      console.error("Payment initiation error:", error);
       toast.error(error.response?.data?.error || "Failed to initiate payment");
       setPaymentProcessing(false);
       setLoading(false);
     }
   };
 
+  // Step validation
+  const step1Valid = !!(formData.spaId && formData.service);
+  const step2Valid = !!(formData.datetime && !timeError);
+
+  const [step1Attempted, setStep1Attempted] = useState(false);
+  const [step2Attempted, setStep2Attempted] = useState(false);
+
+  const goNext = () => {
+    if (currentStep === 1) {
+      setStep1Attempted(true);
+      if (!step1Valid) {
+        if (!formData.spaId) toast.error("Please select a spa");
+        else toast.error("Please select a service to continue");
+        return;
+      }
+    }
+    if (currentStep === 2) {
+      setStep2Attempted(true);
+      if (!formData.datetime) { toast.error("Please select a date and time"); return; }
+      if (timeError) { toast.error(timeError); return; }
+    }
+    setCurrentStep((s) => Math.min(3, s + 1));
+  };
+
+  const goPrev = () => setCurrentStep((s) => Math.max(1, s - 1));
+
+  // Select styles
+  const selectStyles = {
+    control: (base, state) => ({
+      ...base,
+      minHeight: "42px",
+      borderRadius: "12px",
+      borderColor: state.isFocused ? "#10b981" : "#e4ddd2",
+      boxShadow: state.isFocused ? "0 0 0 2px rgba(16,185,129,0.15)" : "none",
+      backgroundColor: "#faf8f5",
+      "&:hover": { borderColor: state.isFocused ? "#10b981" : "#a08b7c" },
+    }),
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isSelected
+        ? "#10b981"
+        : state.isFocused
+          ? "#d1fae5"
+          : "white",
+      color: state.isSelected ? "white" : "#2C2420",
+    }),
+    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+    menu: (base) => ({
+      ...base,
+      zIndex: 9999,
+      borderRadius: "12px",
+      overflow: "hidden",
+    }),
+  };
+
   return (
     <>
-      {/* Load Razorpay SDK */}
       <Script
         src="https://checkout.razorpay.com/v1/checkout.js"
         onLoad={() => setRazorpayLoaded(true)}
-        onError={() => {
-          console.error("Failed to load Razorpay SDK");
-          toast.error("Failed to load payment system");
-        }}
+        onError={() => toast.error("Failed to load payment system")}
       />
 
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent
           onClose={onClose}
-          className="max-w-2xl max-h-[calc(100vh-5rem)] sm:max-h-[90vh] overflow-y-auto"
+          className="max-w-lg max-h-[calc(100vh-2rem)] sm:max-h-[92vh] overflow-y-auto scrollbar-thin p-0 gap-0 rounded-3xl border-0 shadow-luxury-lg"
           data-testid="booking-modal"
         >
-          <DialogHeader className="pt-2 sm:pt-0">
-            <DialogTitle className="text-lg sm:text-xl">
-              Book Your Spa Appointment
-            </DialogTitle>
-          </DialogHeader>
+          {/* Header */}
+          <div className="relative bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 pt-6 pb-8 rounded-t-3xl">
+            <DialogHeader>
+              <DialogTitle className="text-white font-playfair text-xl sm:text-2xl font-bold">
+                {currentStep === 1 && "Choose Your Experience"}
+                {currentStep === 2 && "Pick Your Time"}
+                {currentStep === 3 && "Confirm & Pay"}
+              </DialogTitle>
+              <p className="text-emerald-100 text-sm mt-1">
+                {formData.spaName || "Select a spa to get started"}
+              </p>
+            </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 mt-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Name <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="text"
-                value={formData.customerName}
-                onChange={(e) =>
-                  setFormData({ ...formData, customerName: e.target.value })
-                }
-                placeholder="Enter your name"
-                required
-                disabled={paymentProcessing}
-                data-testid="booking-name-input"
-              />
+            {/* Step indicator */}
+            <div className="flex items-center gap-0 mt-5">
+              {STEPS.map((step, idx) => {
+                const Icon = step.icon;
+                const isActive = currentStep === step.id;
+                const isDone = currentStep > step.id;
+                return (
+                  <div
+                    key={step.id}
+                    className="flex items-center flex-1 last:flex-none"
+                  >
+                    <div className="flex flex-col items-center gap-1">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+                          isDone
+                            ? "bg-white text-emerald-600 shadow-md"
+                            : isActive
+                              ? "bg-white text-emerald-600 shadow-lg ring-2 ring-white/50 scale-110"
+                              : "bg-emerald-700/50 text-emerald-200"
+                        }`}
+                      >
+                        {isDone ? (
+                          <Check className="w-4 h-4" />
+                        ) : (
+                          <Icon className="w-3.5 h-3.5" />
+                        )}
+                      </div>
+                      <span
+                        className={`text-[10px] font-semibold ${isActive || isDone ? "text-white" : "text-emerald-300"}`}
+                      >
+                        {step.label}
+                      </span>
+                    </div>
+                    {idx < STEPS.length - 1 && (
+                      <div
+                        className={`flex-1 h-0.5 mx-2 mb-4 rounded-full transition-all duration-500 ${isDone ? "bg-white" : "bg-emerald-700/50"}`}
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="tel"
-                value={formData.customerPhone}
-                onChange={(e) => {
-                  const inputValue = e.target.value;
-                  // Remove all non-digit characters
-                  const digitsOnly = inputValue.replace(/\D/g, "");
-                  // Limit to 10 digits
-                  const limitedDigits = digitsOnly.substring(0, 10);
-
-                  setFormData({ ...formData, customerPhone: limitedDigits });
-
-                  // Real-time validation
-                  const validation = validatePhone10Digits(limitedDigits);
-                  if (validation.isValid) {
-                    setPhoneError("");
-                  } else {
-                    setPhoneError(validation.error);
-                  }
-                }}
-                placeholder="Enter your phone number"
-                required
-                disabled={paymentProcessing}
-                data-testid="booking-phone-input"
-                className={
-                  phoneError ? "border-red-500 focus-visible:ring-red-500" : ""
-                }
-              />
-              {phoneError && (
-                <p className="text-red-500 text-xs mt-1">{phoneError}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address{" "}
-              </label>
-              <Input
-                type="email"
-                value={formData.customerEmail}
-                onChange={(e) =>
-                  setFormData({ ...formData, customerEmail: e.target.value })
-                }
-                placeholder="Enter your email"
-                disabled={paymentProcessing}
-                data-testid="booking-email-input"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Spa <span className="text-red-500">*</span>
-              </label>
-              <Select
-                options={allSpaOptions}
-                value={selectedSpaOption}
-                onChange={handleSpaChange}
-                placeholder="Select a spa..."
-                isDisabled={!!prefilledSpa || paymentProcessing}
-                isSearchable={true}
-                className="react-select-container"
-                classNamePrefix="react-select"
-                data-testid="booking-spa-select"
-                menuPortalTarget={
-                  typeof document !== "undefined" ? document.body : null
-                }
-                menuPosition="fixed"
-                styles={{
-                  control: (baseStyles, state) => ({
-                    ...baseStyles,
-                    minHeight: "40px",
-                    borderColor: state.isFocused ? "#10b981" : "#d1d5db",
-                    boxShadow: state.isFocused ? "0 0 0 1px #10b981" : "none",
-                    "&:hover": {
-                      borderColor: state.isFocused ? "#10b981" : "#9ca3af",
-                    },
-                  }),
-                  option: (baseStyles, state) => ({
-                    ...baseStyles,
-                    backgroundColor: state.isSelected
-                      ? "#10b981"
-                      : state.isFocused
-                        ? "#d1fae5"
-                        : "white",
-                    color: state.isSelected ? "white" : "#111827",
-                    "&:hover": {
-                      backgroundColor: state.isSelected ? "#10b981" : "#d1fae5",
-                    },
-                  }),
-                  menuPortal: (base) => ({
-                    ...base,
-                    zIndex: 9999,
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    zIndex: 9999,
-                  }),
-                }}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Service <span className="text-red-500">*</span>
-              </label>
-              <Select
-                options={serviceOptions}
-                value={selectedServiceOption}
-                onChange={handleServiceChange}
-                placeholder="Select a service..."
-                isDisabled={!formData.spaId || paymentProcessing}
-                isSearchable={true}
-                className="react-select-container"
-                classNamePrefix="react-select"
-                data-testid="booking-service-select"
-                menuPortalTarget={
-                  typeof document !== "undefined" ? document.body : null
-                }
-                menuPosition="fixed"
-                styles={{
-                  control: (baseStyles, state) => ({
-                    ...baseStyles,
-                    minHeight: "40px",
-                    borderColor: state.isFocused ? "#10b981" : "#d1d5db",
-                    boxShadow: state.isFocused ? "0 0 0 1px #10b981" : "none",
-                    "&:hover": {
-                      borderColor: state.isFocused ? "#10b981" : "#9ca3af",
-                    },
-                  }),
-                  option: (baseStyles, state) => ({
-                    ...baseStyles,
-                    backgroundColor: state.isSelected
-                      ? "#10b981"
-                      : state.isFocused
-                        ? "#d1fae5"
-                        : "white",
-                    color: state.isSelected ? "white" : "#111827",
-                    "&:hover": {
-                      backgroundColor: state.isSelected ? "#10b981" : "#d1fae5",
-                    },
-                  }),
-                  menuPortal: (base) => ({
-                    ...base,
-                    zIndex: 9999,
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    zIndex: 9999,
-                  }),
-                }}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date & Time <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Input
-                    type="date"
-                    value={date}
-                    onChange={(e) => {
-                      setDate(e.target.value);
-                      // Re-validate when date changes
-                      if (e.target.value && time) {
-                        validateBookingTime(e.target.value, time);
+          {/* Step content */}
+          <div className="px-6 py-5 bg-sand-50">
+            {/* ─── STEP 1: Spa + Service ─── */}
+            {currentStep === 1 && (
+              <div className="space-y-5 step-enter">
+                {/* Spa selector */}
+                {!prefilledSpa && (
+                  <div>
+                    <label className="flex items-center justify-between text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      <span>Select Spa <span className="text-red-400 normal-case">*</span></span>
+                      {step1Attempted && !formData.spaId && (
+                        <span className="text-red-400 normal-case font-normal text-[11px]">Required</span>
+                      )}
+                    </label>
+                    <Select
+                      options={allSpaOptions}
+                      value={selectedSpaOption || null}
+                      onChange={handleSpaChange}
+                      placeholder="Search and select a spa..."
+                      isSearchable
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                      menuPortalTarget={
+                        typeof document !== "undefined" ? document.body : null
                       }
-                    }}
-                    min={new Date().toISOString().split("T")[0]}
-                    required
-                    disabled={paymentProcessing}
-                    data-testid="booking-date-input"
-                    className={`w-full ${
-                      timeError && timeError.includes("Sunday")
-                        ? "border-red-500"
-                        : ""
-                    }`}
-                  />
-                </div>
-                <div>
-                  <Input
-                    type="time"
-                    value={time}
-                    onChange={(e) => {
-                      setTime(e.target.value);
-                      // Re-validate when time changes
-                      if (date && e.target.value) {
-                        validateBookingTime(date, e.target.value);
-                      }
-                    }}
-                    min={
-                      selectedSpaData?.storeHours?.openingTime &&
-                      !selectedSpaData?.storeHours?.is24Hours
-                        ? selectedSpaData.storeHours.openingTime
-                        : undefined
-                    }
-                    max={
-                      selectedSpaData?.storeHours?.closingTime &&
-                      !selectedSpaData?.storeHours?.is24Hours
-                        ? selectedSpaData.storeHours.closingTime
-                        : undefined
-                    }
-                    required
-                    disabled={paymentProcessing}
-                    data-testid="booking-time-input"
-                    className={`w-full ${
-                      timeError && !timeError.includes("Sunday")
-                        ? "border-red-500"
-                        : ""
-                    }`}
-                  />
-                </div>
-              </div>
-              {timeError && (
-                <p className="text-red-500 text-xs mt-1">{timeError}</p>
-              )}
-              {selectedSpaData?.storeHours && (
-                <p className="text-gray-500 text-xs mt-1">
-                  {selectedSpaData.storeHours.is24Hours ? (
-                    <span className="inline-flex items-center gap-1">
-                      <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                      Open 24 Hours
-                    </span>
-                  ) : (
-                    <>
-                      Store hours: {selectedSpaData.storeHours.openingTime} -{" "}
-                      {selectedSpaData.storeHours.closingTime}
-                    </>
-                  )}
-                  {selectedSpaData.storeHours.sundayClosed &&
-                    " (Closed on Sunday)"}
-                </p>
-              )}
-            </div>
-
-            {/* Coupon Code Section */}
-            {formData.spaId && formData.service && (
-              <div className="border-t pt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Have a coupon code?
-                </label>
-                <div className="flex gap-2">
-                  <Input
-                    type="text"
-                    value={couponCode}
-                    onChange={(e) => {
-                      setCouponCode(e.target.value.toUpperCase());
-                      setCouponError("");
-                    }}
-                    placeholder="Enter coupon code"
-                    className="flex-1"
-                    disabled={!!appliedCoupon || paymentProcessing}
-                  />
-                  {appliedCoupon ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleRemoveCoupon}
-                      disabled={paymentProcessing}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      Remove
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      onClick={handleApplyCoupon}
-                      disabled={
-                        validatingCoupon ||
-                        !couponCode.trim() ||
-                        paymentProcessing
-                      }
-                      className="bg-emerald-600 hover:bg-emerald-700"
-                    >
-                      {validatingCoupon ? "Applying..." : "Apply"}
-                    </Button>
-                  )}
-                </div>
-                {couponError && (
-                  <p className="text-red-500 text-xs mt-1">{couponError}</p>
+                      menuPosition="fixed"
+                      styles={selectStyles}
+                    />
+                  </div>
                 )}
-                {appliedCoupon && (
-                  <p className="text-emerald-600 text-xs mt-1">
-                    ✓ Coupon "{appliedCoupon.coupon.code}" applied!
+
+                {/* Service selector */}
+                {formData.spaId && (
+                  <div>
+                    <label className="flex items-center justify-between text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      <span>Select Service <span className="text-red-400 normal-case">*</span></span>
+                      {step1Attempted && !formData.service && formData.spaId && (
+                        <span className="text-red-400 normal-case font-normal text-[11px]">Please choose a service</span>
+                      )}
+                    </label>
+                    {serviceOptions.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto scrollbar-thin pr-1">
+                        {serviceOptions.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                service: opt.value,
+                              }))
+                            }
+                            className={`flex items-center justify-between p-3.5 rounded-2xl border-2 text-left transition-all duration-200 ${
+                              formData.service === opt.value
+                                ? "border-emerald-500 bg-emerald-50 shadow-luxury"
+                                : "border-sand-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/40"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                                  formData.service === opt.value
+                                    ? "border-emerald-500 bg-emerald-500"
+                                    : "border-gray-300"
+                                }`}
+                              >
+                                {formData.service === opt.value && (
+                                  <Check className="w-2.5 h-2.5 text-white" />
+                                )}
+                              </div>
+                              <span
+                                className={`text-sm font-medium ${formData.service === opt.value ? "text-emerald-800" : "text-gray-700"}`}
+                              >
+                                {opt.label}
+                              </span>
+                            </div>
+                            {opt.formattedPrice && (
+                              <span
+                                className={`text-sm font-bold flex-shrink-0 ${formData.service === opt.value ? "text-emerald-600" : "text-gray-500"}`}
+                              >
+                                {opt.formattedPrice}
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-6 text-center text-sm text-gray-400 bg-white rounded-2xl border border-sand-200">
+                        No services available for this spa
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!formData.spaId && (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Sparkles className="w-8 h-8 text-emerald-400" />
+                    </div>
+                    <p className="text-sm text-gray-400">
+                      Select a spa to see available services
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ─── STEP 2: Date + Time ─── */}
+            {currentStep === 2 && (
+              <div className="space-y-5 step-enter">
+                {/* Store hours info */}
+                {selectedSpaData?.storeHours && (
+                  <div className="flex items-center gap-2.5 p-3.5 bg-white rounded-2xl border border-sand-200">
+                    <div className="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Clock className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700">
+                        {selectedSpaData.storeHours.is24Hours ? (
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse inline-block" />
+                            Open 24 Hours
+                          </span>
+                        ) : (
+                          `${selectedSpaData.storeHours.openingTime} – ${selectedSpaData.storeHours.closingTime}`
+                        )}
+                      </p>
+                      {selectedSpaData.storeHours.sundayClosed && (
+                        <p className="text-xs text-orange-500 mt-0.5">
+                          Closed on Sundays
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Date */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    Select Date <span className="text-red-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" />
+                    <Input
+                      type="date"
+                      value={date}
+                      onChange={(e) => {
+                        setDate(e.target.value);
+                        if (e.target.value && time)
+                          validateBookingTime(e.target.value, time);
+                      }}
+                      min={new Date().toISOString().split("T")[0]}
+                      required
+                      disabled={paymentProcessing}
+                      data-testid="booking-date-input"
+                      className={`pl-10 h-11 rounded-2xl bg-white border-sand-200 focus:border-emerald-400 focus-visible:ring-emerald-200 ${
+                        timeError?.includes("Sunday") ? "border-red-300" : ""
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                {/* Time */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    Select Time <span className="text-red-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" />
+                    <Input
+                      type="time"
+                      value={time}
+                      onChange={(e) => {
+                        setTime(e.target.value);
+                        if (date && e.target.value)
+                          validateBookingTime(date, e.target.value);
+                      }}
+                      min={
+                        selectedSpaData?.storeHours?.openingTime &&
+                        !selectedSpaData?.storeHours?.is24Hours
+                          ? selectedSpaData.storeHours.openingTime
+                          : undefined
+                      }
+                      max={
+                        selectedSpaData?.storeHours?.closingTime &&
+                        !selectedSpaData?.storeHours?.is24Hours
+                          ? selectedSpaData.storeHours.closingTime
+                          : undefined
+                      }
+                      required
+                      disabled={paymentProcessing}
+                      data-testid="booking-time-input"
+                      className={`pl-10 h-11 rounded-2xl bg-white border-sand-200 focus:border-emerald-400 focus-visible:ring-emerald-200 ${
+                        timeError && !timeError.includes("Sunday")
+                          ? "border-red-300"
+                          : ""
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                {timeError && (
+                  <p className="text-red-500 text-xs bg-red-50 px-3 py-2 rounded-xl border border-red-100">
+                    {timeError}
                   </p>
                 )}
               </div>
             )}
 
-            {/* Booking fee info */}
-            {formData.spaId && formData.service && originalAmount > 0 && (
-              <div className="border-t pt-4">
-                <div className="flex items-start space-x-3 p-3 border-2 border-emerald-500 rounded-lg bg-emerald-50">
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">
-                      Book Now - Pay ₹{BOOKING_FEE.toLocaleString()} Only
+            {/* ─── STEP 3: Your Details + Confirm ─── */}
+            {currentStep === 3 && (
+              <div className="space-y-4 step-enter">
+                {/* Personal details */}
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Your Details
+                  </p>
+
+                  {/* Name */}
+                  <div>
+                    <label className="flex items-center justify-between text-xs text-gray-500 mb-1.5 pl-1">
+                      <span>Full Name <span className="text-red-400">*</span></span>
+                      {formData.customerName && (
+                        <span className="text-emerald-500 flex items-center gap-1 text-[11px]">
+                          <Check className="w-3 h-3" /> Looks good
+                        </span>
+                      )}
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" />
+                      <Input
+                        type="text"
+                        value={formData.customerName}
+                        onChange={(e) =>
+                          setFormData({ ...formData, customerName: e.target.value })
+                        }
+                        placeholder="Enter your full name"
+                        required
+                        disabled={paymentProcessing}
+                        data-testid="booking-name-input"
+                        className={`pl-10 h-11 rounded-2xl bg-white focus:border-emerald-400 focus-visible:ring-emerald-200 ${formData.customerName ? "border-emerald-200" : "border-sand-200"}`}
+                      />
                     </div>
-                    <div className="text-sm text-gray-600">
-                      Pay remaining ₹{pendingAmount.toLocaleString()} at the spa
+                    {!formData.customerName && (
+                      <p className="text-[11px] text-gray-400 mt-1 pl-1">Required to confirm your booking</p>
+                    )}
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <label className="flex items-center justify-between text-xs text-gray-500 mb-1.5 pl-1">
+                      <span>Phone Number <span className="text-red-400">*</span></span>
+                      {!phoneError && formData.customerPhone.length === 10 && (
+                        <span className="text-emerald-500 flex items-center gap-1 text-[11px]">
+                          <Check className="w-3 h-3" /> Valid
+                        </span>
+                      )}
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" />
+                      <Input
+                        type="tel"
+                        value={formData.customerPhone}
+                        onChange={(e) => {
+                          const digits = e.target.value
+                            .replace(/\D/g, "")
+                            .substring(0, 10);
+                          setFormData({ ...formData, customerPhone: digits });
+                          const v = validatePhone10Digits(digits);
+                          setPhoneError(v.isValid ? "" : v.error);
+                        }}
+                        placeholder="10-digit mobile number"
+                        required
+                        disabled={paymentProcessing}
+                        data-testid="booking-phone-input"
+                        className={`pl-10 h-11 rounded-2xl bg-white focus:border-emerald-400 focus-visible:ring-emerald-200 ${phoneError ? "border-red-300 focus-visible:ring-red-200" : formData.customerPhone.length === 10 ? "border-emerald-200" : "border-sand-200"}`}
+                      />
+                    </div>
+                    {phoneError && (
+                      <p className="text-red-500 text-xs mt-1 pl-1 flex items-center gap-1">
+                        <span className="w-3 h-3 rounded-full bg-red-100 flex items-center justify-center text-[10px] flex-shrink-0">!</span>
+                        {phoneError}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="flex items-center text-xs text-gray-500 mb-1.5 pl-1 gap-1">
+                      Email Address
+                      <span className="text-gray-400 text-[10px] font-normal">(optional — for booking confirmation)</span>
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" />
+                      <Input
+                        type="email"
+                        value={formData.customerEmail}
+                        onChange={(e) =>
+                          setFormData({ ...formData, customerEmail: e.target.value })
+                        }
+                        placeholder="your@email.com"
+                        disabled={paymentProcessing}
+                        data-testid="booking-email-input"
+                        className="pl-10 h-11 rounded-2xl bg-white border-sand-200 focus:border-emerald-400 focus-visible:ring-emerald-200"
+                      />
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
 
-            {/* Pricing Summary with GST */}
-            {formData.spaId && formData.service && originalAmount > 0 && (
-              <div className="border-t pt-4 space-y-2">
-                <h3 className="text-sm font-semibold text-gray-900">
-                  Pricing Summary
-                </h3>
-                <div className="space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Service Price:</span>
-                    <span className="text-gray-900">
-                      ₹{originalAmount.toLocaleString()}
-                    </span>
+                {/* Booking summary card */}
+                <div className="bg-white rounded-2xl border border-sand-200 overflow-hidden">
+                  <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-3 border-b border-sand-200">
+                    <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
+                      Booking Summary
+                    </p>
                   </div>
-                  {appliedCoupon && discountAmount > 0 && (
-                    <div className="flex justify-between text-emerald-600">
-                      <span>Discount ({appliedCoupon.coupon.code}):</span>
-                      <span>-₹{discountAmount.toLocaleString()}</span>
+                  <div className="px-4 py-3 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Spa</span>
+                      <span className="font-medium text-gray-800 text-right ml-4 line-clamp-1 max-w-[55%]">
+                        {formData.spaName}
+                      </span>
                     </div>
-                  )}
-                  <div className="flex justify-between text-gray-500 text-xs hidden">
-                    <span>Base Amount:</span>
-                    <span>₹{baseAmount.toLocaleString()}</span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Service</span>
+                      <span className="font-medium text-gray-800 text-right ml-4 line-clamp-1 max-w-[55%]">
+                        {formData.service}
+                      </span>
+                    </div>
+                    {date && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Date & Time</span>
+                        <span className="font-medium text-gray-800">
+                          {new Date(date).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                          })}
+                          {time && `, ${time}`}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex justify-between text-gray-500 text-xs hidden">
-                    <span>GST (18% included):</span>
-                    <span>₹{gstAmount.toLocaleString()}</span>
+                </div>
+
+                {/* Coupon */}
+                {originalAmount > 0 && (
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      Coupon Code
+                    </label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" />
+                        <Input
+                          type="text"
+                          value={couponCode}
+                          onChange={(e) => {
+                            setCouponCode(e.target.value.toUpperCase());
+                            setCouponError("");
+                          }}
+                          placeholder="Enter coupon code"
+                          disabled={!!appliedCoupon || paymentProcessing}
+                          className="pl-10 h-10 rounded-xl bg-white border-sand-200 focus:border-emerald-400 focus-visible:ring-emerald-200 text-sm"
+                        />
+                      </div>
+                      {appliedCoupon ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleRemoveCoupon}
+                          disabled={paymentProcessing}
+                          className="h-10 px-3 rounded-xl text-red-500 border-red-200 hover:bg-red-50 text-sm font-medium"
+                        >
+                          Remove
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          onClick={handleApplyCoupon}
+                          disabled={
+                            validatingCoupon ||
+                            !couponCode.trim() ||
+                            paymentProcessing
+                          }
+                          className="h-10 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-sm font-medium"
+                        >
+                          {validatingCoupon ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            "Apply"
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                    {couponError && (
+                      <p className="text-red-500 text-xs mt-1 pl-1">
+                        {couponError}
+                      </p>
+                    )}
+                    {appliedCoupon && (
+                      <p className="text-emerald-600 text-xs mt-1 pl-1 flex items-center gap-1">
+                        <Check className="w-3 h-3" />
+                        Coupon "{appliedCoupon.coupon.code}" applied!
+                      </p>
+                    )}
                   </div>
-                  <div className="flex justify-between pt-2 border-t font-semibold">
-                    <span className="text-gray-900">Total Amount:</span>
-                    <span className="text-emerald-600">
-                      ₹{finalAmount.toLocaleString()}
-                    </span>
-                  </div>
-                  {paymentType === "booking_only" && (
-                    <>
-                      <div className="flex justify-between pt-2 border-t">
-                        <span className="text-gray-600">Pay Now:</span>
-                        <span className="font-medium text-emerald-600">
+                )}
+
+                {/* Pricing breakdown */}
+                {originalAmount > 0 && (
+                  <div className="bg-white rounded-2xl border border-sand-200 overflow-hidden">
+                    <div className="px-4 py-3 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Service Price</span>
+                        <span className="text-gray-800">
+                          ₹{originalAmount.toLocaleString()}
+                        </span>
+                      </div>
+                      {appliedCoupon && discountAmount > 0 && (
+                        <div className="flex justify-between text-sm text-emerald-600">
+                          <span>Discount ({appliedCoupon.coupon.code})</span>
+                          <span>−₹{discountAmount.toLocaleString()}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm pt-2 border-t border-sand-100 font-semibold">
+                        <span className="text-gray-700">Total Amount</span>
+                        <span className="text-emerald-600">
+                          ₹{finalAmount.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Pay now split */}
+                    <div className="bg-emerald-50 px-4 py-3 border-t border-emerald-100">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="font-semibold text-emerald-800">
+                          Pay Now (Booking Fee)
+                        </span>
+                        <span className="font-bold text-emerald-700">
                           ₹{BOOKING_FEE.toLocaleString()}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Pay at Spa:</span>
-                        <span className="font-medium text-gray-900">
-                          ₹{pendingAmount.toLocaleString()}
-                        </span>
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>Pay at Spa</span>
+                        <span>₹{pendingAmount.toLocaleString()}</span>
                       </div>
-                    </>
-                  )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Terms */}
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="relative mt-0.5 w-5 h-5 flex-shrink-0">
+                    {/* Real input covers the visual box — clicking anywhere on it works */}
+                    <input
+                      type="checkbox"
+                      id="acceptTerms"
+                      checked={acceptedTerms}
+                      onChange={(e) => setAcceptedTerms(e.target.checked)}
+                      disabled={paymentProcessing}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
+                      data-testid="booking-terms-checkbox"
+                    />
+                    <div
+                      className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 pointer-events-none ${
+                        acceptedTerms
+                          ? "bg-emerald-500 border-emerald-500"
+                          : "bg-white border-sand-300 group-hover:border-emerald-400"
+                      }`}
+                    >
+                      {acceptedTerms && (
+                        <Check className="w-3 h-3 text-white" />
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-600 leading-relaxed">
+                    I accept the{" "}
+                    <Link
+                      href="/terms"
+                      target="_blank"
+                      className="text-emerald-600 underline underline-offset-2 hover:text-emerald-700"
+                    >
+                      Terms & Conditions
+                    </Link>
+                    <span className="text-red-400"> *</span>
+                  </span>
+                </label>
+
+                {/* Security note */}
+                <div className="flex items-center gap-2 text-xs text-gray-400 bg-sand-100 rounded-xl px-3 py-2.5">
+                  <Shield className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                  Secure payment powered by Razorpay. Your payment info is
+                  encrypted.
                 </div>
               </div>
             )}
+          </div>
 
-            <div className="flex items-start space-x-2 pt-2">
-              <input
-                type="checkbox"
-                id="acceptTerms"
-                checked={acceptedTerms}
-                onChange={(e) => setAcceptedTerms(e.target.checked)}
-                disabled={paymentProcessing}
-                className="mt-1 h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
-                data-testid="booking-terms-checkbox"
-              />
-              <label
-                htmlFor="acceptTerms"
-                className="text-sm text-gray-700 cursor-pointer"
-              >
-                I accept the{" "}
-                <Link
-                  href="/terms"
-                  target="_blank"
-                  className="text-emerald-600 hover:underline"
-                >
-                  Terms & Conditions
-                </Link>
-                <span className="text-red-500">*</span>
-              </label>
-            </div>
-
-            {/* Payment Security Note */}
-            <div className="bg-gray-50 rounded-lg p-3 flex items-center gap-2 text-xs text-gray-600">
-              <svg
-                className="w-4 h-4 text-emerald-600 flex-shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
-              <span>
-                Secure payment powered by Razorpay. Your payment information is
-                encrypted and secure.
-              </span>
-            </div>
-
-            <div className="flex space-x-3 pt-4">
-              <Button
+          {/* Footer navigation */}
+          <div className="px-6 py-4 bg-white rounded-b-3xl border-t border-sand-100 flex items-center gap-3">
+            {currentStep > 1 ? (
+              <button
                 type="button"
-                variant="outline"
-                onClick={onClose}
-                className="flex-1"
+                onClick={goPrev}
                 disabled={paymentProcessing}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-medium text-gray-600 bg-sand-100 hover:bg-sand-200 transition-colors disabled:opacity-50"
+                data-testid="booking-cancel-button"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={paymentProcessing}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-medium text-gray-600 bg-sand-100 hover:bg-sand-200 transition-colors"
                 data-testid="booking-cancel-button"
               >
                 Cancel
-              </Button>
-              <Button
-                type="submit"
+              </button>
+            )}
+
+            {currentStep < 3 ? (
+              <button
+                type="button"
+                onClick={goNext}
+                disabled={paymentProcessing}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-luxury hover:shadow-luxury-lg transition-all duration-300 disabled:opacity-60"
+              >
+                Continue
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSubmit}
                 disabled={loading || !acceptedTerms || !razorpayLoaded}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-luxury hover:shadow-luxury-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 data-testid="booking-submit-button"
               >
                 {loading ? (
-                  <span className="flex items-center gap-2">
-                    <svg
-                      className="animate-spin h-4 w-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     Processing...
-                  </span>
-                ) : paymentType === "booking_only" ? (
-                  `Pay ₹${BOOKING_FEE.toLocaleString()} to Book`
+                  </>
                 ) : (
-                  `Pay ₹${finalAmount.toLocaleString()}`
+                  <>
+                    <Shield className="w-4 h-4" />
+                    Pay ₹{BOOKING_FEE.toLocaleString()} to Book
+                  </>
                 )}
-              </Button>
-            </div>
-          </form>
+              </button>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </>
