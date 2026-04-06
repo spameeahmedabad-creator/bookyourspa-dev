@@ -306,7 +306,7 @@ function HomeContent() {
                 label: "Verified Spas",
               },
               { value: "500+", label: "Happy Customers" },
-              { value: "4.8★", label: "Average Rating" },
+              // { value: "4.8★", label: "Average Rating" },
             ].map(({ value, label }) => (
               <div key={label} className="text-center">
                 <p className="text-2xl font-bold text-white font-playfair">
