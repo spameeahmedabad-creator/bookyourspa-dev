@@ -282,13 +282,15 @@ function HomeContent() {
           </div>
 
           <h1 className="font-playfair text-3xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight max-w-2xl">
-            Find Your
-            <span className="block text-emerald-gradient">Perfect Escape</span>
+            Book The Best Spa & Massage in
+            <span className="block text-emerald-gradient">
+              Ahmedabad and Gandhinagar
+            </span>
           </h1>
 
           <p className="text-base sm:text-lg text-white/80 max-w-xl mb-8 sm:mb-10 leading-relaxed">
-            Discover and book premium spa experiences. Relax, refresh, and
-            rejuvenate — in seconds.
+            Find and book the best spa and wellness centers across Ahmedabad,
+            Gandhinagar, and beyond
           </p>
 
           {/* Search */}
