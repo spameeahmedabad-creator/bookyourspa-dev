@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin, Bookmark, ArrowRight, Star } from "lucide-react";
+import { MapPin, Bookmark, ArrowRight, Star, Tag } from "lucide-react";
 import BookingModal from "@/components/BookingModal";
 import axios from "axios";
 import { toast } from "sonner";
@@ -98,6 +98,19 @@ export default function SpaCard({ spa }) {
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
+          {/* Active coupon badge */}
+          {spa.activeCoupon && (
+            <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 pl-2 pr-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm border border-amber-200 shadow-md">
+              <Tag className="w-3 h-3 flex-shrink-0 text-amber-500" />
+              <span className="text-[11px] text-gray-500 leading-none">
+                Use code
+              </span>
+              <span className="text-[11px] font-bold text-amber-600 tracking-wide leading-none">
+                {spa.activeCoupon.code}
+              </span>
+            </div>
+          )}
+
           {/* Bookmark button */}
           {user && !loading && (
             <button
@@ -115,7 +128,6 @@ export default function SpaCard({ spa }) {
               />
             </button>
           )}
-
         </div>
 
         {/* Content */}

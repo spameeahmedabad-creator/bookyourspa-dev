@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Spa from "@/models/Spa";
+import Coupon from "@/models/Coupon";
 import User from "@/models/User"; // Import User model to ensure it's registered for populate
 import { verifyToken } from "@/lib/jwt";
 
@@ -30,7 +31,10 @@ export async function GET(request) {
         .sort({ createdAt: -1 });
     } catch (populateError) {
       // If populate fails, fetch spas without populating
-      console.warn("Populate failed, fetching spas without owner data:", populateError.message);
+      console.warn(
+        "Populate failed, fetching spas without owner data:",
+        populateError.message,
+      );
       spas = await Spa.find(query)
         .skip(skip)
         .limit(limit)
@@ -39,8 +43,37 @@ export async function GET(request) {
 
     const total = await Spa.countDocuments(query);
 
+    // Attach best active coupon per spa (single query, no N+1)
+    const spaIds = spas.map((s) => s._id);
+    const now = new Date();
+    const activeCoupons = await Coupon.find({
+      spaId: { $in: spaIds },
+      isActive: true,
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+      $or: [
+        { usageLimit: null },
+        { $expr: { $lt: ["$usedCount", "$usageLimit"] } },
+      ],
+    }).select("spaId type value code");
+
+    // Map spaId → best coupon (highest value)
+    const bestCouponBySpa = {};
+    for (const coupon of activeCoupons) {
+      const key = String(coupon.spaId);
+      if (!bestCouponBySpa[key] || coupon.value > bestCouponBySpa[key].value) {
+        bestCouponBySpa[key] = coupon;
+      }
+    }
+
+    const spasWithCoupons = spas.map((spa) => {
+      const plain = spa.toObject ? spa.toObject() : { ...spa };
+      plain.activeCoupon = bestCouponBySpa[String(spa._id)] || null;
+      return plain;
+    });
+
     return NextResponse.json({
-      spas,
+      spas: spasWithCoupons,
       pagination: {
         page,
         limit,
@@ -52,7 +85,7 @@ export async function GET(request) {
     console.error("Get spas error:", error);
     return NextResponse.json(
       { error: "Failed to fetch spas", details: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -86,7 +119,7 @@ export async function POST(request) {
     console.error("Create spa error:", error);
     return NextResponse.json(
       { error: "Failed to create spa" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
