@@ -14,12 +14,14 @@ import {
   ChevronLeft,
   ChevronRight,
   MapPin,
+  Navigation,
   Sparkles,
   Clock,
   Star,
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
+import { haversineKm } from "@/lib/distance";
 
 function BookingModalHandler({ onBookingDetected }) {
   const searchParams = useSearchParams();
@@ -46,6 +48,8 @@ function HomeContent() {
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [rotateOffset, setRotateOffset] = useState(0);
   const [listAnimClass, setListAnimClass] = useState("");
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationStatus, setLocationStatus] = useState("idle"); // idle | requesting | granted | denied
   const router = useRouter();
 
   const handleBookingDetected = useCallback(
@@ -63,11 +67,31 @@ function HomeContent() {
 
   useEffect(() => {
     fetchSpas(currentPage, cityFilter, serviceFilter);
-  }, [currentPage, cityFilter, serviceFilter]);
+  }, [currentPage, cityFilter, serviceFilter, userLocation]);
+
   useEffect(() => {
     fetchHeroImages();
     fetchCityCounts();
     fetchServiceImages();
+  }, []);
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocationStatus("denied");
+      return;
+    }
+    setLocationStatus("requesting");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        });
+        setLocationStatus("granted");
+      },
+      () => setLocationStatus("denied"),
+      { timeout: 8000, maximumAge: 300000 },
+    );
   }, []);
 
   useEffect(() => {
@@ -100,9 +124,13 @@ function HomeContent() {
   const fetchSpas = async (page, city = "", service = "") => {
     try {
       setLoading(true);
-      if (city || service) {
+      const loc = userLocation;
+      const limit = 6;
+
+      if (city || service || loc) {
         const response = await axios.get("/api/spas?limit=1000");
         let filtered = response.data.spas || [];
+
         if (city)
           filtered = filtered.filter(
             (s) => s.location?.region?.toLowerCase() === city.toLowerCase(),
@@ -117,12 +145,33 @@ function HomeContent() {
                 (p) => p.title?.toLowerCase() === service.toLowerCase(),
               ),
           );
-        const sorted = sortSpasWithDefault(filtered);
-        const limit = 6;
-        setSpas(sorted.slice((page - 1) * limit, page * limit));
+
+        if (loc) {
+          filtered = filtered
+            .map((spa) => ({
+              ...spa,
+              _distance:
+                spa.location?.latitude != null &&
+                spa.location?.longitude != null
+                  ? haversineKm(
+                      loc.lat,
+                      loc.lng,
+                      spa.location.latitude,
+                      spa.location.longitude,
+                    )
+                  : Infinity,
+            }))
+            .sort((a, b) => a._distance - b._distance);
+        } else {
+          filtered = sortSpasWithDefault(filtered);
+        }
+
+        setSpas(filtered.slice((page - 1) * limit, page * limit));
         setTotalPages(Math.ceil(filtered.length / limit) || 1);
       } else {
-        const response = await axios.get(`/api/spas?page=${page}&limit=6`);
+        const response = await axios.get(
+          `/api/spas?page=${page}&limit=${limit}`,
+        );
         setSpas(sortSpasWithDefault(response.data.spas || []));
         setTotalPages(response.data.pagination?.pages || 1);
       }
@@ -342,17 +391,38 @@ function HomeContent() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-2">
-                {cityFilter || serviceFilter ? "Filtered Results" : "Featured"}
+                {cityFilter || serviceFilter
+                  ? "Filtered Results"
+                  : locationStatus === "granted"
+                    ? "Near You"
+                    : "Featured"}
               </p>
-              <h2 className="font-playfair text-2xl sm:text-3xl font-bold text-gray-900">
-                {cityFilter && serviceFilter
-                  ? `${serviceFilter} in ${cityFilter}`
-                  : cityFilter
-                    ? `Spas in ${cityFilter}`
-                    : serviceFilter
-                      ? `${serviceFilter} Spas`
-                      : "Top Spas Near You"}
-              </h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="font-playfair text-2xl sm:text-3xl font-bold text-gray-900">
+                  {cityFilter && serviceFilter
+                    ? `${serviceFilter} in ${cityFilter}`
+                    : cityFilter
+                      ? `Spas in ${cityFilter}`
+                      : serviceFilter
+                        ? `${serviceFilter} Spas`
+                        : "Top Spas Near You"}
+                </h2>
+                {locationStatus === "granted" &&
+                  !cityFilter &&
+                  !serviceFilter && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                      <Navigation className="w-3 h-3" />
+                      Sorted by distance
+                    </span>
+                  )}
+                {locationStatus === "requesting" &&
+                  !cityFilter &&
+                  !serviceFilter && (
+                    <span className="text-[11px] text-gray-400 animate-pulse">
+                      Detecting your location…
+                    </span>
+                  )}
+              </div>
             </div>
 
             {/* Mobile rotate nav — visible only on mobile */}
@@ -416,14 +486,30 @@ function HomeContent() {
               data-testid="spa-grid"
             >
               {spas.map((spa) => (
-                <SpaCard key={spa._id} spa={spa} />
+                <SpaCard
+                  key={spa._id}
+                  spa={spa}
+                  distance={
+                    spa._distance != null && spa._distance !== Infinity
+                      ? spa._distance
+                      : null
+                  }
+                />
               ))}
             </div>
 
             {/* Mobile — all cards in rotated order */}
             <div className={`md:hidden flex flex-col gap-6 ${listAnimClass}`}>
               {rotatedSpas.map((spa) => (
-                <SpaCard key={spa._id} spa={spa} />
+                <SpaCard
+                  key={spa._id}
+                  spa={spa}
+                  distance={
+                    spa._distance != null && spa._distance !== Infinity
+                      ? spa._distance
+                      : null
+                  }
+                />
               ))}
             </div>
 

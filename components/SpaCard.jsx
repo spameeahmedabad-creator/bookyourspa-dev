@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MapPin, Bookmark, ArrowRight, Star, Tag } from "lucide-react";
+import { formatDistance } from "@/lib/distance";
 import BookingModal from "@/components/BookingModal";
 import axios from "axios";
 import { toast } from "sonner";
 
-export default function SpaCard({ spa }) {
+export default function SpaCard({ spa, distance = null }) {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -141,11 +142,18 @@ export default function SpaCard({ spa }) {
 
           <div className="flex items-start text-gray-500 mb-3 gap-1.5">
             <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-emerald-500" />
-            <span className="text-xs sm:text-sm line-clamp-1 leading-snug">
-              {spa.location?.region ||
-                spa.location?.address ||
-                "Location not specified"}
-            </span>
+            <div className="min-w-0">
+              <span className="text-xs sm:text-sm line-clamp-1 leading-snug block">
+                {spa.location?.region ||
+                  spa.location?.address ||
+                  "Location not specified"}
+              </span>
+              {distance != null && (
+                <span className="text-[11px] font-medium text-emerald-600">
+                  {formatDistance(distance)}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Services */}

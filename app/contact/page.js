@@ -5,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, Phone, MapPin, Send } from "lucide-react";
+import { Mail, MapPin, Send } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ContactPage() {
@@ -80,23 +80,6 @@ export default function ContactPage() {
                     Email Us
                   </h3>
                   <p className="text-gray-600">spameeahmedabad@gmail.com</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-                    <Phone className="w-6 h-6 text-emerald-600" />
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                    Call Us
-                  </h3>
-                  <p className="text-gray-600">+91 8140621609</p>
-                  <p className="text-gray-600">Mon-Sat: 9 AM - 8 PM</p>
                 </div>
               </div>
             </div>
