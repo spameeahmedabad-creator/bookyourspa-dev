@@ -792,18 +792,17 @@ function HomeContent() {
       <section className="py-12 sm:py-16 bg-gradient-to-r from-emerald-600 to-teal-600">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
           <h2 className="font-playfair text-2xl sm:text-4xl font-bold text-white mb-4">
-            Ready for Your Wellness Journey?
+            Want to grow your spa?
           </h2>
           <p className="text-emerald-100 text-base mb-8">
-            Book your spa appointment now and pay just ₹199 to secure your slot.
+            Join BookYourSpa with 100% Guaranteed marketing.
           </p>
-          <button
-            onClick={() => setShowBookingModal(true)}
+          <a
+            href="/contact"
             className="inline-flex items-center gap-2 bg-white text-emerald-700 px-8 py-4 rounded-2xl text-base font-bold hover:bg-emerald-50 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105"
           >
-            <Sparkles className="w-5 h-5" />
-            Book Your Spa Now
-          </button>
+            Contact Us
+          </a>
         </div>
       </section>
 
