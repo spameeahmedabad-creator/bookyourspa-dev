@@ -5,27 +5,61 @@ import axios from "axios";
 import { X, Tag, Clock, Sparkles, Copy, Check } from "lucide-react";
 
 const STATIC_BANNER_CONFIG = {
-  enabled: false,
-  image: "/etc/rainbow-banner-coupan.png",
-  mobileImage: "/etc/rainbow-banner-coupan-mobile.jpeg",
+  enabled: true,
+  image: "/offer/offer.png",
+  mobileImage: "/offer/offer.png",
   alt: "Special Coupon Offer",
   link: null,
 };
 
 const THEME = {
-  emerald: { from: "#059669", via: "#0d9488", to: "#059669", badge: "bg-white/20 border-white/30" },
-  red:     { from: "#dc2626", via: "#e11d48", to: "#dc2626", badge: "bg-white/20 border-white/30" },
-  purple:  { from: "#7c3aed", via: "#6d28d9", to: "#7c3aed", badge: "bg-white/20 border-white/30" },
-  orange:  { from: "#d97706", via: "#ea580c", to: "#d97706", badge: "bg-white/20 border-white/30" },
-  blue:    { from: "#2563eb", via: "#0891b2", to: "#2563eb", badge: "bg-white/20 border-white/30" },
-  pink:    { from: "#db2777", via: "#e11d48", to: "#db2777", badge: "bg-white/20 border-white/30" },
+  emerald: {
+    from: "#059669",
+    via: "#0d9488",
+    to: "#059669",
+    badge: "bg-white/20 border-white/30",
+  },
+  red: {
+    from: "#dc2626",
+    via: "#e11d48",
+    to: "#dc2626",
+    badge: "bg-white/20 border-white/30",
+  },
+  purple: {
+    from: "#7c3aed",
+    via: "#6d28d9",
+    to: "#7c3aed",
+    badge: "bg-white/20 border-white/30",
+  },
+  orange: {
+    from: "#d97706",
+    via: "#ea580c",
+    to: "#d97706",
+    badge: "bg-white/20 border-white/30",
+  },
+  blue: {
+    from: "#2563eb",
+    via: "#0891b2",
+    to: "#2563eb",
+    badge: "bg-white/20 border-white/30",
+  },
+  pink: {
+    from: "#db2777",
+    via: "#e11d48",
+    to: "#db2777",
+    badge: "bg-white/20 border-white/30",
+  },
 };
 
 function CountdownBit({ value, unit }) {
   return (
     <span className="inline-flex flex-col items-center leading-none">
-      <span className="font-bold tabular-nums">{String(value).padStart(2, "0")}</span>
-      <span className="text-[8px] opacity-70 uppercase tracking-wider">{unit}</span>
+      <span className="font-bold tabular-nums">
+        {String(value).padStart(2, "0")}
+      </span>
+      <span className="text-[8px] opacity-70 uppercase tracking-wider">
+        {unit}
+      </span>
     </span>
   );
 }
@@ -49,17 +83,28 @@ function Countdown({ expiresAt }) {
     return () => clearInterval(id);
   }, [calc]);
 
-  if (!t) return <span className="text-xs opacity-80 font-medium">Ending soon!</span>;
+  if (!t)
+    return <span className="text-xs opacity-80 font-medium">Ending soon!</span>;
 
   return (
     <div className="inline-flex items-center gap-1 text-xs">
       <Clock className="w-3 h-3 opacity-75 flex-shrink-0" />
       <div className="flex items-end gap-0.5">
-        {t.d > 0 && <><CountdownBit value={t.d} unit="d" /><span className="opacity-50 mb-0.5">:</span></>}
+        {t.d > 0 && (
+          <>
+            <CountdownBit value={t.d} unit="d" />
+            <span className="opacity-50 mb-0.5">:</span>
+          </>
+        )}
         <CountdownBit value={t.h} unit="h" />
         <span className="opacity-50 mb-0.5">:</span>
         <CountdownBit value={t.m} unit="m" />
-        {t.d === 0 && <><span className="opacity-50 mb-0.5">:</span><CountdownBit value={t.s} unit="s" /></>}
+        {t.d === 0 && (
+          <>
+            <span className="opacity-50 mb-0.5">:</span>
+            <CountdownBit value={t.s} unit="s" />
+          </>
+        )}
       </div>
     </div>
   );
@@ -111,7 +156,10 @@ export default function PromotionalBanner() {
 
   useEffect(() => {
     if (promotions.length > 1) {
-      const id = setInterval(() => setCurrentIndex((p) => (p + 1) % promotions.length), 4000);
+      const id = setInterval(
+        () => setCurrentIndex((p) => (p + 1) % promotions.length),
+        4000,
+      );
       return () => clearInterval(id);
     }
   }, [promotions.length]);
@@ -134,7 +182,12 @@ export default function PromotionalBanner() {
     if (dismissed) return null;
     const imgEl = (src, cls) =>
       STATIC_BANNER_CONFIG.link ? (
-        <a href={STATIC_BANNER_CONFIG.link} target="_blank" rel="noopener noreferrer" className="block w-full">
+        <a
+          href={STATIC_BANNER_CONFIG.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full"
+        >
           <img src={src} alt={STATIC_BANNER_CONFIG.alt} className={cls} />
         </a>
       ) : (
@@ -143,14 +196,23 @@ export default function PromotionalBanner() {
 
     return (
       <div className="relative bg-[#c41230] overflow-hidden">
-        <div className="block sm:hidden w-full">{imgEl(STATIC_BANNER_CONFIG.mobileImage, "w-full h-auto block")}</div>
-        <div className="hidden sm:block w-full">{imgEl(STATIC_BANNER_CONFIG.image, "w-full h-auto block")}</div>
+        {/* Mobile — full auto height */}
+        <div className="block sm:hidden w-full">
+          {imgEl(STATIC_BANNER_CONFIG.mobileImage, "w-full h-auto block")}
+        </div>
+        {/* Desktop — fixed height, full image visible */}
+        <div className="hidden sm:block w-full h-[200px] bg-[#c41230]">
+          {imgEl(
+            STATIC_BANNER_CONFIG.image,
+            "w-full h-full object-contain block",
+          )}
+        </div>
         <button
           onClick={() => setDismissed(true)}
-          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center bg-black/30 hover:bg-black/50 rounded-full transition-colors z-10"
+          className="absolute right-3 top-3 w-8 h-8 flex items-center justify-center bg-black/40 hover:bg-black/60 rounded-full transition-colors z-50 cursor-pointer"
           aria-label="Dismiss banner"
         >
-          <X className="w-3.5 h-3.5 text-white" />
+          <X className="w-4 h-4 text-white" />
         </button>
       </div>
     );
@@ -175,7 +237,8 @@ export default function PromotionalBanner() {
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%)",
+          background:
+            "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%)",
           animation: "bannerShimmer 3s ease-in-out infinite",
         }}
       />
@@ -186,7 +249,6 @@ export default function PromotionalBanner() {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="py-2.5 sm:py-3 flex items-center justify-center gap-2 sm:gap-4 pr-8">
-
           {/* Left sparkle */}
           <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 opacity-90 flex-shrink-0 animate-pulse" />
 
@@ -221,7 +283,9 @@ export default function PromotionalBanner() {
                 key={i}
                 onClick={() => setCurrentIndex(i)}
                 className={`rounded-full transition-all duration-300 ${
-                  i === currentIndex ? "w-4 h-1 bg-white" : "w-1 h-1 bg-white/40 hover:bg-white/60"
+                  i === currentIndex
+                    ? "w-4 h-1 bg-white"
+                    : "w-1 h-1 bg-white/40 hover:bg-white/60"
                 }`}
                 aria-label={`Promotion ${i + 1}`}
               />
@@ -241,13 +305,23 @@ export default function PromotionalBanner() {
 
       <style jsx>{`
         @keyframes bannerShift {
-          0%   { background-position: 0% 50%; }
-          50%  { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
         }
         @keyframes bannerShimmer {
-          0%   { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
         }
       `}</style>
     </div>
