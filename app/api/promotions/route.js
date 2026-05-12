@@ -20,7 +20,7 @@ export async function GET() {
         { $expr: { $lt: ["$usedCount", "$usageLimit"] } },
       ],
     })
-      .select("code type value bannerText bannerColor bannerPosition scope spaId endDate")
+      .select("code type value bannerImage bannerText bannerColor bannerPosition scope spaId endDate")
       .populate("spaId", "name")
       .sort({ createdAt: -1 })
       .limit(5);
@@ -47,6 +47,7 @@ export async function GET() {
         code: promo.code,
         type: promo.type,
         value: promo.value,
+        image: promo.bannerImage || "",
         text: displayText,
         color: promo.bannerColor || "emerald",
         position: promo.bannerPosition || "top",

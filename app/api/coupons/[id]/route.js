@@ -55,6 +55,7 @@ export async function PUT(request, { params }) {
       perUserLimit,
       minOrderAmount,
       showBanner,
+      bannerImage,
       bannerText,
       bannerColor,
     } = data;
@@ -68,6 +69,7 @@ export async function PUT(request, { params }) {
     if (minOrderAmount !== undefined) coupon.minOrderAmount = minOrderAmount;
     // Banner settings
     if (showBanner !== undefined) coupon.showBanner = showBanner;
+    if (bannerImage !== undefined) coupon.bannerImage = bannerImage;
     if (bannerText !== undefined) coupon.bannerText = bannerText;
     if (bannerColor !== undefined) coupon.bannerColor = bannerColor;
 

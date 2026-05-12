@@ -20,6 +20,7 @@ import {
   DollarSign,
   Megaphone,
 } from "lucide-react";
+import GitHubImageUpload from "@/components/GitHubImageUpload";
 
 export default function CouponsPage() {
   const router = useRouter();
@@ -42,6 +43,7 @@ export default function CouponsPage() {
     minOrderAmount: "0",
     // Banner settings
     showBanner: false,
+    bannerImage: "",
     bannerText: "",
     bannerColor: "emerald",
   });
@@ -107,6 +109,7 @@ export default function CouponsPage() {
       perUserLimit: "1",
       minOrderAmount: "0",
       showBanner: false,
+      bannerImage: "",
       bannerText: "",
       bannerColor: "emerald",
     });
@@ -131,6 +134,7 @@ export default function CouponsPage() {
       perUserLimit: coupon.perUserLimit?.toString() || "1",
       minOrderAmount: coupon.minOrderAmount?.toString() || "0",
       showBanner: coupon.showBanner || false,
+      bannerImage: coupon.bannerImage || "",
       bannerText: coupon.bannerText || "",
       bannerColor: coupon.bannerColor || "emerald",
     });
@@ -169,6 +173,7 @@ export default function CouponsPage() {
           perUserLimit: formData.perUserLimit,
           minOrderAmount: formData.minOrderAmount,
           showBanner: formData.showBanner,
+          bannerImage: formData.bannerImage,
           bannerText: formData.bannerText,
           bannerColor: formData.bannerColor,
         });
@@ -644,6 +649,34 @@ export default function CouponsPage() {
 
                     {formData.showBanner && (
                       <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Banner Image (optional)
+                          </label>
+                          <GitHubImageUpload
+                            folder="banners"
+                            label="Upload Banner Image"
+                            value={formData.bannerImage}
+                            onUpload={(url) =>
+                              setFormData((prev) => ({ ...prev, bannerImage: url }))
+                            }
+                          />
+                          {formData.bannerImage && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFormData((prev) => ({ ...prev, bannerImage: "" }))
+                              }
+                              className="mt-2 text-xs text-red-500 hover:text-red-700 underline"
+                            >
+                              Remove image (use text banner instead)
+                            </button>
+                          )}
+                          <p className="text-xs text-gray-500 mt-1">
+                            If provided, the banner will display this image. Otherwise the text banner is shown.
+                          </p>
+                        </div>
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Custom Banner Text (optional)

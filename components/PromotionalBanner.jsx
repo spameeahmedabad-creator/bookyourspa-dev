@@ -5,7 +5,7 @@ import axios from "axios";
 import { X, Tag, Clock, Sparkles, Copy, Check } from "lucide-react";
 
 const STATIC_BANNER_CONFIG = {
-  enabled: true,
+  enabled: false,
   image: "/offer/offer.png",
   mobileImage: "/offer/offer.png",
   alt: "Special Coupon Offer",
@@ -223,6 +223,27 @@ export default function PromotionalBanner() {
 
   const promo = promotions[currentIndex];
   const theme = THEME[promo.color] || THEME.emerald;
+
+  // Image banner — shown when the active promo has an image
+  if (promo.image) {
+    return (
+      <div className="relative bg-[#c41230] overflow-hidden">
+        <div className="block sm:hidden w-full">
+          <img src={promo.image} alt="Promotional offer" className="w-full h-auto block" />
+        </div>
+        <div className="hidden sm:block w-full h-[200px] bg-[#c41230]">
+          <img src={promo.image} alt="Promotional offer" className="w-full h-full object-contain block" />
+        </div>
+        <button
+          onClick={() => setDismissed(true)}
+          className="absolute right-3 top-3 w-8 h-8 flex items-center justify-center bg-black/40 hover:bg-black/60 rounded-full transition-colors z-50 cursor-pointer"
+          aria-label="Dismiss banner"
+        >
+          <X className="w-4 h-4 text-white" />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div

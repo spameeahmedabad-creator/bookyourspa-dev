@@ -107,6 +107,7 @@ export async function POST(request) {
       perUserLimit,
       minOrderAmount,
       showBanner,
+      bannerImage,
       bannerText,
       bannerColor,
     } = data;
@@ -190,6 +191,7 @@ export async function POST(request) {
       createdBy: decoded.userId,
       // Banner settings
       showBanner: showBanner || false,
+      bannerImage: bannerImage || "",
       bannerText: bannerText || "",
       bannerColor: bannerColor || "emerald",
     });

@@ -68,6 +68,10 @@ const CouponSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  bannerImage: {
+    type: String,
+    default: "",
+  },
   bannerText: {
     type: String,
     default: "",
