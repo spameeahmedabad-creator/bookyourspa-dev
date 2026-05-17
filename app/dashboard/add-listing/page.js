@@ -18,6 +18,7 @@ import {
 import GitHubImageUpload from "@/components/GitHubImageUpload";
 import GitHubGalleryUpload from "@/components/GitHubGalleryUpload";
 import Select from "react-select";
+import { extractCoordsFromGoogleMapsUrl } from "@/lib/distance";
 
 const REGION_OPTIONS = [
   { value: "Ahmedabad", label: "Ahmedabad" },
@@ -528,22 +529,75 @@ function AddListingPageContent() {
                   <Input
                     type="url"
                     value={formData.location.googleMapsLink}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const link = e.target.value;
+                      const coords = extractCoordsFromGoogleMapsUrl(link);
                       setFormData({
                         ...formData,
                         location: {
                           ...formData.location,
-                          googleMapsLink: e.target.value,
+                          googleMapsLink: link,
+                          ...(coords && {
+                            latitude: coords.lat.toString(),
+                            longitude: coords.lng.toString(),
+                          }),
                         },
-                      })
-                    }
-                    placeholder="https://maps.app.goo.gl/2PA7PpUudmCTwq4SA"
+                      });
+                    }}
+                    placeholder="https://www.google.com/maps/place/..."
                   />
                   <p className="text-gray-500 text-xs mt-1">
-                    Enter your Google Maps share link (e.g.,
-                    https://maps.app.goo.gl/...)
+                    Paste your Google Maps link — coordinates will be
+                    auto-detected.
                   </p>
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Latitude
+                    </label>
+                    <Input
+                      type="number"
+                      step="any"
+                      value={formData.location.latitude}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          location: {
+                            ...formData.location,
+                            latitude: e.target.value,
+                          },
+                        })
+                      }
+                      placeholder="e.g. 23.0309"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Longitude
+                    </label>
+                    <Input
+                      type="number"
+                      step="any"
+                      value={formData.location.longitude}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          location: {
+                            ...formData.location,
+                            longitude: e.target.value,
+                          },
+                        })
+                      }
+                      placeholder="e.g. 72.5710"
+                    />
+                  </div>
+                </div>
+                <p className="text-gray-400 text-xs -mt-2">
+                  Coordinates are auto-filled from the Maps link. Edit manually
+                  if needed.
+                </p>
               </div>
 
               {/* Photos / Gallery */}
